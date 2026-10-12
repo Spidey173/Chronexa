@@ -1,0 +1,19 @@
+# Environment & Secrets
+.env
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.DS_Store
+
+# Virtual Environment
+.venv/
+env/
+venv/
+
+# Cache directories
+.pytest_cache/
+.coverage
+htmlcov/
+scratch/
+.cache/
