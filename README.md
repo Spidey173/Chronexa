@@ -1,7 +1,6 @@
 # ⏱️ Chronexa: Work Memory Search & Action Assistant
 
 > **Target Role:** Associate / Junior Python Developer · Associate AI/RAG Engineer · Data Engineer  
-> **Built by:** [Pruthvi R](https://github.com/Spidey173) ([Portfolio](https://pruthvi-17.vercel.app/) · [LinkedIn](https://www.linkedin.com/in/pruthvir173/))  
 > **Tech Stack:** Python 3.10+, BM25, FastEmbed, Streamlit, Groq / OpenAI API
 
 A desktop work-assistant project that searches across scattered workplace communications (Slack messages, Gmail, Google Calendar events, and meeting transcripts) and executes dry-run actions safely.
