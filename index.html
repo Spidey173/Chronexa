@@ -3655,6 +3655,17 @@ window.CHRONEXA_DATA = {
 
 </script>
   <script>
+    // HTML Sanitization for Untrusted Content
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
     // State
     const DATA = window.CHRONEXA_DATA || { benchmarks: [], actions: [], corpus_sample: [] };
     let currentBenchmark = DATA.benchmarks[0] || {};
@@ -3890,10 +3901,10 @@ window.CHRONEXA_DATA = {
           card.className = `citation-card ${rank === 0 ? 'primary' : ''}`;
           card.innerHTML = `
             <div class="citation-meta">
-              <span><strong>#${rank + 1} [${ev.id}]</strong> · Record: <code>${ev.record}</code></span>
-              <span>${formatHumanDate(ev.time)}</span>
+              <span><strong>#${rank + 1} [${escapeHtml(ev.id)}]</strong> · Record: <code>${escapeHtml(ev.record)}</code></span>
+              <span>${escapeHtml(formatHumanDate(ev.time))}</span>
             </div>
-            <div class="citation-snippet">${ev.text}</div>
+            <div class="citation-snippet">${escapeHtml(ev.text)}</div>
           `;
           citationList.appendChild(card);
         });
@@ -3990,10 +4001,10 @@ window.CHRONEXA_DATA = {
         div.className = 'timeline-item';
         div.innerHTML = `
           <div class="timeline-card">
-            <div class="timeline-date-tag">${it.date}</div>
-            <div class="timeline-title">${it.title}</div>
-            <div class="timeline-desc">${it.desc}</div>
-            <div class="timeline-record">Source Record: <code>${it.record}</code></div>
+            <div class="timeline-date-tag">${escapeHtml(it.date)}</div>
+            <div class="timeline-title">${escapeHtml(it.title)}</div>
+            <div class="timeline-desc">${escapeHtml(it.desc)}</div>
+            <div class="timeline-record">Source Record: <code>${escapeHtml(it.record)}</code></div>
           </div>
         `;
         container.appendChild(div);
@@ -4026,8 +4037,8 @@ window.CHRONEXA_DATA = {
         card.className = `action-btn-card ${idx === 0 ? 'active' : ''}`;
         const pType = act.predicted && act.predicted[0] ? act.predicted[0].type : 'tool.call';
         card.innerHTML = `
-          <div class="action-btn-title">${act.command}</div>
-          <div class="action-btn-type">→ ${pType}</div>
+          <div class="action-btn-title">${escapeHtml(act.command)}</div>
+          <div class="action-btn-type">→ ${escapeHtml(pType)}</div>
         `;
         card.addEventListener('click', () => {
           document.querySelectorAll('.action-btn-card').forEach(c => c.classList.remove('active'));
@@ -4042,37 +4053,47 @@ window.CHRONEXA_DATA = {
       currentAction = act;
       actionCommandInput.value = act.command;
       const isConfirm = act.predicted && act.predicted.some(p => p.type === 'confirm');
+      const isClarify = act.predicted && act.predicted.some(p => p.type === 'clarify');
       
       if (isConfirm) {
         guardrailBanner.className = 'guardrail-alert confirm';
         guardrailText.textContent = '⚠️ Destructive Action Guardrail: Requires explicit user confirmation before executing.';
+      } else if (isClarify) {
+        guardrailBanner.className = 'guardrail-alert confirm';
+        guardrailText.textContent = '❓ Ambiguity Resolution: Multiple entity candidates detected; requesting clarification.';
       } else {
         guardrailBanner.className = 'guardrail-alert safe';
-        guardrailText.textContent = '✓ Standard Dry-Run Execution: All entities resolved dynamically with 100% parameter accuracy.';
+        guardrailText.textContent = '✓ Validated Dry-Run Action: Conforms strictly to allowlisted schemas.';
       }
 
       actionJsonOutput.textContent = JSON.stringify(act.predicted, null, 2);
     }
 
     btnParseAction.addEventListener('click', () => {
-      const cmd = actionCommandInput.value.trim().toLowerCase();
+      const rawInput = actionCommandInput.value.trim();
+      const cmd = rawInput.toLowerCase();
       const match = DATA.actions.find(a => a.command.toLowerCase().includes(cmd) || cmd.includes(a.command.toLowerCase()));
       if (match) {
         loadAction(match);
+      } else if (cmd.includes('delete') || cmd.includes('purge') || cmd.includes('drop')) {
+        const confirmAct = [{
+          type: "confirm",
+          args: { summary: rawInput }
+        }];
+        actionJsonOutput.textContent = JSON.stringify(confirmAct, null, 2);
+        guardrailBanner.className = 'guardrail-alert confirm';
+        guardrailText.textContent = '⚠️ Destructive Action Guardrail: User confirmation required.';
       } else {
-        // Fallback dynamic parser simulation
-        const fallback = [
-          {
-            type: "slack.send_message",
-            args: {
-              to: "U03SARAHK",
-              text: actionCommandInput.value
-            }
+        // Fallback: request clarification rather than guessing
+        const clarifyAct = [{
+          type: "clarify",
+          args: {
+            question: `Could not safely parse command: "${rawInput}". Please specify recipient, application, or service.`
           }
-        ];
-        actionJsonOutput.textContent = JSON.stringify(fallback, null, 2);
-        guardrailBanner.className = 'guardrail-alert safe';
-        guardrailText.textContent = '✓ Dynamic Entity Resolution: Channel/User mapped to active context.';
+        }];
+        actionJsonOutput.textContent = JSON.stringify(clarifyAct, null, 2);
+        guardrailBanner.className = 'guardrail-alert confirm';
+        guardrailText.textContent = '❓ Ambiguous or Unknown Action: Requesting clarification.';
       }
       showToast('Payload updated!');
     });
@@ -4135,10 +4156,10 @@ window.CHRONEXA_DATA = {
         card.className = 'citation-card';
         card.innerHTML = `
           <div class="citation-meta">
-            <span><strong>[${u.id}]</strong> · Record: <code>${u.record}</code> (${u.source_type})</span>
-            <span>${formatHumanDate(u.time)}</span>
+            <span><strong>[${escapeHtml(u.id)}]</strong> · Record: <code>${escapeHtml(u.record)}</code> (${escapeHtml(u.source_type)})</span>
+            <span>${escapeHtml(formatHumanDate(u.time))}</span>
           </div>
-          <div class="citation-snippet">${u.text}</div>
+          <div class="citation-snippet">${escapeHtml(u.text)}</div>
         `;
         corpusDisplayList.appendChild(card);
       });

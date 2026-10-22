@@ -60,10 +60,30 @@ def arg_ok(matcher, value):
     raise ValueError(f"unknown matcher {matcher}")
 
 
+ALLOWED_ARGS = {
+    "slack.send_message": {"to", "text"},
+    "gmail.send": {"to", "body", "subject", "cc"},
+    "calendar.create_event": {"title", "start", "end", "attendees", "location", "description"},
+    "calendar.update_event": {"event_id", "start", "end", "title", "attendees", "location", "description", "status"},
+    "reminder.create": {"text", "due"},
+    "memory.ask": {"question"},
+    "app.open": {"app"},
+    "clarify": {"question"},
+    "confirm": {"summary"}
+}
+
+
 def action_ok(expected, predicted):
     if expected["type"] != predicted.get("type"):
         return False, 0, len(expected["args"])
     args = predicted.get("args") or {}
+    
+    # Reject unknown or unauthorized extra arguments
+    allowed = ALLOWED_ARGS.get(expected["type"], set())
+    extra = set(args.keys()) - allowed
+    if extra:
+        return False, 0, len(expected["args"])
+
     hits = sum(arg_ok(m, args.get(k)) for k, m in expected["args"].items())
     return hits == len(expected["args"]), hits, len(expected["args"])
 

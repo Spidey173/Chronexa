@@ -1,4 +1,7 @@
-"""CLI runner for Chronexa Action Assistant (Bonus Task).
+"""CLI runner for Chronexa Action Assistant (TextOS).
+
+Executes action parsing dynamically across all input commands,
+validates each output against strict schemas, and writes predictions.
 """
 import argparse
 import json
@@ -19,10 +22,7 @@ def run_actions(commands_path: Path, output_path: Path):
         commands = [json.loads(line) for line in f if line.strip()]
 
     parser = ActionParser()
-    if parser.provider == "none" and output_path.exists():
-        print(f"Notice: No active LLM provider configured. Preserving verified predictions in {output_path}")
-        return
-
+    print(f"ActionParser active provider: {parser.provider}")
     predictions = []
 
     for idx, item in enumerate(commands, start=1):
@@ -33,14 +33,15 @@ def run_actions(commands_path: Path, output_path: Path):
         print(f"[{idx}/{len(commands)}] Parsing action: {c_id} - '{c_text}'...")
         actions = parser.parse(c_text, as_of)
         predictions.append({"id": c_id, "actions": actions})
-        time.sleep(1.0)
+        if parser.provider != "none":
+            time.sleep(0.5)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
         for p in predictions:
             f.write(json.dumps(p) + "\n")
 
-    print(f"Action predictions written to {output_path}")
+    print(f"Action predictions written to {output_path} ({len(predictions)} items)")
 
 
 def main():

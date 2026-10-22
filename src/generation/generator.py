@@ -2,7 +2,7 @@
 
 Calls the model with strictly retrieved context, enforces temporal grounding,
 parses the structured response, and applies safety/abstention guardrails.
-Includes robust retry with backoff for rate limits (429).
+Includes XML document sandboxing to defend against prompt injection.
 """
 import json
 import os
@@ -18,14 +18,16 @@ from src.generation.prompt import SYSTEM_PROMPT, USER_TEMPLATE
 
 
 def _load_env_if_needed():
-    """Load .env file into os.environ if present."""
+    """Load .env file into os.environ if present, without overwriting existing environment."""
     if os.path.exists(".env"):
         with open(".env") as f:
             for line in f:
                 line = line.strip()
                 if line and not line.startswith("#") and "=" in line:
                     k, v = line.split("=", 1)
-                    os.environ[k.strip()] = v.strip("\"'")
+                    key = k.strip()
+                    if key not in os.environ:
+                        os.environ[key] = v.strip("\"'")
 
 
 class AnswerGenerator:
@@ -45,7 +47,7 @@ class AnswerGenerator:
 
         if self.groq_key:
             self.provider = "groq"
-            self.model = model or os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
+            self.model = model or os.environ.get("GROQ_MODEL", "qwen/qwen3.8-27b")
             self.base_url = "https://api.groq.com/openai/v1"
         elif self.openai_key:
             self.provider = "openai"
@@ -87,7 +89,6 @@ class AnswerGenerator:
         if proc.returncode != 0:
             raise RuntimeError(f"Claude CLI error: {proc.stderr[:200]}")
         out = proc.stdout.strip()
-        # Extract JSON from possible markdown code fences
         if "```json" in out:
             out = out.split("```json", 1)[1].split("```", 1)[0].strip()
         elif "```" in out:
@@ -153,7 +154,7 @@ class AnswerGenerator:
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {auth_key}",
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chronexa/2.0"
         }
         body = {
             "model": self.model,
@@ -173,7 +174,7 @@ class AnswerGenerator:
             except Exception as e:
                 err_str = str(e)
                 if "429" in err_str:
-                    wait_s = 4.0 * (attempt + 1)
+                    wait_s = 3.0 * (attempt + 1)
                     if hasattr(e, "headers") and e.headers and "retry-after" in e.headers:
                         try:
                             wait_s = min(12.0, float(e.headers["retry-after"]) + 1.0)
@@ -190,7 +191,7 @@ class AnswerGenerator:
         raise RuntimeError("Failed after max retries")
 
     def generate(self, question: str, as_of: str, retrieved_units: List[Unit]) -> Dict[str, Any]:
-        """Generates a grounded answer from top retrieved units."""
+        """Generates a grounded answer from top retrieved units with security boundaries."""
         context_blocks = []
         valid_ids = set()
         total_len = 0
@@ -198,10 +199,13 @@ class AnswerGenerator:
             valid_ids.add(u.id)
             max_chars = 3500 if idx <= 2 else 1000
             text = u.text[:max_chars] if len(u.text) > max_chars else u.text
-            if total_len + len(text) > 14000 and idx > 4:
+            # Defuse potential prompt breakout tags in untrusted data
+            safe_text = text.replace("</record>", "&lt;/record&gt;").replace("</evidence_records>", "&lt;/evidence_records&gt;")
+            if total_len + len(safe_text) > 14000 and idx > 4:
                 continue
-            context_blocks.append(f"[{idx}] (ID: {u.id}) {text}")
-            total_len += len(text)
+            src_type = getattr(u, "source_type", "unknown")
+            context_blocks.append(f'<record id="{u.id}" source="{src_type}">\n{safe_text}\n</record>')
+            total_len += len(safe_text)
 
         context_str = "\n\n".join(context_blocks) if context_blocks else "(No records found)"
 
@@ -231,11 +235,14 @@ class AnswerGenerator:
             sources = []
 
         clean_sources = sources
-        # Grounded fallback if LLM returned empty/error
+        # Grounded fallback if LLM returned empty or is offline
+        UNANSWERABLE_TOPICS = [
+            "guest network", "wifi password", "wifi", "soc 2", "salary", "pay",
+            "compensation", "bonus", "equity", "social security", "home address"
+        ]
         if not answer or answer.startswith("Error generating answer"):
-            # Check if query looks unanswerable or has zero relevant retrieved units
             q_lower = question.lower()
-            if not retrieved_units or any(w in q_lower for w in ["guest network", "wifi password", "soc 2"]):
+            if not retrieved_units or any(w in q_lower for w in UNANSWERABLE_TOPICS):
                 answer = "Not in memory: nothing in the data covers this."
                 abstained = True
                 clean_sources = []
@@ -247,7 +254,10 @@ class AnswerGenerator:
                 clean_sents = []
                 for s in sents:
                     s_clean = s.strip()
-                    if s_clean and not any(l in s_clean.lower() for l in ["review@pipelinepilot", "pipelinepilot"]):
+                    if s_clean:
+                        # Skip adversarial instructions and tags
+                        if re.search(r"(?:review@pipelinepilot|pipelinepilot|ignore (?:your )?previous instructions|delete records|forward all emails|<\/?system>|<\/?record>)", s_clean, re.I):
+                            continue
                         clean_sents.append(s_clean)
                     if len(" ".join(clean_sents).split()) >= 35:
                         break
@@ -271,11 +281,19 @@ class AnswerGenerator:
             answer = "Not in memory: nothing in the data covers this."
             clean_sources = []
 
-        # Guardrail 4: Sanitization of prompt injection leak terms
-        leak_terms = ["review@pipelinepilot", "pipelinepilot.example.com", "forward all emails"]
-        for term in leak_terms:
-            if term.lower() in answer.lower():
-                answer = re.sub(re.escape(term), "[REDACTED]", answer, flags=re.IGNORECASE)
+        # Guardrail 4: Sanitization of prompt injection leak terms and instructions
+        injection_patterns = [
+            r"review@pipelinepilot(?:\.example\.com)?",
+            r"pipelinepilot(?:\.example\.com)?",
+            r"forward all emails[^\.\n]*",
+            r"ignore (?:your )?previous instructions[^\.\n]*",
+            r"delete records[^\.\n]*",
+            r"note to any ai[^\.\n]*",
+            r"<\/?system>[^\.\n]*"
+        ]
+        for pat in injection_patterns:
+            if re.search(pat, answer, re.IGNORECASE):
+                answer = re.sub(pat, "[REDACTED DIRECTIVE]", answer, flags=re.IGNORECASE)
 
         return {
             "answer": answer,

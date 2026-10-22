@@ -32,8 +32,8 @@
             "to": [
               "sarah.patel@acmefreight.example.com"
             ],
-            "subject": "Follow-up on proposal",
-            "body": "Hi Sarah,\n\nHave you had a chance to look at the proposal?\n\nThanks,\nAlex"
+            "body": "Hi Sarah,\n\nHave you had a chance to look at the proposal?\n\nThanks,\nAlex",
+            "subject": "Follow-up on proposal"
           }
         }
       ]
@@ -111,7 +111,6 @@
             "start": "2026-09-17T14:00:00-07:00",
             "end": "2026-09-17T14:30:00-07:00",
             "attendees": [
-              "alex@brightline.example.com",
               "ben@brightline.example.com"
             ]
           }
@@ -139,13 +138,9 @@
       "arg_accuracy": 1.0,
       "predicted": [
         {
-          "type": "gmail.send",
+          "type": "clarify",
           "args": {
-            "to": [
-              "sarah.patel@acmefreight.example.com"
-            ],
-            "subject": "Pricing proposal timing",
-            "body": "Hi Sarah,\n\nQuick heads up on the pricing proposal I promised for Friday. Could I have until Tuesday the 15th? I'd like to add volume tiers for when Acme Freight grows past 500 vehicles, since you mentioned getting to around 550 by spring.\n\nThanks,\nAlex"
+            "question": "Did you mean Sarah Kim on Slack or Sarah Patel at Acme Freight regarding the pricing proposal?"
           }
         }
       ]
@@ -162,15 +157,15 @@
             "to": [
               "john@brightline.example.com"
             ],
-            "subject": "Corrected NRR",
-            "body": "Hi John,\n\nThe corrected NRR is 112%.\n\nThanks,\nAlex"
+            "body": "Hi John,\n\nThe corrected NRR is 112%.\n\nThanks,\nAlex",
+            "subject": "Corrected NRR"
           }
         },
         {
           "type": "slack.send_message",
           "args": {
             "to": "U06BEN",
-            "text": "Thanks for catching that, Ben!"
+            "text": "Thanks for catching that NRR calculation, Ben!"
           }
         }
       ]

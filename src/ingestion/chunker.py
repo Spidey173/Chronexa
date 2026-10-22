@@ -14,10 +14,16 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any
 
 from eval_harness.records import Unit
+from zoneinfo import ZoneInfo
+
+LOCAL_TZ = ZoneInfo("America/Los_Angeles")
 
 
 def _dt(s) -> datetime:
-    return datetime.fromisoformat(str(s).replace("Z", "+00:00"))
+    d = datetime.fromisoformat(str(s).replace("Z", "+00:00"))
+    if d.tzinfo is None:
+        d = d.replace(tzinfo=LOCAL_TZ)
+    return d
 
 
 @dataclass
@@ -79,16 +85,17 @@ def load_enriched_records(data_dir: Path) -> Tuple[List[EnrichedUnit], Dict[str,
 
     # 2. Slack: Message context with previous turn
     users_file = d / "connectors/slack/users.json"
-    names = {u["id"]: u["real_name"] for u in json.load(open(users_file, encoding="utf-8"))} if users_file.exists() else {}
+    names = {u["id"]: u["real_name"] for u in json.loads(users_file.read_text(encoding="utf-8"))} if users_file.exists() else {}
     chans_file = d / "connectors/slack/channels.json"
-    chans = {c["id"]: c["name"] for c in json.load(open(chans_file, encoding="utf-8"))} if chans_file.exists() else {}
+    chans = {c["id"]: c["name"] for c in json.loads(chans_file.read_text(encoding="utf-8"))} if chans_file.exists() else {}
 
     slack_msgs = []
     slack_file = d / "connectors/slack/messages.jsonl"
     if slack_file.exists():
-        for line in open(slack_file, encoding="utf-8"):
-            if line.strip():
-                slack_msgs.append(json.loads(line))
+        with open(slack_file, encoding="utf-8") as sf:
+            for line in sf:
+                if line.strip():
+                    slack_msgs.append(json.loads(line))
 
     # Sort slack messages by time for windowing
     slack_msgs.sort(key=lambda x: _dt(x["ts"]))
@@ -139,81 +146,84 @@ def load_enriched_records(data_dir: Path) -> Tuple[List[EnrichedUnit], Dict[str,
     # 3. Gmail: Structured headers + message body
     gmail_file = d / "connectors/gmail/messages.jsonl"
     if gmail_file.exists():
-        for line in open(gmail_file, encoding="utf-8"):
-            if not line.strip():
-                continue
-            x = json.loads(line)
-            t = _dt(x["date"])
-            rec_id = x["id"]
-            to_str = ", ".join(x.get("to", []))
-            cc_str = f" Cc: {', '.join(x.get('cc', []))}" if x.get("cc") else ""
-            subj = x.get("subject", "No subject")
-            header = f"[Email | Date: {x['date'][:10]} | Subject: {subj} | From: {x.get('from')} | To: {to_str}{cc_str} | ID: {rec_id}]"
-            enriched_text = f"{header}\n{x.get('body', '')}"
+        with open(gmail_file, encoding="utf-8") as gf:
+            for line in gf:
+                if not line.strip():
+                    continue
+                x = json.loads(line)
+                t = _dt(x["date"])
+                rec_id = x["id"]
+                to_str = ", ".join(x.get("to", []))
+                cc_str = f" Cc: {', '.join(x.get('cc', []))}" if x.get("cc") else ""
+                subj = x.get("subject", "No subject")
+                header = f"[Email | Date: {x['date'][:10]} | Subject: {subj} | From: {x.get('from')} | To: {to_str}{cc_str} | ID: {rec_id}]"
+                enriched_text = f"{header}\n{x.get('body', '')}"
 
-            units.append(EnrichedUnit(
-                id=rec_id,
-                record=rec_id,
-                time=t,
-                text=enriched_text,
-                source_type="email",
-                speaker=x.get("from", ""),
-                parent_title=subj
-            ))
+                units.append(EnrichedUnit(
+                    id=rec_id,
+                    record=rec_id,
+                    time=t,
+                    text=enriched_text,
+                    source_type="email",
+                    speaker=x.get("from", ""),
+                    parent_title=subj
+                ))
 
     # 4. Google Calendar: Structured events
     cal_file = d / "connectors/google_calendar/events.jsonl"
     if cal_file.exists():
-        for line in open(cal_file, encoding="utf-8"):
-            if not line.strip():
-                continue
-            x = json.loads(line)
-            st, en = x["start"], x["end"]
-            start_iso = st.get("dateTime") or st.get("date")
-            end_iso = en.get("dateTime") or en.get("date")
-            when = f"{start_iso} to {end_iso}"
-            att = ", ".join(a.get("email", "") for a in x.get("attendees", []))
-            loc = f" | Location: {x.get('location')}" if x.get("location") else ""
-            header = f"[Calendar | Event: {x.get('summary')} | Time: {when}{loc} | Attendees: {att} | ID: {x['id']}]"
-            enriched_text = f"{header}\n{x.get('description', '')}"
+        with open(cal_file, encoding="utf-8") as cf:
+            for line in cf:
+                if not line.strip():
+                    continue
+                x = json.loads(line)
+                st, en = x["start"], x["end"]
+                start_iso = st.get("dateTime") or st.get("date")
+                end_iso = en.get("dateTime") or en.get("date")
+                when = f"{start_iso} to {end_iso}"
+                att = ", ".join(a.get("email", "") for a in x.get("attendees", []))
+                loc = f" | Location: {x.get('location')}" if x.get("location") else ""
+                header = f"[Calendar | Event: {x.get('summary')} | Time: {when}{loc} | Attendees: {att} | ID: {x['id']}]"
+                enriched_text = f"{header}\n{x.get('description', '')}"
 
-            units.append(EnrichedUnit(
-                id=x["id"],
-                record=x["id"],
-                time=_dt(x["updated"]),
-                text=enriched_text,
-                source_type="calendar",
-                speaker="Organizer",
-                parent_title=x.get("summary", "")
-            ))
+                units.append(EnrichedUnit(
+                    id=x["id"],
+                    record=x["id"],
+                    time=_dt(x["updated"]),
+                    text=enriched_text,
+                    source_type="calendar",
+                    speaker="Organizer",
+                    parent_title=x.get("summary", "")
+                ))
 
     # 5. Dictations
     dct_file = d / "native/dictation/dictations.jsonl"
     if dct_file.exists():
-        for line in open(dct_file, encoding="utf-8"):
-            if not line.strip():
-                continue
-            x = json.loads(line)
-            t = _dt(x["timestamp"])
-            header = f"[Dictation | Target: {x.get('target_app')} – {x.get('target_context')} | Date: {x['timestamp'][:10]} | ID: {x['id']}]"
-            enriched_text = f"{header}\n{x.get('cleaned_text', '')}"
-            if x.get("raw_transcript"):
-                enriched_text += f"\n(raw transcript: {x['raw_transcript']})"
+        with open(dct_file, encoding="utf-8") as df:
+            for line in df:
+                if not line.strip():
+                    continue
+                x = json.loads(line)
+                t = _dt(x["timestamp"])
+                header = f"[Dictation | Target: {x.get('target_app')} – {x.get('target_context')} | Date: {x['timestamp'][:10]} | ID: {x['id']}]"
+                enriched_text = f"{header}\n{x.get('cleaned_text', '')}"
+                if x.get("raw_transcript"):
+                    enriched_text += f"\n(raw transcript: {x['raw_transcript']})"
 
-            units.append(EnrichedUnit(
-                id=x["id"],
-                record=x["id"],
-                time=t,
-                text=enriched_text,
-                source_type="dictation",
-                speaker="Alex Rivera",
-                parent_title=x.get("target_app", "")
-            ))
+                units.append(EnrichedUnit(
+                    id=x["id"],
+                    record=x["id"],
+                    time=t,
+                    text=enriched_text,
+                    source_type="dictation",
+                    speaker="Alex Rivera",
+                    parent_title=x.get("target_app", "")
+                ))
 
     # 6. ChatGPT Conversations
     cgpt_file = d / "connectors/chatgpt/conversations.json"
     if cgpt_file.exists():
-        for c in json.load(open(cgpt_file, encoding="utf-8")):
+        for c in json.loads(cgpt_file.read_text(encoding="utf-8")):
             title = c.get("title", "ChatGPT")
             for m in c.get("messages", []):
                 t = _dt(m["create_time"])
@@ -231,7 +241,8 @@ def load_enriched_records(data_dir: Path) -> Tuple[List[EnrichedUnit], Dict[str,
 
     # 7. Codex Sessions
     for f in sorted((d / "connectors/codex/sessions").glob("*.jsonl")):
-        events = [json.loads(l) for l in open(f, encoding="utf-8") if l.strip()]
+        with open(f, encoding="utf-8") as cf:
+            events = [json.loads(l) for l in cf if l.strip()]
         if not events:
             continue
         meta, body = events[0], events[1:]

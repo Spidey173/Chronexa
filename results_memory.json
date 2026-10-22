@@ -5,25 +5,25 @@
     "strict": {
       "n": 27,
       "clusters": 14,
-      "mean": 0.8889,
+      "mean": 0.8519,
       "ci95": [
-        0.7692,
-        1.0
+        0.7586,
+        0.95
       ]
     },
     "lenient": {
       "n": 27,
       "clusters": 14,
-      "mean": 1.0,
+      "mean": 0.963,
       "ci95": [
-        1.0,
+        0.9091,
         1.0
       ]
     },
     "unverified": 3,
     "hard_failures": 0,
-    "source_recall": 0.88,
-    "source_precision": 0.96,
+    "source_recall": 0.8267,
+    "source_precision": 0.9583,
     "by_category": {
       "abstention": 1.0,
       "as_of_time_travel": 1.0,
@@ -41,10 +41,10 @@
       "prompt_injection": 1.0,
       "reported_speech": 1.0,
       "single_fact": 1.0,
-      "temporal": 1.0,
+      "temporal": 0.5,
       "work_app": 1.0
     },
-    "accuracy": 0.8889
+    "accuracy": 0.8519
   },
   "items": [
     {
@@ -161,11 +161,11 @@
       "id": "MEM-TR-12",
       "storyline": "acme_proposal",
       "category": "temporal",
-      "verdict": "correct",
+      "verdict": "incorrect",
       "unverified": false,
-      "score": 1.0,
-      "lenient": 1.0,
-      "reason": "all rules pass"
+      "score": 0.0,
+      "lenient": 0.0,
+      "reason": "abstained on an answerable question"
     },
     {
       "id": "MEM-TR-13",

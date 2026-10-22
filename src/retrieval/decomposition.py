@@ -45,6 +45,8 @@ def _save_cache(cache_file: Path, cache: Dict[str, Any]):
 
 def _call_repo_llm(prompt: str, system: str = "") -> Optional[str]:
     """Attempts to call available LLM client from the repository."""
+    if os.environ.get("CHRONEXA_OFFLINE") == "1":
+        return None
     # 1. Try AnswerGenerator providers (OpenAI, Anthropic, Gemini, or authenticated Claude CLI)
     try:
         from src.generation.generator import AnswerGenerator

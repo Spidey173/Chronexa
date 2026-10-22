@@ -71,3 +71,4 @@ Evaluated across candidate context windows (Top 8, Top 10, Top 12) retrieved via
 | ACT-TR-12 | Remind 1 hr before board meeting | **PASS** | 3/3 (`due: 2026-09-23T08:00:00-07:00`) |
 
 **Summary:** 100.0% Pass Rate (12/12), 100.0% Argument Accuracy.
+| holdout | paraphrases | `hybrid_rrf_rerank` | 32 | 53.6% | 89.3% | 92.9% | 0.4656 | 3.6% | 0 | 2540ms | N/A |

@@ -21,12 +21,24 @@ nothing needed was found, MRR, and how many forbidden records were retrieved.
 """
 import argparse
 import json
+import sys
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
-import records
-from stats import cluster_bootstrap
+_THIS_DIR = Path(__file__).resolve().parent
+_ROOT_DIR = _THIS_DIR.parent
+if str(_THIS_DIR) not in sys.path:
+    sys.path.insert(0, str(_THIS_DIR))
+if str(_ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(_ROOT_DIR))
+
+try:
+    import records
+    from stats import cluster_bootstrap
+except ModuleNotFoundError:
+    from eval_harness import records
+    from eval_harness.stats import cluster_bootstrap
 
 KS = (5, 10, 20)
 PRIMARY_K = 10

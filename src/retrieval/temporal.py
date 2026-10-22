@@ -5,9 +5,42 @@ Provides soft metadata boosting and records-on-date lookups. Never applies hard 
 """
 import re
 from datetime import datetime
-from typing import List, Tuple, Set, Optional
+from typing import List, Tuple, Set, Optional, Any
+from zoneinfo import ZoneInfo
 import dateparser
 from eval_harness.records import Unit
+
+LOCAL_TZ = ZoneInfo("America/Los_Angeles")
+
+
+def parse_iso_datetime(val: Any) -> datetime:
+    """Parses an ISO datetime string or datetime object into an offset-aware datetime.
+    
+    If naive, explicitly assigns the workspace timezone (America/Los_Angeles).
+    Supports strings with 'Z', offsets, or bare dates (YYYY-MM-DD).
+    """
+    if isinstance(val, datetime):
+        if val.tzinfo is None:
+            return val.replace(tzinfo=LOCAL_TZ)
+        return val
+
+    s = str(val).strip()
+    if not s:
+        raise ValueError("Cannot parse empty datetime string")
+    
+    # Handle YYYY-MM-DD bare dates by setting to end of that day
+    if re.match(r"^\d{4}-\d{2}-\d{2}$", s):
+        s += "T23:59:59"
+
+    normalized = s.replace("Z", "+00:00")
+    # Replace space with T if needed
+    if " " in normalized and "T" not in normalized:
+        normalized = normalized.replace(" ", "T")
+
+    dt = datetime.fromisoformat(normalized)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=LOCAL_TZ)
+    return dt
 
 
 DATE_INDICATORS = {

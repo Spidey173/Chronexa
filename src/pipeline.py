@@ -14,11 +14,9 @@ from src.config import DATA_DIR, EVALS_DIR, OUTPUTS_DIR
 from src.ingestion.loader import get_visible_units, _get_raw_records
 from src.retrieval.bm25 import BM25Index
 from src.retrieval.hybrid import HybridRetriever
+from src.retrieval.reranker import CrossEncoderReranker
+from src.retrieval.temporal import parse_iso_datetime
 from src.generation.generator import AnswerGenerator
-
-
-def _parse_dt(dt_str: str) -> datetime:
-    return datetime.fromisoformat(str(dt_str).replace("Z", "+00:00"))
 
 
 def run_pipeline(
@@ -46,7 +44,7 @@ def run_pipeline(
         q_id = item["id"]
         q_text = item["question"]
         as_of_str = item["as_of"]
-        as_of_dt = _parse_dt(as_of_str)
+        as_of_dt = parse_iso_datetime(as_of_str)
 
         # 1. Strictly temporally visible units
         visible_units = get_visible_units(as_of_dt, data_dir=data_dir)
@@ -68,8 +66,9 @@ def run_pipeline(
             answer_text = gen_res["answer"]
             sources_ids = gen_res["sources"]
             abstained_flag = gen_res["abstained"]
-            import time
-            time.sleep(3.5)
+            if generator.provider != "none":
+                import time
+                time.sleep(1.0)
         else:
             answer_text = ""
             sources_ids = retrieved_ids[:3]

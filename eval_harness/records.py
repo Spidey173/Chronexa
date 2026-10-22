@@ -23,8 +23,16 @@ class Unit:
     timestamp_iso: str = ""
 
 
+from zoneinfo import ZoneInfo
+
+LOCAL_TZ = ZoneInfo("America/Los_Angeles")
+
+
 def _dt(s):
-    return datetime.fromisoformat(str(s).replace("Z", "+00:00"))
+    d = datetime.fromisoformat(str(s).replace("Z", "+00:00"))
+    if d.tzinfo is None:
+        d = d.replace(tzinfo=LOCAL_TZ)
+    return d
 
 
 def load(data_dir):
@@ -44,60 +52,76 @@ def load(data_dir):
                               source_type="meeting", speaker=who, meeting_id=m["id"],
                               timestamp_iso=seg_time.isoformat()))
 
-    for line in open(d / "native/dictation/dictations.jsonl"):
-        x = json.loads(line)
-        t = _dt(x["timestamp"])
-        units.append(Unit(x["id"], x["id"], t,
-                          f"[Dictation {x['mode']} into {x['target_app']} – {x['target_context']}, "
-                          f"{x['delivery_state']}] {x['cleaned_text']}"
-                          f"{chr(10) + '(raw transcript: ' + x['raw_transcript'] + ')' if x.get('raw_transcript') else ''}",
-                          source_type="dictation", speaker="Alex Rivera", meeting_id=x.get("target_app", ""),
-                          timestamp_iso=t.isoformat()))
+    dict_file = d / "native/dictation/dictations.jsonl"
+    if dict_file.exists():
+        with open(dict_file, encoding="utf-8") as df:
+            for line in df:
+                x = json.loads(line)
+                t = _dt(x["timestamp"])
+                units.append(Unit(x["id"], x["id"], t,
+                                  f"[Dictation {x['mode']} into {x['target_app']} – {x['target_context']}, "
+                                  f"{x['delivery_state']}] {x['cleaned_text']}"
+                                  f"{chr(10) + '(raw transcript: ' + x['raw_transcript'] + ')' if x.get('raw_transcript') else ''}",
+                                  source_type="dictation", speaker="Alex Rivera", meeting_id=x.get("target_app", ""),
+                                  timestamp_iso=t.isoformat()))
 
-    names = {u["id"]: u["real_name"] for u in json.load(open(d / "connectors/slack/users.json"))}
-    chans = {c["id"]: c["name"] for c in json.load(open(d / "connectors/slack/channels.json"))}
-    for line in open(d / "connectors/slack/messages.jsonl"):
-        x = json.loads(line)
-        t = _dt(x["ts"])
-        where = chans.get(x["channel_id"], x["channel_id"])
-        if x.get("subtype") == "message_deleted":
-            deleted[x["target_id"]] = t
-            units.append(Unit(x["id"], x["id"], t, f"[Slack {where}] (message {x['target_id']} was deleted)",
-                              source_type="slack", speaker="System", meeting_id=where, timestamp_iso=t.isoformat()))
-            continue
-        if x.get("subtype") == "message_changed":
-            edits.setdefault(x["target_id"], []).append((t, x["text"]))
-            units.append(Unit(x["id"], x["id"], t, f"[Slack {where}, edit of {x['target_id']}] {x['text']}",
-                              source_type="slack", speaker="System", meeting_id=where, timestamp_iso=t.isoformat()))
-            continue
-        who = names.get(x.get("user"), x.get("bot_name") or x.get("user"))
-        units.append(Unit(x["id"], x["id"], t, f"[Slack {where}] {who}: {x['text']}",
-                          source_type="slack", speaker=who, meeting_id=where, timestamp_iso=t.isoformat()))
+    slack_users = d / "connectors/slack/users.json"
+    names = {u["id"]: u["real_name"] for u in json.loads(slack_users.read_text(encoding="utf-8"))} if slack_users.exists() else {}
+    slack_chans = d / "connectors/slack/channels.json"
+    chans = {c["id"]: c["name"] for c in json.loads(slack_chans.read_text(encoding="utf-8"))} if slack_chans.exists() else {}
 
-    for line in open(d / "connectors/gmail/messages.jsonl"):
-        x = json.loads(line)
-        t = _dt(x["date"])
-        units.append(Unit(x["id"], x["id"], t,
-                          f"[Email {x['date'][:16]}] From {x['from']} To {', '.join(x['to'])}"
-                          f"{' Cc ' + ', '.join(x['cc']) if x['cc'] else ''} | {x['subject']}\n{x['body']}",
-                          source_type="email", speaker=x.get("from", ""), meeting_id=x.get("subject", ""),
-                          timestamp_iso=t.isoformat()))
+    slack_msgs_file = d / "connectors/slack/messages.jsonl"
+    if slack_msgs_file.exists():
+        with open(slack_msgs_file, encoding="utf-8") as sf:
+            for line in sf:
+                x = json.loads(line)
+                t = _dt(x["ts"])
+                where = chans.get(x["channel_id"], x["channel_id"])
+                if x.get("subtype") == "message_deleted":
+                    deleted[x["target_id"]] = t
+                    units.append(Unit(x["id"], x["id"], t, f"[Slack {where}] (message {x['target_id']} was deleted)",
+                                      source_type="slack", speaker="System", meeting_id=where, timestamp_iso=t.isoformat()))
+                    continue
+                if x.get("subtype") == "message_changed":
+                    edits.setdefault(x["target_id"], []).append((t, x["text"]))
+                    units.append(Unit(x["id"], x["id"], t, f"[Slack {where}, edit of {x['target_id']}] {x['text']}",
+                                      source_type="slack", speaker="System", meeting_id=where, timestamp_iso=t.isoformat()))
+                    continue
+                who = names.get(x.get("user"), x.get("bot_name") or x.get("user"))
+                units.append(Unit(x["id"], x["id"], t, f"[Slack {where}] {who}: {x['text']}",
+                                  source_type="slack", speaker=who, meeting_id=where, timestamp_iso=t.isoformat()))
 
-    for line in open(d / "connectors/google_calendar/events.jsonl"):
-        x = json.loads(line)
-        st, en = x["start"], x["end"]
-        when = f"{st.get('dateTime') or st.get('date')} to {en.get('dateTime') or en.get('date')}"
-        att = ", ".join(a["email"] for a in x.get("attendees", []))
-        t = _dt(x["updated"])
-        units.append(Unit(x["id"], x["id"], t,
-                          f"[Calendar, {x['status']}] {x['summary']} | {when} | {x.get('location') or ''} | "
-                          f"attendees: {att} | {x.get('description') or ''}"
-                          f"{' | repeats ' + str(x['recurrence']) if x.get('recurrence') else ''}",
-                          source_type="calendar", speaker="Organizer", meeting_id=x["id"],
-                          timestamp_iso=t.isoformat()))
+    gmail_file = d / "connectors/gmail/messages.jsonl"
+    if gmail_file.exists():
+        with open(gmail_file, encoding="utf-8") as gf:
+            for line in gf:
+                x = json.loads(line)
+                t = _dt(x["date"])
+                units.append(Unit(x["id"], x["id"], t,
+                                  f"[Email {x['date'][:16]}] From {x['from']} To {', '.join(x['to'])}"
+                                  f"{' Cc ' + ', '.join(x['cc']) if x['cc'] else ''} | {x['subject']}\n{x['body']}",
+                                  source_type="email", speaker=x.get("from", ""), meeting_id=x.get("subject", ""),
+                                  timestamp_iso=t.isoformat()))
+
+    cal_file = d / "connectors/google_calendar/events.jsonl"
+    if cal_file.exists():
+        with open(cal_file, encoding="utf-8") as cf:
+            for line in cf:
+                x = json.loads(line)
+                st, en = x["start"], x["end"]
+                when = f"{st.get('dateTime') or st.get('date')} to {en.get('dateTime') or en.get('date')}"
+                att = ", ".join(a["email"] for a in x.get("attendees", []))
+                t = _dt(x["updated"])
+                units.append(Unit(x["id"], x["id"], t,
+                                  f"[Calendar, {x['status']}] {x['summary']} | {when} | {x.get('location') or ''} | "
+                                  f"attendees: {att} | {x.get('description') or ''}"
+                                  f"{' | repeats ' + str(x['recurrence']) if x.get('recurrence') else ''}",
+                                  source_type="calendar", speaker="Organizer", meeting_id=x["id"],
+                                  timestamp_iso=t.isoformat()))
 
     for f in sorted((d / "connectors/codex/sessions").glob("*.jsonl")):
-        events = [json.loads(l) for l in open(f)]
+        with open(f, encoding="utf-8") as cf:
+            events = [json.loads(l) for l in cf if l.strip()]
         meta, body = events[0], events[1:]
         text = "\n".join(f"{e.get('role', e.get('tool', e['type']))}: {e.get('content') or e.get('input', '')}"
                          for e in body)
@@ -107,13 +131,15 @@ def load(data_dir):
                           source_type="codex", speaker="User/Agent", meeting_id=meta.get("repo", ""),
                           timestamp_iso=t.isoformat()))
 
-    for c in json.load(open(d / "connectors/chatgpt/conversations.json")):
-        for m in c["messages"]:
-            t = _dt(m["create_time"])
-            units.append(Unit(m["id"], c["id"], t,
-                              f"[ChatGPT '{c['title']}'] {m['role']}: {m['content']}",
-                              source_type="chatgpt", speaker=m.get("role", ""), meeting_id=c.get("title", ""),
-                              timestamp_iso=t.isoformat()))
+    cgpt_file = d / "connectors/chatgpt/conversations.json"
+    if cgpt_file.exists():
+        for c in json.loads(cgpt_file.read_text(encoding="utf-8")):
+            for m in c["messages"]:
+                t = _dt(m["create_time"])
+                units.append(Unit(m["id"], c["id"], t,
+                                  f"[ChatGPT '{c['title']}'] {m['role']}: {m['content']}",
+                                  source_type="chatgpt", speaker=m.get("role", ""), meeting_id=c.get("title", ""),
+                                  timestamp_iso=t.isoformat()))
 
     units.sort(key=lambda u: u.time)
     return units, deleted, edits
@@ -134,10 +160,13 @@ def context(data_dir):
 def visible(data_dir, as_of):
     """Units a system could know at `as_of`: delivered by then, not deleted by then, edits applied."""
     units, deleted, edits = load(data_dir)
+    as_of_dt = as_of if isinstance(as_of, datetime) else _dt(as_of)
+    if as_of_dt.tzinfo is None:
+        as_of_dt = as_of_dt.replace(tzinfo=LOCAL_TZ)
     out = []
     for u in units:
-        if u.time > as_of or (u.id in deleted and deleted[u.id] <= as_of):
+        if u.time > as_of_dt or (u.id in deleted and deleted[u.id] <= as_of_dt):
             continue
-        newer = [txt for t, txt in edits.get(u.id, []) if t <= as_of]
+        newer = [txt for t, txt in edits.get(u.id, []) if t <= as_of_dt]
         out.append(Unit(u.id, u.record, u.time, u.text if not newer else u.text.partition(": ")[0] + ": " + newer[-1] + " (edited)"))
     return out

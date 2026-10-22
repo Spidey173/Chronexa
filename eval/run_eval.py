@@ -395,13 +395,17 @@ def main():
                         choices=["v2_baseline", "bm25_only", "dense_only", "hybrid_rrf", "hybrid_rrf_rerank",
                                  "+decomposition", "+decomposition+2hop", "+date_handling", "synonyms_disabled",
                                  "compare_all_dev", "phase4_ablation"])
-    parser.add_argument("--split", default="dev", choices=["dev"])
+    parser.add_argument("--split", default="dev", choices=["dev", "holdout", "both"], help="Dataset split to evaluate")
     parser.add_argument("--mode", default="paraphrases", choices=["paraphrases", "original", "both"])
+    parser.add_argument("--offline", action="store_true", help="Force offline retrieval (no external LLM decomposition)")
     parser.add_argument("--dense-model", default="BAAI/bge-small-en-v1.5")
     parser.add_argument("--rerank-model", default="Xenova/ms-marco-MiniLM-L-6-v2")
     parser.add_argument("--rerank-pool", type=int, default=40)
-    parser.add_argument("--generate-answers", action="store_true", default=True)
+    parser.add_argument("--generate-answers", action="store_true", default=False)
     args = parser.parse_args()
+
+    if args.offline:
+        os.environ["CHRONEXA_OFFLINE"] = "1"
 
     runner = EvaluationRunner()
 
@@ -412,11 +416,13 @@ def main():
     else:
         configs_to_run = [args.config]
 
+    eval_splits = ["dev", "holdout"] if args.split == "both" else [args.split]
     eval_jobs = []
-    if args.mode in ("paraphrases", "both"):
-        eval_jobs.append(("dev", "paraphrases", EVAL_DIR / "dev_paraphrases.jsonl"))
-    if args.mode in ("original", "both"):
-        eval_jobs.append(("dev", "original", EVAL_DIR / "dev_original.jsonl"))
+    for sp in eval_splits:
+        if args.mode in ("paraphrases", "both"):
+            eval_jobs.append((sp, "paraphrases", EVAL_DIR / f"{sp}_paraphrases.jsonl"))
+        if args.mode in ("original", "both"):
+            eval_jobs.append((sp, "original", EVAL_DIR / f"{sp}_original.jsonl"))
 
     for split_name, ds_name, path in eval_jobs:
         with open(path, "r", encoding="utf-8") as f:
