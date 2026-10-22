@@ -993,10 +993,10 @@
   <div class="top-banner">
     <div class="live-badge">
       <span class="pulse-dot"></span>
-      <span>PRODUCTION EDGE ENGINE · ZERO-SLEEP HOSTING ACTIVE</span>
+      <span>PORTFOLIO DEMO · PRE-INDEXED BENCHMARK REPLAY</span>
     </div>
     <div style="font-family: var(--font-mono); font-size: 0.75rem;">
-      <span>Strict Physical Temporal Filtering (time &le; as_of) · Pure CPU Optimization</span>
+      <span>Strict Physical Temporal Filtering (time &le; as_of) · Local CPU Hybrid Retrieval</span>
     </div>
   </div>
 
@@ -1037,35 +1037,35 @@
           Grounded Work Memory Search with <span class="highlight">Zero Future Leakage</span>.
         </h1>
         <p class="hero-subtitle">
-          Search across fragmented Slack messages, Gmail threads, Google Calendar events, and meeting transcripts strictly as of an arbitrary historical timestamp. Never cheats by looking at future records.
+          Search across fragmented Slack messages, Gmail threads, Google Calendar events, and meeting transcripts strictly as of an arbitrary historical timestamp. Evaluated across separate Dev and Holdout benchmarks.
         </p>
         <div class="hero-pills">
           <span class="badge-pill">📅 Pre-Retrieval Time Boundary</span>
           <span class="badge-pill badge-cyan">🔍 Hybrid RRF Fusion</span>
-          <span class="badge-pill badge-emerald">⚡ 1.7s Pure CPU Search</span>
-          <span class="badge-pill">🛡️ TextOS Action Guardrails</span>
+          <span class="badge-pill badge-emerald">⚡ Local CPU Pipeline</span>
+          <span class="badge-pill">🛡️ Strict Action Guardrails</span>
         </div>
       </div>
       <div class="metrics-grid">
         <div class="metric-card">
-          <div class="metric-val">100.0%</div>
-          <div class="metric-label">Top-10 Retrieval Recall</div>
-          <div class="metric-delta">25 / 25 Gold Coverage</div>
+          <div class="metric-val">94.4%</div>
+          <div class="metric-label">Dev Top-10 Retrieval</div>
+          <div class="metric-delta">89.3% Holdout with Rerank</div>
         </div>
         <div class="metric-card">
           <div class="metric-val">0.0%</div>
           <div class="metric-label">Future Temporal Leakage</div>
-          <div class="metric-delta">Guaranteed Zero Harm</div>
+          <div class="metric-delta">Strict Physical Filtering</div>
         </div>
         <div class="metric-card">
           <div class="metric-val">12 / 12</div>
-          <div class="metric-label">TextOS Action Accuracy</div>
+          <div class="metric-label">Dry-Run Action Schema</div>
           <div class="metric-delta">100% Parameter Precision</div>
         </div>
         <div class="metric-card">
-          <div class="metric-val">&lt; 1.7s</div>
-          <div class="metric-label">Pure CPU Search Speed</div>
-          <div class="metric-delta">No GPU Required</div>
+          <div class="metric-val">CPU Local</div>
+          <div class="metric-label">FastEmbed + BM25</div>
+          <div class="metric-delta">No Cloud API Required</div>
         </div>
       </div>
     </section>
@@ -1351,34 +1351,40 @@
             </thead>
             <tbody>
               <tr>
-                <td><strong>Top-10 Retrieval Recall</strong></td>
-                <td>&gt; 90.0%</td>
-                <td style="color: var(--accent-emerald); font-weight: 700;">100.0%</td>
-                <td>Zero gold units missed across 27 temporal test queries</td>
+                <td><strong>Dev Split Top-10 Retrieval</strong></td>
+                <td>&gt; 85.0%</td>
+                <td style="color: var(--accent-emerald); font-weight: 700;">94.4% (Orig) / 83.3% (Para)</td>
+                <td>18/19 gold coverage on original dev queries (n=95 total)</td>
+              </tr>
+              <tr>
+                <td><strong>Holdout Top-10 Retrieval</strong></td>
+                <td>&gt; 70.0%</td>
+                <td style="color: var(--accent-emerald); font-weight: 700;">71.4% (Orig) / 89.3% (Rerank)</td>
+                <td>Unseen holdout evaluation with zero leakage & zero tuning</td>
               </tr>
               <tr>
                 <td><strong>Future Leakage Rate</strong></td>
-                <td>&lt; 5.0%</td>
+                <td>0.0%</td>
                 <td style="color: var(--accent-emerald); font-weight: 700;">0.0%</td>
-                <td>No information from future records leaked into answers</td>
+                <td>Physical pre-filtering (timestamp &le; as_of) excludes all future records</td>
               </tr>
               <tr>
-                <td><strong>Search Speed on CPU</strong></td>
-                <td>&lt; 5.0s</td>
-                <td style="color: var(--accent-cyan); font-weight: 700;">&lt; 1.7s</td>
-                <td>20x faster than dense vector embedding re-computation</td>
+                <td><strong>Local Search Pipeline</strong></td>
+                <td>Local CPU</td>
+                <td style="color: var(--accent-cyan); font-weight: 700;">Hybrid RRF (CPU)</td>
+                <td>Okapi BM25 + FastEmbed (BGE-small) running local without cloud APIs</td>
               </tr>
               <tr>
-                <td><strong>TextOS Action Assistant</strong></td>
-                <td>&gt; 80.0%</td>
+                <td><strong>TextOS Dry-Run Actions</strong></td>
+                <td>100% Valid</td>
                 <td style="color: var(--accent-emerald); font-weight: 700;">12 / 12 (100%)</td>
-                <td>Dynamic resolution for Slack IDs, Calendar events, Emails</td>
+                <td>Strict schema validation rejecting extra args & preview-only execution</td>
               </tr>
               <tr>
                 <td><strong>Calibrated Abstention</strong></td>
                 <td>100% Guard</td>
                 <td style="color: var(--accent-emerald); font-weight: 700;">100% Safe</td>
-                <td>Safely abstains on Series B valuation, Dana salary, SOC 2</td>
+                <td>Safely abstains when facts are absent (e.g. Dana salary, SOC 2)</td>
               </tr>
             </tbody>
           </table>
@@ -3854,16 +3860,42 @@ window.CHRONEXA_DATA = {
       const q = queryInput.value.trim().toLowerCase();
       const asOf = asOfInput.value.trim();
       
-      // Simulate micro-latency
-      const simulatedLatency = Math.floor(Math.random() * 25) + 22;
-      telLatency.textContent = `${simulatedLatency} ms`;
-
       // Check if current benchmark matches or if we find a matching benchmark
-      let match = currentBenchmark;
-      if (q !== currentBenchmark.question.toLowerCase()) {
-        const found = DATA.benchmarks.find(b => b.question.toLowerCase().includes(q) || q.includes(b.question.toLowerCase()));
-        if (found) match = found;
+      let match = null;
+      if (currentBenchmark && currentBenchmark.question && q === currentBenchmark.question.toLowerCase()) {
+        match = currentBenchmark;
+      } else {
+        match = DATA.benchmarks.find(b => b.question.toLowerCase() === q || b.question.toLowerCase().includes(q) || q.includes(b.question.toLowerCase()));
       }
+
+      if (!match) {
+        // Honest notification for ad-hoc custom queries
+        telLatency.textContent = "Replay N/A";
+        answerCard.className = 'answer-card';
+        answerBadge.className = 'badge-pill';
+        answerBadge.style.background = 'rgba(56, 189, 248, 0.15)';
+        answerBadge.style.color = '#38bdf8';
+        answerBadge.style.borderColor = 'rgba(56, 189, 248, 0.4)';
+        answerBadge.textContent = 'ℹ️ PRE-INDEXED DEMO REPLAY';
+        categoryBadge.textContent = 'MODE: STATIC REPLAY';
+        answerText.innerHTML = `
+          <strong>Ad-Hoc Query Notice:</strong> This web browser interface is a static demonstration replaying pre-computed results from Chronexa's evaluation benchmark.<br><br>
+          The query <em>"${escapeHtml(queryInput.value)}"</em> is not in the pre-indexed demo set. To run arbitrary live hybrid search across all 1,316 workplace records with the dynamic Python pipeline, run in terminal:
+          <pre style="margin-top: 8px; padding: 10px; background: rgba(0,0,0,0.4); border-radius: 6px; font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent-orange);">python3 src/pipeline.py --mode hybrid</pre>
+          Or select one of the curated benchmark scenario pills above to inspect how facts change over time.
+        `;
+        goldText.textContent = "N/A (Query outside benchmark dataset)";
+        citationList.innerHTML = `
+          <div class="citation-card">
+            <div class="citation-snippet" style="color: var(--text-muted); font-style: italic;">
+              Select a benchmark scenario from the carousel or dropdown above to inspect retrieved evidence units.
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      telLatency.textContent = "Replay (Verified)";
 
       const isAbstain = match.abstained || (match.gold_answer && match.gold_answer.toLowerCase().includes('not in memory'));
       
