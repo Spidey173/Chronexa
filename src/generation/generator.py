@@ -45,7 +45,10 @@ class AnswerGenerator:
         self.anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
         self.groq_key = api_key or os.environ.get("GROQ_API_KEY")
 
-        if self.groq_key:
+        if os.environ.get("CHRONEXA_OFFLINE") == "1":
+            self.provider = "none"
+            self.model = "local-extractive"
+        elif self.groq_key:
             self.provider = "groq"
             self.model = model or os.environ.get("GROQ_MODEL", "qwen/qwen3.8-27b")
             self.base_url = "https://api.groq.com/openai/v1"
@@ -148,7 +151,7 @@ class AnswerGenerator:
                     time.sleep(2)
         raise RuntimeError("Failed after max retries")
 
-    def _call_openai(self, sys_prompt: str, user_prompt: str, retries: int = 8) -> str:
+    def _call_openai(self, sys_prompt: str, user_prompt: str, retries: int = 2) -> str:
         url = f"{self.base_url}/chat/completions"
         auth_key = self.groq_key if self.provider == "groq" else self.openai_key
         headers = {
@@ -168,19 +171,19 @@ class AnswerGenerator:
         for attempt in range(retries):
             try:
                 req = urllib.request.Request(url, data=json.dumps(body).encode("utf-8"), headers=headers, method="POST")
-                with urllib.request.urlopen(req, timeout=60) as resp:
+                with urllib.request.urlopen(req, timeout=30) as resp:
                     data = json.loads(resp.read().decode("utf-8"))
                     return data["choices"][0]["message"]["content"]
             except Exception as e:
                 err_str = str(e)
                 if "429" in err_str:
-                    wait_s = 3.0 * (attempt + 1)
+                    wait_s = 2.0 * (attempt + 1)
                     if hasattr(e, "headers") and e.headers and "retry-after" in e.headers:
                         try:
-                            wait_s = min(12.0, float(e.headers["retry-after"]) + 1.0)
+                            wait_s = min(3.0, float(e.headers["retry-after"]) + 0.5)
                         except Exception:
                             pass
-                    wait_s = min(15.0, wait_s)
+                    wait_s = min(4.0, wait_s)
                     print(f"[RateLimit 429] Waiting {wait_s:.1f}s before retry ({attempt+1}/{retries})...")
                     time.sleep(wait_s)
                 else:

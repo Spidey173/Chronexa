@@ -25,6 +25,17 @@ fi
 MODE="${1:-all}"
 
 case "$MODE" in
+    serve)
+        echo "=== Launching Chronexa Local Live Search Server ==="
+        $PYTHON src/server.py "${2:-8000}"
+        ;;
+    query)
+        if [ -z "$2" ]; then
+            echo "Usage: ./run.sh query \"<your question>\" [as_of_iso_timestamp] [mode: hybrid|bm25]"
+            exit 1
+        fi
+        $PYTHON src/pipeline.py --query "$2" --as-of "${3:-2026-09-18T18:00:00-07:00}" --mode "${4:-hybrid}"
+        ;;
     test)
         echo "=== Running Chronexa Automated Test Suite ==="
         $PYTHON -m unittest discover tests -v

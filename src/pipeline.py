@@ -91,14 +91,96 @@ def run_pipeline(
     print(f"Pipeline complete! Output {len(output_lines)} records to {output_path}")
 
 
+def search_single(
+    query: str,
+    as_of: str = "2026-09-18T18:00:00-07:00",
+    data_dir: Path = DATA_DIR,
+    mode: str = "hybrid",
+    generate_answer: bool = True,
+    top_k: int = 10
+):
+    """Executes a single ad-hoc search query with temporal filtering and grounded answer generation."""
+    as_of_dt = parse_iso_datetime(as_of)
+    visible_units = get_visible_units(as_of_dt, data_dir=data_dir)
+
+    if mode == "hybrid":
+        retriever = HybridRetriever()
+        results = retriever.search(query, visible_units, top_k=top_k, as_of=as_of)
+    else:
+        bm25_idx = BM25Index(visible_units)
+        results = bm25_idx.search(query, top_k=top_k)
+
+    retrieved_units = [unit for unit, _ in results]
+    scores = [score for _, score in results]
+
+    answer_text = ""
+    sources = []
+    abstained = False
+    if generate_answer:
+        generator = AnswerGenerator()
+        gen_res = generator.generate(query, as_of, retrieved_units)
+        answer_text = gen_res["answer"]
+        sources = gen_res["sources"]
+        abstained = gen_res["abstained"]
+
+    return {
+        "query": query,
+        "as_of": as_of,
+        "visible_count": len(visible_units),
+        "answer": answer_text,
+        "sources": sources,
+        "abstained": abstained,
+        "results": [
+            {
+                "id": u.id,
+                "record": u.record,
+                "time": u.time.isoformat() if hasattr(u.time, "isoformat") else str(u.time),
+                "speaker": getattr(u, "speaker", ""),
+                "source_type": getattr(u, "source_type", ""),
+                "text": u.text,
+                "score": float(sc)
+            }
+            for u, sc in zip(retrieved_units, scores)
+        ]
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(description="Chronexa end-to-end memory runner")
+    parser.add_argument("--query", "-q", default=None, help="Run an ad-hoc single natural language query")
+    parser.add_argument("--as-of", default="2026-09-18T18:00:00-07:00", help="Historical cutoff date for query (ISO-8601)")
+    parser.add_argument("--top-k", type=int, default=10, help="Number of evidence candidates to return")
     parser.add_argument("--questions", default=str(EVALS_DIR / "memory_train.jsonl"), help="Path to questions JSONL")
     parser.add_argument("--output", default=str(OUTPUTS_DIR / "memory_train_answers.jsonl"), help="Path to output JSONL")
     parser.add_argument("--data", default=str(DATA_DIR), help="Path to data directory")
     parser.add_argument("--mode", default="hybrid", choices=["bm25", "hybrid"], help="Retrieval mode")
     parser.add_argument("--no-generate", action="store_true", help="Skip answer generation")
     args = parser.parse_args()
+
+    if args.query:
+        res = search_single(
+            args.query,
+            as_of=args.as_of,
+            data_dir=Path(args.data),
+            mode=args.mode,
+            generate_answer=not args.no_generate,
+            top_k=args.top_k
+        )
+        print(f"\n=======================================================")
+        print(f" Query: {res['query']}")
+        print(f" As-Of: {res['as_of']} ({res['visible_count']} units visible)")
+        print(f"=======================================================")
+        if res["answer"]:
+            print(f"\nAnswer:\n{res['answer']}")
+            print(f"\nCitations: {res['sources']}")
+            print(f"Abstained: {res['abstained']}")
+        print(f"\nTop Retrieved Evidence Units ({len(res['results'])}):")
+        for i, item in enumerate(res['results'][:5], 1):
+            speaker_str = f" [{item['speaker']}]" if item.get('speaker') else ""
+            print(f" [{i}] {item['id']} ({item['record']}){speaker_str} | Date: {item['time'][:16]}")
+            snippet = item['text'].replace('\n', ' ')[:140]
+            print(f"     \"{snippet}...\"\n")
+        return
 
     run_pipeline(
         Path(args.questions),

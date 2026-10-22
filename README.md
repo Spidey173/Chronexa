@@ -148,14 +148,45 @@ The runner script [`run.sh`](file:///Users/spidey./Downloads/Spidey/Chronexa/run
 ./run.sh all
 ```
 
-### 4. Viewing the Browser Demo
+### 4. 🔍 "Run This Query Locally" Guide (Ad-Hoc CLI Search)
 
-Open [`index.html`](file:///Users/spidey./Downloads/Spidey/Chronexa/index.html) directly in any modern web browser:
+You can query the pipeline directly from the command line for any custom question and historical cutoff date:
+
 ```bash
-open index.html  # On macOS
-# or: xdg-open index.html (Linux)
+# Basic query using hybrid BM25 + dense retrieval as of Sep 9:
+./run.sh query "When are we launching Route Planner?" "2026-09-09T09:00:00-07:00"
+
+# Same query as of Sep 18 (after subsequent delays were decided):
+./run.sh query "When are we launching Route Planner?" "2026-09-18T18:00:00-07:00"
+
+# Query the status of a client contract:
+./run.sh query "Did Sarah Patel approve the pricing proposal?" "2026-09-16T15:00:00-07:00"
+
+# Pure lexical BM25 mode:
+./run.sh query "What is the NRR metric fix?" "2026-09-18T18:00:00-07:00" "bm25"
+
+# Direct invocation via Python CLI:
+python3 src/pipeline.py --query "What blockers did Priya mention for QA?" --as-of "2026-09-11T12:00:00-07:00" --top-k 5
 ```
-The demo runs client-side, allowing interactive exploration of the historical date slider, benchmark scenario replays, and dry-run action JSON outputs.
+
+Each run displays the strictly visible message pool size, the grounded synthesized answer (with local fallback if offline), cited source records, and the top candidate units with timestamps.
+
+### 5. 🚀 Live Local Search Server & Dashboard Demo
+
+To turn the browser dashboard from a static replay into a **100% live search engine** that queries all 1,316 workplace records in real-time:
+
+```bash
+# Launch the built-in local API server (port 8000 default):
+./run.sh serve
+# or: python3 src/server.py 8000
+```
+
+1. Open **[http://localhost:8000](http://localhost:8000)** in your browser.
+2. The top banner will immediately update to:  
+   `🟢 LIVE LOCAL PIPELINE ACTIVE · FULL CORPUS SEARCH CONNECTED`
+3. Enter **any arbitrary question** or adjust the historical date slider. The UI will execute a live POST request to `/api/search` on your local Python backend, measure real pipeline latency, and render retrieved citations and answers dynamically!
+
+*(If opened statically via `file:///` or on hosted edge without the Python server running, the dashboard automatically and honestly falls back to pre-indexed benchmark replay mode).*
 
 ---
 

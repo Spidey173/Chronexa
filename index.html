@@ -3856,10 +3856,127 @@ window.CHRONEXA_DATA = {
       updateTemporalTelemetry(e.target.value);
     });
 
+    // API Detection (Live Local Search Engine)
+    window.CHRONEXA_LIVE = false;
+    window.CHRONEXA_API_URL = window.location.protocol.startsWith('http') ? '' : 'http://localhost:8000';
+
+    function checkLiveBackend() {
+      fetch(`${window.CHRONEXA_API_URL}/api/health`, { method: 'GET' })
+        .then(r => r.json())
+        .then(data => {
+          if (data && data.status === 'ok') {
+            window.CHRONEXA_LIVE = true;
+            const topBanner = document.querySelector('.top-banner');
+            if (topBanner) {
+              topBanner.innerHTML = `
+                <div class="live-badge">
+                  <span class="pulse-dot" style="background: #10b981; box-shadow: 0 0 8px #10b981;"></span>
+                  <span style="color: #10b981;">🟢 LIVE LOCAL PIPELINE ACTIVE · FULL CORPUS SEARCH CONNECTED</span>
+                </div>
+                <div style="font-family: var(--font-mono); font-size: 0.75rem; color: #a7f3d0;">
+                  <span>Python backend running on localhost:8000 · Arbitrary questions and custom dates search live</span>
+                </div>
+              `;
+            }
+          }
+        })
+        .catch(() => {
+          // Stay in honest pre-indexed replay mode
+        });
+    }
+    checkLiveBackend();
+
     function executeSearch() {
-      const q = queryInput.value.trim().toLowerCase();
+      const qRaw = queryInput.value.trim();
+      const q = qRaw.toLowerCase();
       const asOf = asOfInput.value.trim();
-      
+
+      if (window.CHRONEXA_LIVE && qRaw) {
+        telLatency.textContent = "Searching...";
+        answerBadge.className = 'badge-pill';
+        answerBadge.style.background = 'rgba(56, 189, 248, 0.2)';
+        answerBadge.style.color = '#38bdf8';
+        answerBadge.textContent = "⏳ SEARCHING 1,316 UNITS...";
+        const startTime = performance.now();
+        const searchMode = (document.getElementById('searchModeSelect') || {}).value || 'hybrid';
+
+        fetch(`${window.CHRONEXA_API_URL}/api/search`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: qRaw, as_of: asOf, mode: searchMode })
+        })
+        .then(r => r.json())
+        .then(data => {
+          const elapsed = Math.round(performance.now() - startTime);
+          telLatency.textContent = `${elapsed} ms (Live)`;
+
+          if (data.error) {
+            answerText.textContent = `Search Error: ${data.error}`;
+            return;
+          }
+
+          if (data.visible_count !== undefined) {
+            poolBadge.textContent = `${data.visible_count} Messages Visible`;
+            telVisible.textContent = `${data.visible_count} units`;
+            telFiltered.textContent = `${1316 - data.visible_count} filtered out`;
+          }
+
+          const isAbstain = data.abstained;
+          if (isAbstain) {
+            answerCard.className = 'answer-card abstention';
+            answerBadge.className = 'badge-pill';
+            answerBadge.style.background = 'rgba(245, 158, 11, 0.15)';
+            answerBadge.style.color = '#f59e0b';
+            answerBadge.style.borderColor = 'rgba(245, 158, 11, 0.4)';
+            answerBadge.textContent = '⚠️ CALIBRATED ABSTENTION';
+          } else {
+            answerCard.className = 'answer-card';
+            answerBadge.className = 'badge-pill badge-emerald';
+            answerBadge.textContent = '✓ LIVE GROUNDED ANSWER';
+          }
+
+          categoryBadge.textContent = `MODE: LIVE ENGINE (${searchMode.toUpperCase()})`;
+          answerText.textContent = data.answer || "No grounded answer synthesized from visible memory window.";
+          goldText.textContent = data.sources && data.sources.length ? `Cited Evidence: ${data.sources.join(', ')}` : "None";
+
+          // Render Live Citations
+          citationList.innerHTML = '';
+          const evidence = data.results || [];
+          if (evidence.length === 0) {
+            citationList.innerHTML = `
+              <div class="citation-card">
+                <div class="citation-snippet" style="color: var(--text-muted); font-style: italic;">
+                  No evidence units met retrieval criteria before ${escapeHtml(asOf)}.
+                </div>
+              </div>
+            `;
+          } else {
+            evidence.forEach((ev, rank) => {
+              const card = document.createElement('div');
+              card.className = `citation-card ${rank === 0 ? 'primary' : ''}`;
+              const scoreStr = ev.score !== undefined ? ` · Score: ${Number(ev.score).toFixed(4)}` : '';
+              card.innerHTML = `
+                <div class="citation-meta">
+                  <span><strong>#${rank + 1} [${escapeHtml(ev.id)}]</strong> · Record: <code>${escapeHtml(ev.record)}</code></span>
+                  <span>${escapeHtml(formatHumanDate(ev.time))}${scoreStr}</span>
+                </div>
+                <div class="citation-snippet">${escapeHtml(ev.text)}</div>
+              `;
+              citationList.appendChild(card);
+            });
+          }
+        })
+        .catch(err => {
+          console.warn("Live API call failed, falling back to replay:", err);
+          renderReplaySearch(q, asOf);
+        });
+        return;
+      }
+
+      renderReplaySearch(q, asOf);
+    }
+
+    function renderReplaySearch(q, asOf) {
       // Check if current benchmark matches or if we find a matching benchmark
       let match = null;
       if (currentBenchmark && currentBenchmark.question && q === currentBenchmark.question.toLowerCase()) {
@@ -3879,10 +3996,11 @@ window.CHRONEXA_DATA = {
         answerBadge.textContent = 'ℹ️ PRE-INDEXED DEMO REPLAY';
         categoryBadge.textContent = 'MODE: STATIC REPLAY';
         answerText.innerHTML = `
-          <strong>Ad-Hoc Query Notice:</strong> This web browser interface is a static demonstration replaying pre-computed results from Chronexa's evaluation benchmark.<br><br>
-          The query <em>"${escapeHtml(queryInput.value)}"</em> is not in the pre-indexed demo set. To run arbitrary live hybrid search across all 1,316 workplace records with the dynamic Python pipeline, run in terminal:
-          <pre style="margin-top: 8px; padding: 10px; background: rgba(0,0,0,0.4); border-radius: 6px; font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent-orange);">python3 src/pipeline.py --mode hybrid</pre>
-          Or select one of the curated benchmark scenario pills above to inspect how facts change over time.
+          <strong>Ad-Hoc Query Notice:</strong> You are viewing the browser demo in static replay mode.<br><br>
+          The query <em>"${escapeHtml(queryInput.value)}"</em> is not in the pre-indexed demo set.<br><br>
+          <strong>To run live search on arbitrary queries:</strong> Start the local Python backend:<br>
+          <pre style="margin-top: 8px; padding: 10px; background: rgba(0,0,0,0.4); border-radius: 6px; font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent-orange);">./run.sh serve</pre>
+          Then reload this page at <a href="http://localhost:8000" target="_blank" style="color: var(--accent-cyan); text-decoration: underline;">http://localhost:8000</a>. Or select one of the benchmark scenario pills above!
         `;
         goldText.textContent = "N/A (Query outside benchmark dataset)";
         citationList.innerHTML = `
@@ -4104,6 +4222,35 @@ window.CHRONEXA_DATA = {
     btnParseAction.addEventListener('click', () => {
       const rawInput = actionCommandInput.value.trim();
       const cmd = rawInput.toLowerCase();
+
+      if (window.CHRONEXA_LIVE && rawInput) {
+        guardrailBanner.className = 'guardrail-alert safe';
+        guardrailText.textContent = '⏳ Parsing command via live ActionParser API...';
+        fetch(`${window.CHRONEXA_API_URL}/api/action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ command: rawInput, as_of: asOfInput.value })
+        })
+        .then(r => r.json())
+        .then(data => {
+          if (data.predicted) {
+            loadAction({ command: rawInput, predicted: data.predicted });
+            showToast('Live dry-run action parsed!');
+          } else {
+            actionJsonOutput.textContent = JSON.stringify(data, null, 2);
+          }
+        })
+        .catch(err => {
+          console.warn("Live action API failed, falling back to local heuristic:", err);
+          handleReplayAction(rawInput, cmd);
+        });
+        return;
+      }
+
+      handleReplayAction(rawInput, cmd);
+    });
+
+    function handleReplayAction(rawInput, cmd) {
       const match = DATA.actions.find(a => a.command.toLowerCase().includes(cmd) || cmd.includes(a.command.toLowerCase()));
       if (match) {
         loadAction(match);
@@ -4126,9 +4273,8 @@ window.CHRONEXA_DATA = {
         actionJsonOutput.textContent = JSON.stringify(clarifyAct, null, 2);
         guardrailBanner.className = 'guardrail-alert confirm';
         guardrailText.textContent = '❓ Ambiguous or Unknown Action: Requesting clarification.';
-      }
       showToast('Payload updated!');
-    });
+    }
 
     btnCopyJson.addEventListener('click', () => {
       navigator.clipboard.writeText(actionJsonOutput.textContent).then(() => {
