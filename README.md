@@ -68,11 +68,9 @@ pip install -r requirements.txt
 ./run.sh all
 ```
 
-### 3. Launch the Interactive Dashboard
-```bash
-streamlit run streamlit_app.py
-```
-Open your browser at `http://localhost:8501` to test queries with the historical date slider.
+### 3. Launch the Interactive Dashboard (or Open Hosted Demo)
+* **Live Hosted Demo (Zero-Sleep Edge):** [https://chronexa17.vercel.app/](https://chronexa17.vercel.app/)
+* **Local Browser:** Simply open `index.html` in your browser to test queries with the historical date slider.
 
 ---
 
@@ -112,8 +110,9 @@ Chronexa/
 │   └── actions/           # Parses commands into Slack/Email/Calendar actions
 ├── eval_harness/          # Scripts to test retrieval accuracy and action parsing
 ├── evals/                 # Benchmark question and command datasets
-├── streamlit_app.py       # Interactive Streamlit demo dashboard
-├── requirements.txt       # Dependencies (numpy, fastembed, streamlit, dateparser)
+├── index.html             # Standalone web demo dashboard (Hosted on Vercel)
+├── vercel.json            # Vercel deployment configuration
+├── requirements.txt       # Dependencies (numpy, fastembed, dateparser)
 └── run.sh                 # Single script to run all tests
 ```
 
