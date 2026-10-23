@@ -44,6 +44,50 @@ class TestRetrieval(unittest.TestCase):
         # Should retrieve the Acme pricing proposal email (EM-0915-ACME-PROP)
         self.assertTrue(any("ACME" in hid for hid in hit_ids))
 
+    def test_fastembed_missing_dense_fallback_to_bm25(self):
+        """Verifies reduced functionality when fastembed is unavailable: dense returns [] and hybrid gracefully uses pure BM25."""
+        from src.retrieval.dense import DenseRetriever
+        from eval_harness.records import Unit
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dense = DenseRetriever(cache_dir=Path(tmpdir))
+            dense.model = None  # Force embedding model unavailable
+            dense.embedding_cache = {}
+
+            self.assertFalse(dense.is_available())
+            u = Unit(id="U1", text="Route Planner launch update", time=datetime(2026, 9, 18), record="R1")
+            # Dense search should return empty list rather than crashing or returning arbitrary zero-vectors
+            self.assertEqual(dense.search("launch update", [u]), [])
+
+            # Hybrid retriever with disabled dense should cleanly return BM25 results
+            hybrid = HybridRetriever(dense_retriever=dense, enable_dense=True, enable_rerank=False)
+            results = hybrid.search("Route Planner", [u])
+            self.assertEqual(len(results), 1)
+            self.assertEqual(results[0][0].id, "U1")
+
+    def test_fastembed_missing_reranker_passthrough(self):
+        """Verifies cross-encoder reranker acts as a safe passthrough when model is unavailable."""
+        from src.retrieval.reranker import CrossEncoderReranker
+        from eval_harness.records import Unit
+
+        reranker = CrossEncoderReranker()
+        reranker.encoder = None  # Force cross-encoder unavailable
+
+        self.assertFalse(reranker.is_available())
+        u1 = Unit(id="U1", text="First doc", time=datetime(2026, 9, 18), record="R1")
+        u2 = Unit(id="U2", text="Second doc", time=datetime(2026, 9, 18), record="R2")
+        cands = [(u1, 0.9), (u2, 0.8)]
+
+        # Rerank should preserve candidate order as passthrough
+        res = reranker.rerank("query", cands, top_k=2)
+        self.assertEqual([u.id for u, _ in res], ["U1", "U2"])
+
+        # Multi-query rerank should also act as safe passthrough
+        res_multi = reranker.rerank_multi_queries(["q1", "q2"], cands, top_k=2)
+        self.assertEqual([u.id for u, _ in res_multi], ["U1", "U2"])
+
 
 if __name__ == "__main__":
     unittest.main()

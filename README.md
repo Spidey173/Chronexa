@@ -64,6 +64,15 @@ User Question / Command + Cutoff Date (as_of)
 | **Browser Demo (`index.html`)** | ✅ Working | Client-side dashboard replaying pre-computed benchmark outputs, demonstrating temporal sliding and schema previews. |
 | **External Live Service Actions** | 🚫 Out of Scope | Actions are strictly dry-run preview objects; no live OAuth integrations, emails, or Slack API calls are executed. |
 
+### ⚙️ Optional Dependencies & Reduced Functionality
+
+Chronexa guards optional packages to prevent crashes when external libraries are absent. However, running without them operates with **explicitly reduced functionality**:
+
+| Omitted Package | Fallback Behavior | Reduced Functionality Impact |
+|---|---|---|
+| **Without `fastembed`** | Disables dense vector search and cross-encoder reranking. `DenseRetriever` returns empty matches and `CrossEncoderReranker` acts as a passthrough. | **Lexical-only retrieval:** Retrieval runs purely via Okapi BM25. Semantic vector similarity and deep cross-attention reranking are disabled. |
+| **Without `dateparser`** | Disables natural-language relative date resolution. Falls back to explicit ISO regex (`YYYY-MM-DD`) and `datetime.strptime` patterns. | **No relative date boosting:** Relative expressions like *"yesterday"*, *"last week"*, or *"next Monday"* are not resolved for temporal score boosting or calendar chaining. Queries rely strictly on lexical matching. |
+
 ---
 
 ## 📁 Evaluation Datasets & Runners
@@ -125,7 +134,7 @@ cp .env.example .env
 The runner script [`run.sh`](run.sh) provides simple commands for all operations:
 
 ```bash
-# 1. Run the automated test suite (42 unit and integration tests):
+# 1. Run the automated test suite (46 unit and integration tests):
 ./run.sh test
 
 # 2. Run the dry-run action assistant benchmark:
@@ -189,16 +198,16 @@ To connect the browser dashboard to your live local Python search engine:
 
 ## 🧪 Automated Test Suite
 
-Chronexa includes 42 focused unit and integration tests covering safety, edge cases, algorithmic correctness, and API endpoints:
+Chronexa includes 46 focused unit and integration tests covering safety, edge cases, algorithmic correctness, API endpoints, and optional dependency fallbacks:
 
-- [`tests/test_temporal.py`](tests/test_temporal.py): Timezone normalization (naive vs. aware datetimes), temporal boundary cutoffs, edit trail preservation, and deletion masking.
-- [`tests/test_retrieval.py`](tests/test_retrieval.py): BM25 exact identifier matching, synonym retrieval, and zero future leakage.
-- [`tests/test_actions.py`](tests/test_actions.py): Strict schema validation, rejection of unauthorized extra arguments, email/datetime format checking, ambiguity clarification, and destructive confirmation.
-- [`tests/test_injection.py`](tests/test_injection.py): XML breakout tag escaping and prompt injection directive neutralization.
-- [`tests/test_abstention.py`](tests/test_abstention.py): Calibrated abstention on unrecorded facts (e.g. SOC 2 reports, salary figures).
-- [`tests/test_server.py`](tests/test_server.py): Local API server integration tests covering health check, live search, live action parsing, input validation bounds (`top_k`, `mode`, `as_of`), malformed JSON handling, CORS headers, payload limits, and loopback security.
+- [`tests/test_temporal.py`](tests/test_temporal.py) (10 tests): Timezone normalization (naive vs. aware datetimes), temporal boundary cutoffs, edit trail preservation, deletion masking, and **dateparser-missing fallback behavior** (ensuring explicit ISO dates extract cleanly while relative expressions degrade gracefully without crashing).
+- [`tests/test_retrieval.py`](tests/test_retrieval.py) (5 tests): BM25 exact identifier matching, synonym retrieval, zero future leakage, and **fastembed-missing fallback behavior** (verifying dense retriever returns empty matches and reranker acts as safe passthrough to preserve pure BM25 ranking).
+- [`tests/test_actions.py`](tests/test_actions.py) (10 tests): Strict schema validation, rejection of unauthorized extra arguments, email/datetime format checking, ambiguity clarification, and destructive confirmation.
+- [`tests/test_injection.py`](tests/test_injection.py) (2 tests): XML breakout tag escaping and prompt injection directive neutralization.
+- [`tests/test_abstention.py`](tests/test_abstention.py) (4 tests): Calibrated abstention on unrecorded facts (e.g. SOC 2 reports, salary figures).
+- [`tests/test_server.py`](tests/test_server.py) (15 tests): Local API server integration tests covering health check, live search, live action parsing, input validation bounds (`top_k`, `mode`, `as_of`), malformed JSON handling, CORS headers, payload limits, and loopback security.
 
-Run all 42 tests:
+Run all 46 tests:
 ```bash
 # Recommended via project test runner (executes pytest with verbose output):
 ./run.sh test
@@ -220,7 +229,7 @@ python3 -m unittest discover tests -v
   - Reciprocal Rank Fusion (RRF) logic and candidate pool merger (`src/retrieval/ranker.py`).
   - Strict Action Schemas with field-level validators and unauthorized argument rejections (`src/actions/schema.py`).
   - XML sandboxing, prompt injection sanitization, and calibrated abstention logic (`src/generation/prompt.py`, `src/generation/generator.py`).
-  - 42-test automated verification suite (`tests/`).
+  - 46-test automated verification suite (`tests/`).
 - **External Libraries Used:**
   - `fastembed`: ONNX-based local embedding inference (`BAAI/bge-small-en-v1.5`).
   - `numpy`: Vector array operations and similarity scoring.

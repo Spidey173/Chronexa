@@ -77,6 +77,40 @@ class TestTemporalBoundaries(unittest.TestCase):
         self.assertIn("Priya Patel: 61 of 64 passing (edited)", edited)
         self.assertIn("[Slack #route-planner | Date: 2026-09-16 | User: Priya Patel | ID: SL-0916-1]", edited)
 
+    def test_dateparser_missing_fallback_iso_dates_only(self):
+        """Verifies reduced functionality when dateparser is unavailable: ISO dates resolve, relative dates skipped."""
+        import src.retrieval.temporal as temporal_mod
+        orig = temporal_mod.dateparser
+        try:
+            temporal_mod.dateparser = None
+            as_of = parse_iso_datetime("2026-09-18T18:00:00-07:00")
+            # 1. Explicit ISO date should still be extracted via regex
+            res_iso = temporal_mod.resolve_dates_with_dateparser("Status report for 2026-09-15 meeting", as_of)
+            self.assertEqual(res_iso, ["2026-09-15"])
+
+            # 2. Relative date expression cannot be parsed without dateparser, returns empty without crashing
+            res_rel = temporal_mod.resolve_dates_with_dateparser("What blockers were discussed yesterday?", as_of)
+            self.assertEqual(res_rel, [])
+        finally:
+            temporal_mod.dateparser = orig
+
+    def test_dateparser_missing_date_boost_no_crash(self):
+        """Verifies apply_date_boost safely operates with or without resolved target dates."""
+        import src.retrieval.temporal as temporal_mod
+        as_of = parse_iso_datetime("2026-09-18T18:00:00-07:00")
+        u1 = Unit(id="U1", text="Report on 2026-09-15", time=as_of, record="R1")
+        u2 = Unit(id="U2", text="Other discussion", time=as_of, record="R2")
+        hits = [(u1, 0.5), (u2, 0.4)]
+        # Empty dates (e.g. from skipped relative parsing) should return unchanged hits
+        boosted_empty = temporal_mod.apply_date_boost(hits, [])
+        self.assertEqual(len(boosted_empty), 2)
+        self.assertEqual(boosted_empty[0][1], 0.5)
+
+        # Explicit ISO target date should boost matching unit
+        boosted = temporal_mod.apply_date_boost(hits, ["2026-09-15"], boost_weight=0.3)
+        self.assertAlmostEqual(boosted[0][1], 0.8)
+        self.assertEqual(boosted[0][0].id, "U1")
+
 
 if __name__ == "__main__":
     unittest.main()
