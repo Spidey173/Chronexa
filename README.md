@@ -56,9 +56,9 @@ User Question / Command + Cutoff Date (as_of)
 
 | Component | Status | Details |
 |---|:---:|---|
-| **Temporal Filtering** | ✅ Working | Pre-retrieval boundary excludes future records; masks deleted messages; handles chronological edit trails. |
-| **Hybrid Search (BM25 + BGE)** | ✅ Working | BM25 exact match + local FastEmbed (`BAAI/bge-small-en-v1.5`) merged via RRF. Runs 100% locally on CPU without external API keys. |
-| **Cross-Encoder Reranker** | ✅ Working | Local reranking via `Xenova/ms-marco-MiniLM-L-6-v2` over top candidates. |
+| **Temporal Filtering** | ✅ Working | Pre-retrieval boundary excludes future records; masks deleted messages; handles chronological edit trails. (Explicit ISO dates work natively; relative dates utilize `dateparser` when installed). |
+| **Hybrid Search (BM25 + BGE)** | ✅ Working (when dependencies installed) | BM25 exact match + local FastEmbed (`BAAI/bge-small-en-v1.5`) merged via RRF. Runs 100% locally on CPU when `fastembed` is installed (falls back to pure BM25 if omitted). |
+| **Cross-Encoder Reranker** | ✅ Working (when dependencies installed) | Local reranking via `Xenova/ms-marco-MiniLM-L-6-v2` over top candidates when `fastembed` is installed (acts as safe passthrough if omitted). |
 | **Dry-Run Action Parser** | ✅ Working | Translates commands into validated JSON actions. Enforces allowlist (`slack.send_message`, `gmail.send`, `calendar.create_event`, `calendar.update_event`, `reminder.create`, `memory.ask`, `app.open`, `clarify`, `confirm`) and rejects extra/unknown arguments. |
 | **Prompt Injection Defense** | ✅ Working | XML tag boundary sandboxing; neutralizes indirect injection instructions embedded in mock messages. |
 | **Browser Demo (`index.html`)** | ✅ Working | Client-side dashboard replaying pre-computed benchmark outputs, demonstrating temporal sliding and schema previews. |
