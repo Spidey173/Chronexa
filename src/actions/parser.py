@@ -77,10 +77,11 @@ Respond ONLY with valid JSON:
 
 
 class ActionParser:
-    def __init__(self, retriever: Optional[HybridRetriever] = None):
+    def __init__(self, retriever: Optional[HybridRetriever] = None, as_of: Optional[str] = None):
         _load_env_if_needed()
         self.entities = EntityResolver()
         self.retriever = retriever or HybridRetriever()
+        self.default_as_of = as_of or "2026-09-18T18:00:00-07:00"
 
         try:
             import certifi
@@ -346,7 +347,7 @@ class ActionParser:
         # If completely unhandled by deterministic rules
         raise ActionValidationError(f"Unable to parse command into a safe dry-run action: '{command}'")
 
-    def parse(self, command: str, as_of: str) -> List[Dict[str, Any]]:
+    def parse(self, command: str, as_of: Optional[str] = None) -> List[Dict[str, Any]]:
         """Parses a natural language command into validated, schema-compliant dry-run actions.
         
         Uses active LLM provider if configured; falls back to deterministic rule engine.
@@ -355,7 +356,8 @@ class ActionParser:
         - Rejection of unknown types and extra/unknown arguments
         - Never silently turns parsing errors into an empty success
         """
-        as_of_dt = parse_iso_datetime(as_of)
+        target_as_of = as_of or self.default_as_of
+        as_of_dt = parse_iso_datetime(target_as_of)
         
         # If no active provider, use deterministic offline parser
         if self.provider == "none":
@@ -367,7 +369,7 @@ class ActionParser:
         mem_context = "\n".join([f"- {u.text}" for u, _ in mem_hits])
 
         known_entities_str = self.entities.format_entities_for_prompt()
-        sys_prompt = SYSTEM_ACTION_PROMPT.format(as_of=as_of, known_entities=known_entities_str)
+        sys_prompt = SYSTEM_ACTION_PROMPT.format(as_of=target_as_of, known_entities=known_entities_str)
         user_prompt = f"Command: {command}\n\nRelevant Memory Context:\n{mem_context}\n\nJSON Action Response:"
 
         raw = "{}"

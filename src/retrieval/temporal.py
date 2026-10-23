@@ -7,7 +7,10 @@ import re
 from datetime import datetime
 from typing import List, Tuple, Set, Optional, Any
 from zoneinfo import ZoneInfo
-import dateparser
+try:
+    import dateparser
+except ImportError:
+    dateparser = None
 from eval_harness.records import Unit
 
 LOCAL_TZ = ZoneInfo("America/Los_Angeles")

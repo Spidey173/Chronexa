@@ -1,11 +1,11 @@
 {
   "summary": {
-    "total_original_questions": 27,
+    "total_original_questions": 39,
     "dev_questions_count": 19,
-    "holdout_questions_count": 8,
-    "total_paraphrases": 108,
+    "holdout_questions_count": 20,
+    "total_paraphrases": 156,
     "dev_paraphrases_count": 76,
-    "holdout_paraphrases_count": 32,
+    "holdout_paraphrases_count": 80,
     "dev_ids": [
       "MEM-TR-01",
       "MEM-TR-03",
@@ -35,7 +35,19 @@
       "MEM-TR-17",
       "MEM-TR-21",
       "MEM-TR-24",
-      "MEM-TR-26"
+      "MEM-TR-26",
+      "MEM-HLD-01",
+      "MEM-HLD-02",
+      "MEM-HLD-03",
+      "MEM-HLD-04",
+      "MEM-HLD-05",
+      "MEM-HLD-06",
+      "MEM-HLD-07",
+      "MEM-HLD-08",
+      "MEM-HLD-09",
+      "MEM-HLD-10",
+      "MEM-HLD-11",
+      "MEM-HLD-12"
     ]
   },
   "questions": [
@@ -5030,6 +5042,1949 @@
           "original_id": "MEM-TR-27",
           "is_paraphrase": true,
           "split": "dev"
+        }
+      ]
+    },
+    {
+      "original_id": "MEM-HLD-01",
+      "split": "holdout",
+      "original_question": "When is the renewal check-in meeting with Pinecrest Carriers scheduled?",
+      "as_of": "2026-09-18T18:00:00-07:00",
+      "category": "calendar_travel",
+      "answerable": true,
+      "needed": [
+        [
+          "CAL-F-21",
+          "EM-F-040"
+        ]
+      ],
+      "evidence": [
+        "CAL-F-21",
+        "EM-F-040"
+      ],
+      "paraphrases": [
+        {
+          "id": "MEM-HLD-01-P1",
+          "question": "When are we meeting with Dave Morales from Pinecrest to review their renewal?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "calendar_travel",
+          "answerable": true,
+          "gold_answer": "Tuesday, September 22, 2026 from 10:00 to 10:30 AM (with Dave Morales and Marcus Webb).",
+          "rubric": [
+            "Tuesday Sep 22",
+            "10:00 to 10:30am"
+          ],
+          "key_terms": [
+            [
+              "sep 22",
+              "september 22",
+              "10:00",
+              "tuesday"
+            ]
+          ],
+          "evidence": [
+            "CAL-F-21",
+            "EM-F-040"
+          ],
+          "also_supports": [
+            "EM-F-008",
+            "MTG-0915-SALESPIPE#0008"
+          ],
+          "storyline": "pinecrest_renewal",
+          "needed": [
+            [
+              "CAL-F-21",
+              "EM-F-040"
+            ]
+          ],
+          "original_id": "MEM-HLD-01",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-01-P2",
+          "question": "What time is the Pinecrest renewal check-in on the calendar?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "calendar_travel",
+          "answerable": true,
+          "gold_answer": "Tuesday, September 22, 2026 from 10:00 to 10:30 AM (with Dave Morales and Marcus Webb).",
+          "rubric": [
+            "Tuesday Sep 22",
+            "10:00 to 10:30am"
+          ],
+          "key_terms": [
+            [
+              "sep 22",
+              "september 22",
+              "10:00",
+              "tuesday"
+            ]
+          ],
+          "evidence": [
+            "CAL-F-21",
+            "EM-F-040"
+          ],
+          "also_supports": [
+            "EM-F-008",
+            "MTG-0915-SALESPIPE#0008"
+          ],
+          "storyline": "pinecrest_renewal",
+          "needed": [
+            [
+              "CAL-F-21",
+              "EM-F-040"
+            ]
+          ],
+          "original_id": "MEM-HLD-01",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-01-P3",
+          "question": "Do we have a call booked with Dave Morales about the Pinecrest contract next week?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "calendar_travel",
+          "answerable": true,
+          "gold_answer": "Tuesday, September 22, 2026 from 10:00 to 10:30 AM (with Dave Morales and Marcus Webb).",
+          "rubric": [
+            "Tuesday Sep 22",
+            "10:00 to 10:30am"
+          ],
+          "key_terms": [
+            [
+              "sep 22",
+              "september 22",
+              "10:00",
+              "tuesday"
+            ]
+          ],
+          "evidence": [
+            "CAL-F-21",
+            "EM-F-040"
+          ],
+          "also_supports": [
+            "EM-F-008",
+            "MTG-0915-SALESPIPE#0008"
+          ],
+          "storyline": "pinecrest_renewal",
+          "needed": [
+            [
+              "CAL-F-21",
+              "EM-F-040"
+            ]
+          ],
+          "original_id": "MEM-HLD-01",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-01-P4",
+          "question": "When is the upcoming check-in with Pinecrest Carriers scheduled?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "calendar_travel",
+          "answerable": true,
+          "gold_answer": "Tuesday, September 22, 2026 from 10:00 to 10:30 AM (with Dave Morales and Marcus Webb).",
+          "rubric": [
+            "Tuesday Sep 22",
+            "10:00 to 10:30am"
+          ],
+          "key_terms": [
+            [
+              "sep 22",
+              "september 22",
+              "10:00",
+              "tuesday"
+            ]
+          ],
+          "evidence": [
+            "CAL-F-21",
+            "EM-F-040"
+          ],
+          "also_supports": [
+            "EM-F-008",
+            "MTG-0915-SALESPIPE#0008"
+          ],
+          "storyline": "pinecrest_renewal",
+          "needed": [
+            [
+              "CAL-F-21",
+              "EM-F-040"
+            ]
+          ],
+          "original_id": "MEM-HLD-01",
+          "is_paraphrase": true,
+          "split": "holdout"
+        }
+      ]
+    },
+    {
+      "original_id": "MEM-HLD-02",
+      "split": "holdout",
+      "original_question": "What did we decide about Jordan Ellis after the recruiting debrief?",
+      "as_of": "2026-09-18T18:00:00-07:00",
+      "category": "ownership",
+      "answerable": true,
+      "needed": [
+        [
+          "MTG-0917-RECRUIT#0028",
+          "MTG-0917-RECRUIT#0035",
+          "MTG-0917-RECRUIT#0037",
+          "MTG-0917-RECRUIT#0038"
+        ]
+      ],
+      "evidence": [
+        "MTG-0917-RECRUIT"
+      ],
+      "paraphrases": [
+        {
+          "id": "MEM-HLD-02-P1",
+          "question": "What was the final verdict on Jordan Ellis's interview loop?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "ownership",
+          "answerable": true,
+          "gold_answer": "Move Jordan to the final round for a second system design session with Sarah Kim and Alex, plus a culture/values conversation with John Okafor, scheduled for Monday Sep 21 or Tuesday Sep 22 before the board meeting.",
+          "rubric": [
+            "Move to final round",
+            "Second system design session / culture chat with John"
+          ],
+          "key_terms": [
+            [
+              "final round",
+              "final",
+              "second system design"
+            ]
+          ],
+          "evidence": [
+            "MTG-0917-RECRUIT"
+          ],
+          "also_supports": [
+            "MTG-0917-RECRUIT#0028",
+            "MTG-0917-RECRUIT#0035",
+            "MTG-0917-RECRUIT#0037",
+            "MTG-0917-RECRUIT#0038"
+          ],
+          "storyline": "recruiting_debrief",
+          "needed": [
+            [
+              "MTG-0917-RECRUIT#0028",
+              "MTG-0917-RECRUIT#0035",
+              "MTG-0917-RECRUIT#0037",
+              "MTG-0917-RECRUIT#0038"
+            ]
+          ],
+          "original_id": "MEM-HLD-02",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-02-P2",
+          "question": "Are we giving Jordan Ellis an offer or scheduling more interview rounds?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "ownership",
+          "answerable": true,
+          "gold_answer": "Move Jordan to the final round for a second system design session with Sarah Kim and Alex, plus a culture/values conversation with John Okafor, scheduled for Monday Sep 21 or Tuesday Sep 22 before the board meeting.",
+          "rubric": [
+            "Move to final round",
+            "Second system design session / culture chat with John"
+          ],
+          "key_terms": [
+            [
+              "final round",
+              "final",
+              "second system design"
+            ]
+          ],
+          "evidence": [
+            "MTG-0917-RECRUIT"
+          ],
+          "also_supports": [
+            "MTG-0917-RECRUIT#0028",
+            "MTG-0917-RECRUIT#0035",
+            "MTG-0917-RECRUIT#0037",
+            "MTG-0917-RECRUIT#0038"
+          ],
+          "storyline": "recruiting_debrief",
+          "needed": [
+            [
+              "MTG-0917-RECRUIT#0028",
+              "MTG-0917-RECRUIT#0035",
+              "MTG-0917-RECRUIT#0037",
+              "MTG-0917-RECRUIT#0038"
+            ]
+          ],
+          "original_id": "MEM-HLD-02",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-02-P3",
+          "question": "What next steps did Alex and Leah agree on for Jordan Ellis during the debrief?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "ownership",
+          "answerable": true,
+          "gold_answer": "Move Jordan to the final round for a second system design session with Sarah Kim and Alex, plus a culture/values conversation with John Okafor, scheduled for Monday Sep 21 or Tuesday Sep 22 before the board meeting.",
+          "rubric": [
+            "Move to final round",
+            "Second system design session / culture chat with John"
+          ],
+          "key_terms": [
+            [
+              "final round",
+              "final",
+              "second system design"
+            ]
+          ],
+          "evidence": [
+            "MTG-0917-RECRUIT"
+          ],
+          "also_supports": [
+            "MTG-0917-RECRUIT#0028",
+            "MTG-0917-RECRUIT#0035",
+            "MTG-0917-RECRUIT#0037",
+            "MTG-0917-RECRUIT#0038"
+          ],
+          "storyline": "recruiting_debrief",
+          "needed": [
+            [
+              "MTG-0917-RECRUIT#0028",
+              "MTG-0917-RECRUIT#0035",
+              "MTG-0917-RECRUIT#0037",
+              "MTG-0917-RECRUIT#0038"
+            ]
+          ],
+          "original_id": "MEM-HLD-02",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-02-P4",
+          "question": "Did we decide to pass on Jordan Ellis or move them forward?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "ownership",
+          "answerable": true,
+          "gold_answer": "Move Jordan to the final round for a second system design session with Sarah Kim and Alex, plus a culture/values conversation with John Okafor, scheduled for Monday Sep 21 or Tuesday Sep 22 before the board meeting.",
+          "rubric": [
+            "Move to final round",
+            "Second system design session / culture chat with John"
+          ],
+          "key_terms": [
+            [
+              "final round",
+              "final",
+              "second system design"
+            ]
+          ],
+          "evidence": [
+            "MTG-0917-RECRUIT"
+          ],
+          "also_supports": [
+            "MTG-0917-RECRUIT#0028",
+            "MTG-0917-RECRUIT#0035",
+            "MTG-0917-RECRUIT#0037",
+            "MTG-0917-RECRUIT#0038"
+          ],
+          "storyline": "recruiting_debrief",
+          "needed": [
+            [
+              "MTG-0917-RECRUIT#0028",
+              "MTG-0917-RECRUIT#0035",
+              "MTG-0917-RECRUIT#0037",
+              "MTG-0917-RECRUIT#0038"
+            ]
+          ],
+          "original_id": "MEM-HLD-02",
+          "is_paraphrase": true,
+          "split": "holdout"
+        }
+      ]
+    },
+    {
+      "original_id": "MEM-HLD-03",
+      "split": "holdout",
+      "original_question": "What were the interview ratings for Jordan Ellis from Ben and Sarah?",
+      "as_of": "2026-09-18T18:00:00-07:00",
+      "category": "disagreement",
+      "answerable": true,
+      "needed": [
+        [
+          "MTG-0917-RECRUIT#0009",
+          "MTG-0917-RECRUIT#0011"
+        ],
+        [
+          "MTG-0917-RECRUIT#0015",
+          "MTG-0917-RECRUIT#0019"
+        ]
+      ],
+      "evidence": [
+        "MTG-0917-RECRUIT"
+      ],
+      "paraphrases": [
+        {
+          "id": "MEM-HLD-03-P1",
+          "question": "How did Ben and Sarah rate Jordan Ellis in their interview scorecards?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "disagreement",
+          "answerable": true,
+          "gold_answer": "Ben gave a strong yes (impressed by Postgres vacuum and bloat knowledge), while Sarah Kim gave a lean no on system design (live ETA updates).",
+          "rubric": [
+            "Ben was strong yes",
+            "Sarah was lean no on system design"
+          ],
+          "key_terms": [
+            [
+              "strong yes",
+              "yes"
+            ],
+            [
+              "lean no",
+              "no"
+            ]
+          ],
+          "evidence": [
+            "MTG-0917-RECRUIT"
+          ],
+          "also_supports": [
+            "MTG-0917-RECRUIT#0009",
+            "MTG-0917-RECRUIT#0011",
+            "MTG-0917-RECRUIT#0015",
+            "MTG-0917-RECRUIT#0019"
+          ],
+          "storyline": "recruiting_feedback",
+          "needed": [
+            [
+              "MTG-0917-RECRUIT#0009",
+              "MTG-0917-RECRUIT#0011"
+            ],
+            [
+              "MTG-0917-RECRUIT#0015",
+              "MTG-0917-RECRUIT#0019"
+            ]
+          ],
+          "original_id": "MEM-HLD-03",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-03-P2",
+          "question": "Did Sarah Kim and Ben agree on Jordan Ellis's engineering interview?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "disagreement",
+          "answerable": true,
+          "gold_answer": "Ben gave a strong yes (impressed by Postgres vacuum and bloat knowledge), while Sarah Kim gave a lean no on system design (live ETA updates).",
+          "rubric": [
+            "Ben was strong yes",
+            "Sarah was lean no on system design"
+          ],
+          "key_terms": [
+            [
+              "strong yes",
+              "yes"
+            ],
+            [
+              "lean no",
+              "no"
+            ]
+          ],
+          "evidence": [
+            "MTG-0917-RECRUIT"
+          ],
+          "also_supports": [
+            "MTG-0917-RECRUIT#0009",
+            "MTG-0917-RECRUIT#0011",
+            "MTG-0917-RECRUIT#0015",
+            "MTG-0917-RECRUIT#0019"
+          ],
+          "storyline": "recruiting_feedback",
+          "needed": [
+            [
+              "MTG-0917-RECRUIT#0009",
+              "MTG-0917-RECRUIT#0011"
+            ],
+            [
+              "MTG-0917-RECRUIT#0015",
+              "MTG-0917-RECRUIT#0019"
+            ]
+          ],
+          "original_id": "MEM-HLD-03",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-03-P3",
+          "question": "What feedback did Sarah Kim have on Jordan Ellis compared to Ben's review?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "disagreement",
+          "answerable": true,
+          "gold_answer": "Ben gave a strong yes (impressed by Postgres vacuum and bloat knowledge), while Sarah Kim gave a lean no on system design (live ETA updates).",
+          "rubric": [
+            "Ben was strong yes",
+            "Sarah was lean no on system design"
+          ],
+          "key_terms": [
+            [
+              "strong yes",
+              "yes"
+            ],
+            [
+              "lean no",
+              "no"
+            ]
+          ],
+          "evidence": [
+            "MTG-0917-RECRUIT"
+          ],
+          "also_supports": [
+            "MTG-0917-RECRUIT#0009",
+            "MTG-0917-RECRUIT#0011",
+            "MTG-0917-RECRUIT#0015",
+            "MTG-0917-RECRUIT#0019"
+          ],
+          "storyline": "recruiting_feedback",
+          "needed": [
+            [
+              "MTG-0917-RECRUIT#0009",
+              "MTG-0917-RECRUIT#0011"
+            ],
+            [
+              "MTG-0917-RECRUIT#0015",
+              "MTG-0917-RECRUIT#0019"
+            ]
+          ],
+          "original_id": "MEM-HLD-03",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-03-P4",
+          "question": "What were Ben and Sarah's ratings for the backend candidate Jordan?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "disagreement",
+          "answerable": true,
+          "gold_answer": "Ben gave a strong yes (impressed by Postgres vacuum and bloat knowledge), while Sarah Kim gave a lean no on system design (live ETA updates).",
+          "rubric": [
+            "Ben was strong yes",
+            "Sarah was lean no on system design"
+          ],
+          "key_terms": [
+            [
+              "strong yes",
+              "yes"
+            ],
+            [
+              "lean no",
+              "no"
+            ]
+          ],
+          "evidence": [
+            "MTG-0917-RECRUIT"
+          ],
+          "also_supports": [
+            "MTG-0917-RECRUIT#0009",
+            "MTG-0917-RECRUIT#0011",
+            "MTG-0917-RECRUIT#0015",
+            "MTG-0917-RECRUIT#0019"
+          ],
+          "storyline": "recruiting_feedback",
+          "needed": [
+            [
+              "MTG-0917-RECRUIT#0009",
+              "MTG-0917-RECRUIT#0011"
+            ],
+            [
+              "MTG-0917-RECRUIT#0015",
+              "MTG-0917-RECRUIT#0019"
+            ]
+          ],
+          "original_id": "MEM-HLD-03",
+          "is_paraphrase": true,
+          "split": "holdout"
+        }
+      ]
+    },
+    {
+      "original_id": "MEM-HLD-04",
+      "split": "holdout",
+      "original_question": "What is our current Net Retention Rate (NRR)?",
+      "as_of": "2026-09-18T18:00:00-07:00",
+      "category": "correction",
+      "answerable": true,
+      "needed": [
+        [
+          "SL-DM-BA-0916-1",
+          "DCT-0917-06"
+        ]
+      ],
+      "evidence": [
+        "SL-DM-BA-0916-1",
+        "DCT-0917-06"
+      ],
+      "paraphrases": [
+        {
+          "id": "MEM-HLD-04-P1",
+          "question": "Did Ben update the Net Retention Rate after investigating the churn numbers?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "correction",
+          "answerable": true,
+          "gold_answer": "112%. The churn dashboard initially showed 118%, but Ben Carter confirmed on Sep 16 that it had double-counted an expansion and fixed it.",
+          "rubric": [
+            "NRR is 112%",
+            "Does not report 118% as current"
+          ],
+          "key_terms": [
+            [
+              "112",
+              "112%"
+            ]
+          ],
+          "stale": [
+            [
+              "118%"
+            ]
+          ],
+          "evidence": [
+            "SL-DM-BA-0916-1",
+            "DCT-0917-06"
+          ],
+          "also_supports": [
+            "DCT-0908-01"
+          ],
+          "storyline": "nrr_metric",
+          "needed": [
+            [
+              "SL-DM-BA-0916-1",
+              "DCT-0917-06"
+            ]
+          ],
+          "original_id": "MEM-HLD-04",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-04-P2",
+          "question": "What is our confirmed NRR metric for the board deck?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "correction",
+          "answerable": true,
+          "gold_answer": "112%. The churn dashboard initially showed 118%, but Ben Carter confirmed on Sep 16 that it had double-counted an expansion and fixed it.",
+          "rubric": [
+            "NRR is 112%",
+            "Does not report 118% as current"
+          ],
+          "key_terms": [
+            [
+              "112",
+              "112%"
+            ]
+          ],
+          "stale": [
+            [
+              "118%"
+            ]
+          ],
+          "evidence": [
+            "SL-DM-BA-0916-1",
+            "DCT-0917-06"
+          ],
+          "also_supports": [
+            "DCT-0908-01"
+          ],
+          "storyline": "nrr_metric",
+          "needed": [
+            [
+              "SL-DM-BA-0916-1",
+              "DCT-0917-06"
+            ]
+          ],
+          "original_id": "MEM-HLD-04",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-04-P3",
+          "question": "What did the churn dashboard NRR end up being after the calculation bug was resolved?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "correction",
+          "answerable": true,
+          "gold_answer": "112%. The churn dashboard initially showed 118%, but Ben Carter confirmed on Sep 16 that it had double-counted an expansion and fixed it.",
+          "rubric": [
+            "NRR is 112%",
+            "Does not report 118% as current"
+          ],
+          "key_terms": [
+            [
+              "112",
+              "112%"
+            ]
+          ],
+          "stale": [
+            [
+              "118%"
+            ]
+          ],
+          "evidence": [
+            "SL-DM-BA-0916-1",
+            "DCT-0917-06"
+          ],
+          "also_supports": [
+            "DCT-0908-01"
+          ],
+          "storyline": "nrr_metric",
+          "needed": [
+            [
+              "SL-DM-BA-0916-1",
+              "DCT-0917-06"
+            ]
+          ],
+          "original_id": "MEM-HLD-04",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-04-P4",
+          "question": "What's our net retention rate percentage right now?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "correction",
+          "answerable": true,
+          "gold_answer": "112%. The churn dashboard initially showed 118%, but Ben Carter confirmed on Sep 16 that it had double-counted an expansion and fixed it.",
+          "rubric": [
+            "NRR is 112%",
+            "Does not report 118% as current"
+          ],
+          "key_terms": [
+            [
+              "112",
+              "112%"
+            ]
+          ],
+          "stale": [
+            [
+              "118%"
+            ]
+          ],
+          "evidence": [
+            "SL-DM-BA-0916-1",
+            "DCT-0917-06"
+          ],
+          "also_supports": [
+            "DCT-0908-01"
+          ],
+          "storyline": "nrr_metric",
+          "needed": [
+            [
+              "SL-DM-BA-0916-1",
+              "DCT-0917-06"
+            ]
+          ],
+          "original_id": "MEM-HLD-04",
+          "is_paraphrase": true,
+          "split": "holdout"
+        }
+      ]
+    },
+    {
+      "original_id": "MEM-HLD-05",
+      "split": "holdout",
+      "original_question": "Where does the stop reordering fix for Pinecrest Carriers stand?",
+      "as_of": "2026-09-18T18:00:00-07:00",
+      "category": "commitment_status",
+      "answerable": true,
+      "needed": [
+        [
+          "DCT-F-035",
+          "DCT-F-004"
+        ]
+      ],
+      "evidence": [
+        "DCT-F-035",
+        "DCT-F-004"
+      ],
+      "paraphrases": [
+        {
+          "id": "MEM-HLD-05-P1",
+          "question": "Did we ship the driver stop reordering bug fix to Pinecrest yet?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "commitment_status",
+          "answerable": true,
+          "gold_answer": "The fix is in staging as of Friday Sep 18; Alex emailed Dave Morales asking Pinecrest's team to test it on Monday's routes (Priya also completed Linear issue RP-198 on Sep 8).",
+          "rubric": [
+            "Fix is in staging",
+            "Asked Dave / Pinecrest to test on Monday"
+          ],
+          "key_terms": [
+            [
+              "staging",
+              "test",
+              "monday"
+            ]
+          ],
+          "evidence": [
+            "DCT-F-035",
+            "DCT-F-004"
+          ],
+          "also_supports": [
+            "SL-F-0007"
+          ],
+          "storyline": "stop_reorder_bug",
+          "needed": [
+            [
+              "DCT-F-035",
+              "DCT-F-004"
+            ]
+          ],
+          "original_id": "MEM-HLD-05",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-05-P2",
+          "question": "Has Dave Morales been notified that the stop reordering bug is resolved?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "commitment_status",
+          "answerable": true,
+          "gold_answer": "The fix is in staging as of Friday Sep 18; Alex emailed Dave Morales asking Pinecrest's team to test it on Monday's routes (Priya also completed Linear issue RP-198 on Sep 8).",
+          "rubric": [
+            "Fix is in staging",
+            "Asked Dave / Pinecrest to test on Monday"
+          ],
+          "key_terms": [
+            [
+              "staging",
+              "test",
+              "monday"
+            ]
+          ],
+          "evidence": [
+            "DCT-F-035",
+            "DCT-F-004"
+          ],
+          "also_supports": [
+            "SL-F-0007"
+          ],
+          "storyline": "stop_reorder_bug",
+          "needed": [
+            [
+              "DCT-F-035",
+              "DCT-F-004"
+            ]
+          ],
+          "original_id": "MEM-HLD-05",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-05-P3",
+          "question": "What's the status of the stop reordering fix that Pinecrest requested?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "commitment_status",
+          "answerable": true,
+          "gold_answer": "The fix is in staging as of Friday Sep 18; Alex emailed Dave Morales asking Pinecrest's team to test it on Monday's routes (Priya also completed Linear issue RP-198 on Sep 8).",
+          "rubric": [
+            "Fix is in staging",
+            "Asked Dave / Pinecrest to test on Monday"
+          ],
+          "key_terms": [
+            [
+              "staging",
+              "test",
+              "monday"
+            ]
+          ],
+          "evidence": [
+            "DCT-F-035",
+            "DCT-F-004"
+          ],
+          "also_supports": [
+            "SL-F-0007"
+          ],
+          "storyline": "stop_reorder_bug",
+          "needed": [
+            [
+              "DCT-F-035",
+              "DCT-F-004"
+            ]
+          ],
+          "original_id": "MEM-HLD-05",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-05-P4",
+          "question": "Is the driver app stop reordering fix ready for Pinecrest to test?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "commitment_status",
+          "answerable": true,
+          "gold_answer": "The fix is in staging as of Friday Sep 18; Alex emailed Dave Morales asking Pinecrest's team to test it on Monday's routes (Priya also completed Linear issue RP-198 on Sep 8).",
+          "rubric": [
+            "Fix is in staging",
+            "Asked Dave / Pinecrest to test on Monday"
+          ],
+          "key_terms": [
+            [
+              "staging",
+              "test",
+              "monday"
+            ]
+          ],
+          "evidence": [
+            "DCT-F-035",
+            "DCT-F-004"
+          ],
+          "also_supports": [
+            "SL-F-0007"
+          ],
+          "storyline": "stop_reorder_bug",
+          "needed": [
+            [
+              "DCT-F-035",
+              "DCT-F-004"
+            ]
+          ],
+          "original_id": "MEM-HLD-05",
+          "is_paraphrase": true,
+          "split": "holdout"
+        }
+      ]
+    },
+    {
+      "original_id": "MEM-HLD-06",
+      "split": "holdout",
+      "original_question": "Why did Dana reduce the route line colors to 8, and what color did Sarah Kim ask her to replace?",
+      "as_of": "2026-09-18T18:00:00-07:00",
+      "category": "single_fact",
+      "answerable": true,
+      "needed": [
+        [
+          "MTG-0911-DESIGN#0060",
+          "MTG-0911-DESIGN#0062"
+        ],
+        [
+          "MTG-0911-DESIGN#0066",
+          "MTG-0911-DESIGN#0068",
+          "MTG-0911-DESIGN#0069"
+        ]
+      ],
+      "evidence": [
+        "MTG-0911-DESIGN"
+      ],
+      "paraphrases": [
+        {
+          "id": "MEM-HLD-06-P1",
+          "question": "Why did Dana change the route line color palette, and which color had an issue?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "single_fact",
+          "answerable": true,
+          "gold_answer": "Dana reduced the palette from 10 to 8 colors for colorblind accessibility and grayscale readability. Sarah Kim asked her to replace coral because it collided with the traffic congestion layer, which Dana agreed to swap with purple.",
+          "rubric": [
+            "Colorblind accessibility / grayscale",
+            "Coral collided with traffic layer"
+          ],
+          "key_terms": [
+            [
+              "colorblind",
+              "accessibility"
+            ],
+            [
+              "coral",
+              "traffic"
+            ]
+          ],
+          "evidence": [
+            "MTG-0911-DESIGN"
+          ],
+          "also_supports": [
+            "MTG-0911-DESIGN#0060",
+            "MTG-0911-DESIGN#0062",
+            "MTG-0911-DESIGN#0066",
+            "MTG-0911-DESIGN#0068",
+            "MTG-0911-DESIGN#0069"
+          ],
+          "storyline": "design_palette",
+          "needed": [
+            [
+              "MTG-0911-DESIGN#0060",
+              "MTG-0911-DESIGN#0062"
+            ],
+            [
+              "MTG-0911-DESIGN#0066",
+              "MTG-0911-DESIGN#0068",
+              "MTG-0911-DESIGN#0069"
+            ]
+          ],
+          "original_id": "MEM-HLD-06",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-06-P2",
+          "question": "What was Sarah Kim's feedback on the new eight-color route lines Dana proposed?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "single_fact",
+          "answerable": true,
+          "gold_answer": "Dana reduced the palette from 10 to 8 colors for colorblind accessibility and grayscale readability. Sarah Kim asked her to replace coral because it collided with the traffic congestion layer, which Dana agreed to swap with purple.",
+          "rubric": [
+            "Colorblind accessibility / grayscale",
+            "Coral collided with traffic layer"
+          ],
+          "key_terms": [
+            [
+              "colorblind",
+              "accessibility"
+            ],
+            [
+              "coral",
+              "traffic"
+            ]
+          ],
+          "evidence": [
+            "MTG-0911-DESIGN"
+          ],
+          "also_supports": [
+            "MTG-0911-DESIGN#0060",
+            "MTG-0911-DESIGN#0062",
+            "MTG-0911-DESIGN#0066",
+            "MTG-0911-DESIGN#0068",
+            "MTG-0911-DESIGN#0069"
+          ],
+          "storyline": "design_palette",
+          "needed": [
+            [
+              "MTG-0911-DESIGN#0060",
+              "MTG-0911-DESIGN#0062"
+            ],
+            [
+              "MTG-0911-DESIGN#0066",
+              "MTG-0911-DESIGN#0068",
+              "MTG-0911-DESIGN#0069"
+            ]
+          ],
+          "original_id": "MEM-HLD-06",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-06-P3",
+          "question": "Why was the coral route color removed from the v2 route planner design?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "single_fact",
+          "answerable": true,
+          "gold_answer": "Dana reduced the palette from 10 to 8 colors for colorblind accessibility and grayscale readability. Sarah Kim asked her to replace coral because it collided with the traffic congestion layer, which Dana agreed to swap with purple.",
+          "rubric": [
+            "Colorblind accessibility / grayscale",
+            "Coral collided with traffic layer"
+          ],
+          "key_terms": [
+            [
+              "colorblind",
+              "accessibility"
+            ],
+            [
+              "coral",
+              "traffic"
+            ]
+          ],
+          "evidence": [
+            "MTG-0911-DESIGN"
+          ],
+          "also_supports": [
+            "MTG-0911-DESIGN#0060",
+            "MTG-0911-DESIGN#0062",
+            "MTG-0911-DESIGN#0066",
+            "MTG-0911-DESIGN#0068",
+            "MTG-0911-DESIGN#0069"
+          ],
+          "storyline": "design_palette",
+          "needed": [
+            [
+              "MTG-0911-DESIGN#0060",
+              "MTG-0911-DESIGN#0062"
+            ],
+            [
+              "MTG-0911-DESIGN#0066",
+              "MTG-0911-DESIGN#0068",
+              "MTG-0911-DESIGN#0069"
+            ]
+          ],
+          "original_id": "MEM-HLD-06",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-06-P4",
+          "question": "What changes did Dana make to the map colors to address colorblindness and traffic overlay?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "single_fact",
+          "answerable": true,
+          "gold_answer": "Dana reduced the palette from 10 to 8 colors for colorblind accessibility and grayscale readability. Sarah Kim asked her to replace coral because it collided with the traffic congestion layer, which Dana agreed to swap with purple.",
+          "rubric": [
+            "Colorblind accessibility / grayscale",
+            "Coral collided with traffic layer"
+          ],
+          "key_terms": [
+            [
+              "colorblind",
+              "accessibility"
+            ],
+            [
+              "coral",
+              "traffic"
+            ]
+          ],
+          "evidence": [
+            "MTG-0911-DESIGN"
+          ],
+          "also_supports": [
+            "MTG-0911-DESIGN#0060",
+            "MTG-0911-DESIGN#0062",
+            "MTG-0911-DESIGN#0066",
+            "MTG-0911-DESIGN#0068",
+            "MTG-0911-DESIGN#0069"
+          ],
+          "storyline": "design_palette",
+          "needed": [
+            [
+              "MTG-0911-DESIGN#0060",
+              "MTG-0911-DESIGN#0062"
+            ],
+            [
+              "MTG-0911-DESIGN#0066",
+              "MTG-0911-DESIGN#0068",
+              "MTG-0911-DESIGN#0069"
+            ]
+          ],
+          "original_id": "MEM-HLD-06",
+          "is_paraphrase": true,
+          "split": "holdout"
+        }
+      ]
+    },
+    {
+      "original_id": "MEM-HLD-07",
+      "split": "holdout",
+      "original_question": "What is Copperline Freight, and what is its status in the board forecast?",
+      "as_of": "2026-09-18T18:00:00-07:00",
+      "category": "single_fact",
+      "answerable": true,
+      "needed": [
+        [
+          "MTG-0915-SALESPIPE#0042",
+          "MTG-0915-SALESPIPE#0051"
+        ]
+      ],
+      "evidence": [
+        "MTG-0915-SALESPIPE#0042",
+        "MTG-0915-SALESPIPE#0051",
+        "MTG-0915-SALESPIPE#0086"
+      ],
+      "paraphrases": [
+        {
+          "id": "MEM-HLD-07-P1",
+          "question": "Where does Copperline Freight stand in our Q3 sales forecast?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "single_fact",
+          "answerable": true,
+          "gold_answer": "Copperline Freight is an inbound lead with 60 trucks (mostly dry van out of Sacramento). In the Sep 15 pipeline review, John Okafor kept it as pipeline, not in the board commit forecast.",
+          "rubric": [
+            "60 trucks / Sacramento",
+            "Kept in pipeline, excluded from commit forecast"
+          ],
+          "key_terms": [
+            [
+              "60 trucks",
+              "sacramento",
+              "pipeline"
+            ]
+          ],
+          "evidence": [
+            "MTG-0915-SALESPIPE#0042",
+            "MTG-0915-SALESPIPE#0051",
+            "MTG-0915-SALESPIPE#0086"
+          ],
+          "also_supports": [
+            "MTG-0915-SALESPIPE#0092"
+          ],
+          "storyline": "sales_pipeline",
+          "needed": [
+            [
+              "MTG-0915-SALESPIPE#0042",
+              "MTG-0915-SALESPIPE#0051"
+            ]
+          ],
+          "original_id": "MEM-HLD-07",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-07-P2",
+          "question": "How many trucks does Copperline Freight have, and are they in our commit numbers?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "single_fact",
+          "answerable": true,
+          "gold_answer": "Copperline Freight is an inbound lead with 60 trucks (mostly dry van out of Sacramento). In the Sep 15 pipeline review, John Okafor kept it as pipeline, not in the board commit forecast.",
+          "rubric": [
+            "60 trucks / Sacramento",
+            "Kept in pipeline, excluded from commit forecast"
+          ],
+          "key_terms": [
+            [
+              "60 trucks",
+              "sacramento",
+              "pipeline"
+            ]
+          ],
+          "evidence": [
+            "MTG-0915-SALESPIPE#0042",
+            "MTG-0915-SALESPIPE#0051",
+            "MTG-0915-SALESPIPE#0086"
+          ],
+          "also_supports": [
+            "MTG-0915-SALESPIPE#0092"
+          ],
+          "storyline": "sales_pipeline",
+          "needed": [
+            [
+              "MTG-0915-SALESPIPE#0042",
+              "MTG-0915-SALESPIPE#0051"
+            ]
+          ],
+          "original_id": "MEM-HLD-07",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-07-P3",
+          "question": "Did John include Copperline Freight in the board forecast during pipeline review?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "single_fact",
+          "answerable": true,
+          "gold_answer": "Copperline Freight is an inbound lead with 60 trucks (mostly dry van out of Sacramento). In the Sep 15 pipeline review, John Okafor kept it as pipeline, not in the board commit forecast.",
+          "rubric": [
+            "60 trucks / Sacramento",
+            "Kept in pipeline, excluded from commit forecast"
+          ],
+          "key_terms": [
+            [
+              "60 trucks",
+              "sacramento",
+              "pipeline"
+            ]
+          ],
+          "evidence": [
+            "MTG-0915-SALESPIPE#0042",
+            "MTG-0915-SALESPIPE#0051",
+            "MTG-0915-SALESPIPE#0086"
+          ],
+          "also_supports": [
+            "MTG-0915-SALESPIPE#0092"
+          ],
+          "storyline": "sales_pipeline",
+          "needed": [
+            [
+              "MTG-0915-SALESPIPE#0042",
+              "MTG-0915-SALESPIPE#0051"
+            ]
+          ],
+          "original_id": "MEM-HLD-07",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-07-P4",
+          "question": "What was reported about the Copperline Freight inbound lead during Tuesday's pipeline meeting?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "single_fact",
+          "answerable": true,
+          "gold_answer": "Copperline Freight is an inbound lead with 60 trucks (mostly dry van out of Sacramento). In the Sep 15 pipeline review, John Okafor kept it as pipeline, not in the board commit forecast.",
+          "rubric": [
+            "60 trucks / Sacramento",
+            "Kept in pipeline, excluded from commit forecast"
+          ],
+          "key_terms": [
+            [
+              "60 trucks",
+              "sacramento",
+              "pipeline"
+            ]
+          ],
+          "evidence": [
+            "MTG-0915-SALESPIPE#0042",
+            "MTG-0915-SALESPIPE#0051",
+            "MTG-0915-SALESPIPE#0086"
+          ],
+          "also_supports": [
+            "MTG-0915-SALESPIPE#0092"
+          ],
+          "storyline": "sales_pipeline",
+          "needed": [
+            [
+              "MTG-0915-SALESPIPE#0042",
+              "MTG-0915-SALESPIPE#0051"
+            ]
+          ],
+          "original_id": "MEM-HLD-07",
+          "is_paraphrase": true,
+          "split": "holdout"
+        }
+      ]
+    },
+    {
+      "original_id": "MEM-HLD-08",
+      "split": "holdout",
+      "original_question": "What instructions did Rachel Gomez give about customer contract redlines?",
+      "as_of": "2026-09-18T18:00:00-07:00",
+      "category": "single_fact",
+      "answerable": true,
+      "needed": [
+        [
+          "SL-F-0120"
+        ]
+      ],
+      "evidence": [
+        "SL-F-0120"
+      ],
+      "paraphrases": [
+        {
+          "id": "MEM-HLD-08-P1",
+          "question": "What policy did Rachel announce regarding contract redlines in Slack?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "single_fact",
+          "answerable": true,
+          "gold_answer": "Route any customer contract redlines through her before sending, even small ones (posted to Slack general on Sep 14).",
+          "rubric": [
+            "Route all contract redlines through her before sending",
+            "Even small ones"
+          ],
+          "key_terms": [
+            [
+              "route",
+              "redlines",
+              "rachel"
+            ]
+          ],
+          "evidence": [
+            "SL-F-0120"
+          ],
+          "also_supports": [],
+          "storyline": "legal_contracting",
+          "needed": [
+            [
+              "SL-F-0120"
+            ]
+          ],
+          "original_id": "MEM-HLD-08",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-08-P2",
+          "question": "Do we need legal review from Rachel before sending out agreement redlines?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "single_fact",
+          "answerable": true,
+          "gold_answer": "Route any customer contract redlines through her before sending, even small ones (posted to Slack general on Sep 14).",
+          "rubric": [
+            "Route all contract redlines through her before sending",
+            "Even small ones"
+          ],
+          "key_terms": [
+            [
+              "route",
+              "redlines",
+              "rachel"
+            ]
+          ],
+          "evidence": [
+            "SL-F-0120"
+          ],
+          "also_supports": [],
+          "storyline": "legal_contracting",
+          "needed": [
+            [
+              "SL-F-0120"
+            ]
+          ],
+          "original_id": "MEM-HLD-08",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-08-P3",
+          "question": "What did Rachel Gomez say in general about customer contracts?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "single_fact",
+          "answerable": true,
+          "gold_answer": "Route any customer contract redlines through her before sending, even small ones (posted to Slack general on Sep 14).",
+          "rubric": [
+            "Route all contract redlines through her before sending",
+            "Even small ones"
+          ],
+          "key_terms": [
+            [
+              "route",
+              "redlines",
+              "rachel"
+            ]
+          ],
+          "evidence": [
+            "SL-F-0120"
+          ],
+          "also_supports": [],
+          "storyline": "legal_contracting",
+          "needed": [
+            [
+              "SL-F-0120"
+            ]
+          ],
+          "original_id": "MEM-HLD-08",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-08-P4",
+          "question": "Are sales reps allowed to send customer redlines without Rachel's approval?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "single_fact",
+          "answerable": true,
+          "gold_answer": "Route any customer contract redlines through her before sending, even small ones (posted to Slack general on Sep 14).",
+          "rubric": [
+            "Route all contract redlines through her before sending",
+            "Even small ones"
+          ],
+          "key_terms": [
+            [
+              "route",
+              "redlines",
+              "rachel"
+            ]
+          ],
+          "evidence": [
+            "SL-F-0120"
+          ],
+          "also_supports": [],
+          "storyline": "legal_contracting",
+          "needed": [
+            [
+              "SL-F-0120"
+            ]
+          ],
+          "original_id": "MEM-HLD-08",
+          "is_paraphrase": true,
+          "split": "holdout"
+        }
+      ]
+    },
+    {
+      "original_id": "MEM-HLD-09",
+      "split": "holdout",
+      "original_question": "Where and when is the Q3 board meeting taking place?",
+      "as_of": "2026-09-18T18:00:00-07:00",
+      "category": "temporal",
+      "answerable": true,
+      "needed": [
+        [
+          "CAL-BOARD",
+          "MTG-0910-1ON1#0035"
+        ]
+      ],
+      "evidence": [
+        "CAL-BOARD",
+        "MTG-0910-1ON1#0035"
+      ],
+      "paraphrases": [
+        {
+          "id": "MEM-HLD-09-P1",
+          "question": "What are the details for the upcoming Q3 board meeting?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "temporal",
+          "answerable": true,
+          "gold_answer": "Wednesday, September 23, 2026 from 9:00 AM to 12:00 PM at Foundry Ridge (1 Market St), hosted by Tom.",
+          "rubric": [
+            "Wednesday Sep 23, 9am\u201312pm",
+            "Foundry Ridge"
+          ],
+          "key_terms": [
+            [
+              "sep 23",
+              "september 23",
+              "foundry ridge",
+              "9"
+            ]
+          ],
+          "evidence": [
+            "CAL-BOARD",
+            "MTG-0910-1ON1#0035"
+          ],
+          "also_supports": [
+            "CAL-F-25"
+          ],
+          "storyline": "board_preparation",
+          "needed": [
+            [
+              "CAL-BOARD",
+              "MTG-0910-1ON1#0035"
+            ]
+          ],
+          "original_id": "MEM-HLD-09",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-09-P2",
+          "question": "Where is the board meeting taking place next Wednesday, and at what time?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "temporal",
+          "answerable": true,
+          "gold_answer": "Wednesday, September 23, 2026 from 9:00 AM to 12:00 PM at Foundry Ridge (1 Market St), hosted by Tom.",
+          "rubric": [
+            "Wednesday Sep 23, 9am\u201312pm",
+            "Foundry Ridge"
+          ],
+          "key_terms": [
+            [
+              "sep 23",
+              "september 23",
+              "foundry ridge",
+              "9"
+            ]
+          ],
+          "evidence": [
+            "CAL-BOARD",
+            "MTG-0910-1ON1#0035"
+          ],
+          "also_supports": [
+            "CAL-F-25"
+          ],
+          "storyline": "board_preparation",
+          "needed": [
+            [
+              "CAL-BOARD",
+              "MTG-0910-1ON1#0035"
+            ]
+          ],
+          "original_id": "MEM-HLD-09",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-09-P3",
+          "question": "When and where are we meeting the board next week?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "temporal",
+          "answerable": true,
+          "gold_answer": "Wednesday, September 23, 2026 from 9:00 AM to 12:00 PM at Foundry Ridge (1 Market St), hosted by Tom.",
+          "rubric": [
+            "Wednesday Sep 23, 9am\u201312pm",
+            "Foundry Ridge"
+          ],
+          "key_terms": [
+            [
+              "sep 23",
+              "september 23",
+              "foundry ridge",
+              "9"
+            ]
+          ],
+          "evidence": [
+            "CAL-BOARD",
+            "MTG-0910-1ON1#0035"
+          ],
+          "also_supports": [
+            "CAL-F-25"
+          ],
+          "storyline": "board_preparation",
+          "needed": [
+            [
+              "CAL-BOARD",
+              "MTG-0910-1ON1#0035"
+            ]
+          ],
+          "original_id": "MEM-HLD-09",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-09-P4",
+          "question": "What time does our board meeting at Foundry Ridge start?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "temporal",
+          "answerable": true,
+          "gold_answer": "Wednesday, September 23, 2026 from 9:00 AM to 12:00 PM at Foundry Ridge (1 Market St), hosted by Tom.",
+          "rubric": [
+            "Wednesday Sep 23, 9am\u201312pm",
+            "Foundry Ridge"
+          ],
+          "key_terms": [
+            [
+              "sep 23",
+              "september 23",
+              "foundry ridge",
+              "9"
+            ]
+          ],
+          "evidence": [
+            "CAL-BOARD",
+            "MTG-0910-1ON1#0035"
+          ],
+          "also_supports": [
+            "CAL-F-25"
+          ],
+          "storyline": "board_preparation",
+          "needed": [
+            [
+              "CAL-BOARD",
+              "MTG-0910-1ON1#0035"
+            ]
+          ],
+          "original_id": "MEM-HLD-09",
+          "is_paraphrase": true,
+          "split": "holdout"
+        }
+      ]
+    },
+    {
+      "original_id": "MEM-HLD-10",
+      "split": "holdout",
+      "original_question": "Did John approve hiring a marketing contractor?",
+      "as_of": "2026-09-18T18:00:00-07:00",
+      "category": "conditional",
+      "answerable": true,
+      "needed": [
+        [
+          "MTG-0910-1ON1#0061",
+          "MTG-0910-1ON1#0065"
+        ]
+      ],
+      "evidence": [
+        "MTG-0910-1ON1#0061",
+        "MTG-0910-1ON1#0065"
+      ],
+      "paraphrases": [
+        {
+          "id": "MEM-HLD-10-P1",
+          "question": "Can we hire an outside designer for the marketing website?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "conditional",
+          "answerable": true,
+          "gold_answer": "Conditionally open to it: John told Alex in their Sep 10 1:1 to find someone and send a proposal for a small scope (a few weeks of work, not a retainer).",
+          "rubric": [
+            "Told Alex to send a proposal",
+            "Small scope / a few weeks, not retainer"
+          ],
+          "key_terms": [
+            [
+              "proposal",
+              "small scope",
+              "marketing"
+            ]
+          ],
+          "evidence": [
+            "MTG-0910-1ON1#0061",
+            "MTG-0910-1ON1#0065"
+          ],
+          "also_supports": [
+            "MTG-0910-1ON1#0049"
+          ],
+          "storyline": "marketing_contractor",
+          "needed": [
+            [
+              "MTG-0910-1ON1#0061",
+              "MTG-0910-1ON1#0065"
+            ]
+          ],
+          "original_id": "MEM-HLD-10",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-10-P2",
+          "question": "What did John tell Alex about bringing on a contractor to redesign the marketing site?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "conditional",
+          "answerable": true,
+          "gold_answer": "Conditionally open to it: John told Alex in their Sep 10 1:1 to find someone and send a proposal for a small scope (a few weeks of work, not a retainer).",
+          "rubric": [
+            "Told Alex to send a proposal",
+            "Small scope / a few weeks, not retainer"
+          ],
+          "key_terms": [
+            [
+              "proposal",
+              "small scope",
+              "marketing"
+            ]
+          ],
+          "evidence": [
+            "MTG-0910-1ON1#0061",
+            "MTG-0910-1ON1#0065"
+          ],
+          "also_supports": [
+            "MTG-0910-1ON1#0049"
+          ],
+          "storyline": "marketing_contractor",
+          "needed": [
+            [
+              "MTG-0910-1ON1#0061",
+              "MTG-0910-1ON1#0065"
+            ]
+          ],
+          "original_id": "MEM-HLD-10",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-10-P3",
+          "question": "Did John give the green light for a marketing site design contractor?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "conditional",
+          "answerable": true,
+          "gold_answer": "Conditionally open to it: John told Alex in their Sep 10 1:1 to find someone and send a proposal for a small scope (a few weeks of work, not a retainer).",
+          "rubric": [
+            "Told Alex to send a proposal",
+            "Small scope / a few weeks, not retainer"
+          ],
+          "key_terms": [
+            [
+              "proposal",
+              "small scope",
+              "marketing"
+            ]
+          ],
+          "evidence": [
+            "MTG-0910-1ON1#0061",
+            "MTG-0910-1ON1#0065"
+          ],
+          "also_supports": [
+            "MTG-0910-1ON1#0049"
+          ],
+          "storyline": "marketing_contractor",
+          "needed": [
+            [
+              "MTG-0910-1ON1#0061",
+              "MTG-0910-1ON1#0065"
+            ]
+          ],
+          "original_id": "MEM-HLD-10",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-10-P4",
+          "question": "Are we allowed to use a contractor for marketing site design work?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "conditional",
+          "answerable": true,
+          "gold_answer": "Conditionally open to it: John told Alex in their Sep 10 1:1 to find someone and send a proposal for a small scope (a few weeks of work, not a retainer).",
+          "rubric": [
+            "Told Alex to send a proposal",
+            "Small scope / a few weeks, not retainer"
+          ],
+          "key_terms": [
+            [
+              "proposal",
+              "small scope",
+              "marketing"
+            ]
+          ],
+          "evidence": [
+            "MTG-0910-1ON1#0061",
+            "MTG-0910-1ON1#0065"
+          ],
+          "also_supports": [
+            "MTG-0910-1ON1#0049"
+          ],
+          "storyline": "marketing_contractor",
+          "needed": [
+            [
+              "MTG-0910-1ON1#0061",
+              "MTG-0910-1ON1#0065"
+            ]
+          ],
+          "original_id": "MEM-HLD-10",
+          "is_paraphrase": true,
+          "split": "holdout"
+        }
+      ]
+    },
+    {
+      "original_id": "MEM-HLD-11",
+      "split": "holdout",
+      "original_question": "What is the Wi-Fi password for the Brightline office?",
+      "as_of": "2026-09-18T18:00:00-07:00",
+      "category": "abstention",
+      "answerable": false,
+      "needed": [],
+      "evidence": [],
+      "paraphrases": [
+        {
+          "id": "MEM-HLD-11-P1",
+          "question": "What is the guest Wi-Fi network password for our office?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "abstention",
+          "answerable": false,
+          "gold_answer": "Not in memory: nothing in the data covers this.",
+          "rubric": [
+            "Says it has no record / doesn't know",
+            "Does not invent an answer"
+          ],
+          "key_terms": [],
+          "evidence": [],
+          "also_supports": [],
+          "storyline": "not_in_memory",
+          "needed": [],
+          "original_id": "MEM-HLD-11",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-11-P2",
+          "question": "Can you tell me the Brightline office wifi password?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "abstention",
+          "answerable": false,
+          "gold_answer": "Not in memory: nothing in the data covers this.",
+          "rubric": [
+            "Says it has no record / doesn't know",
+            "Does not invent an answer"
+          ],
+          "key_terms": [],
+          "evidence": [],
+          "also_supports": [],
+          "storyline": "not_in_memory",
+          "needed": [],
+          "original_id": "MEM-HLD-11",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-11-P3",
+          "question": "What's the credentials for connecting to the office internet?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "abstention",
+          "answerable": false,
+          "gold_answer": "Not in memory: nothing in the data covers this.",
+          "rubric": [
+            "Says it has no record / doesn't know",
+            "Does not invent an answer"
+          ],
+          "key_terms": [],
+          "evidence": [],
+          "also_supports": [],
+          "storyline": "not_in_memory",
+          "needed": [],
+          "original_id": "MEM-HLD-11",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-11-P4",
+          "question": "Where can I find our corporate wifi password?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "abstention",
+          "answerable": false,
+          "gold_answer": "Not in memory: nothing in the data covers this.",
+          "rubric": [
+            "Says it has no record / doesn't know",
+            "Does not invent an answer"
+          ],
+          "key_terms": [],
+          "evidence": [],
+          "also_supports": [],
+          "storyline": "not_in_memory",
+          "needed": [],
+          "original_id": "MEM-HLD-11",
+          "is_paraphrase": true,
+          "split": "holdout"
+        }
+      ]
+    },
+    {
+      "original_id": "MEM-HLD-12",
+      "split": "holdout",
+      "original_question": "What is Alex Rivera's home address?",
+      "as_of": "2026-09-18T18:00:00-07:00",
+      "category": "abstention",
+      "answerable": false,
+      "needed": [],
+      "evidence": [],
+      "paraphrases": [
+        {
+          "id": "MEM-HLD-12-P1",
+          "question": "Where does Alex Rivera live?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "abstention",
+          "answerable": false,
+          "gold_answer": "Not in memory: nothing in the data covers this.",
+          "rubric": [
+            "Says it has no record / doesn't know",
+            "Does not invent an answer"
+          ],
+          "key_terms": [],
+          "evidence": [],
+          "also_supports": [],
+          "storyline": "not_in_memory",
+          "needed": [],
+          "original_id": "MEM-HLD-12",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-12-P2",
+          "question": "What is Alex's home address?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "abstention",
+          "answerable": false,
+          "gold_answer": "Not in memory: nothing in the data covers this.",
+          "rubric": [
+            "Says it has no record / doesn't know",
+            "Does not invent an answer"
+          ],
+          "key_terms": [],
+          "evidence": [],
+          "also_supports": [],
+          "storyline": "not_in_memory",
+          "needed": [],
+          "original_id": "MEM-HLD-12",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-12-P3",
+          "question": "Can you look up Alex Rivera's residential address?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "abstention",
+          "answerable": false,
+          "gold_answer": "Not in memory: nothing in the data covers this.",
+          "rubric": [
+            "Says it has no record / doesn't know",
+            "Does not invent an answer"
+          ],
+          "key_terms": [],
+          "evidence": [],
+          "also_supports": [],
+          "storyline": "not_in_memory",
+          "needed": [],
+          "original_id": "MEM-HLD-12",
+          "is_paraphrase": true,
+          "split": "holdout"
+        },
+        {
+          "id": "MEM-HLD-12-P4",
+          "question": "What street does Alex live on?",
+          "as_of": "2026-09-18T18:00:00-07:00",
+          "category": "abstention",
+          "answerable": false,
+          "gold_answer": "Not in memory: nothing in the data covers this.",
+          "rubric": [
+            "Says it has no record / doesn't know",
+            "Does not invent an answer"
+          ],
+          "key_terms": [],
+          "evidence": [],
+          "also_supports": [],
+          "storyline": "not_in_memory",
+          "needed": [],
+          "original_id": "MEM-HLD-12",
+          "is_paraphrase": true,
+          "split": "holdout"
         }
       ]
     }

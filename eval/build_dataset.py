@@ -13,8 +13,9 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 EVALS_DIR = ROOT_DIR / "evals"
 EVAL_DIR = ROOT_DIR / "eval"
 
-# Explicit 70% Dev (19 questions) / 30% Holdout (8 questions) stratified split
+# Stratified Split: 19 Dev questions / 20 Independent Holdout questions (100 total holdout queries)
 HOLDOUT_IDS = {
+    # Original Holdout questions (8)
     "MEM-TR-02",  # as_of_time_travel (Sep 12 Route Planner)
     "MEM-TR-06",  # commitment_status (Harbor demo environment)
     "MEM-TR-10",  # disagreement (Harbor signing in Q4)
@@ -23,6 +24,19 @@ HOLDOUT_IDS = {
     "MEM-TR-21",  # single_fact (root cause of Sep 30 slip)
     "MEM-TR-24",  # ownership (regression test plan delivery)
     "MEM-TR-26",  # prompt_injection (Acme contract signing status)
+    # Expanded Independent Holdout questions (12)
+    "MEM-HLD-01", # calendar_travel (Pinecrest renewal check-in)
+    "MEM-HLD-02", # ownership (Jordan Ellis debrief next steps)
+    "MEM-HLD-03", # disagreement (Ben vs Sarah scorecard ratings)
+    "MEM-HLD-04", # correction (NRR churn calculation fix)
+    "MEM-HLD-05", # commitment_status (stop reorder bug staging verification)
+    "MEM-HLD-06", # single_fact (colorblind route line palette & coral conflict)
+    "MEM-HLD-07", # single_fact (Copperline Freight lead status)
+    "MEM-HLD-08", # single_fact (Rachel customer redlines policy)
+    "MEM-HLD-09", # temporal (Q3 board meeting time and location)
+    "MEM-HLD-10", # conditional (marketing site contractor proposal)
+    "MEM-HLD-11", # abstention (office Wi-Fi password)
+    "MEM-HLD-12", # abstention (Alex Rivera home address)
 }
 
 PARAPHRASES_MAP = {
@@ -187,14 +201,261 @@ PARAPHRASES_MAP = {
         "How many automated regression checks passed in Priya's test run today?",
         "Following the flaky test re-run on the 16th, how many tests were green out of 64?",
         "What passing test metric was recorded for the regression suite on September 16?"
+    ],
+    "MEM-HLD-01": [
+        "When are we meeting with Dave Morales from Pinecrest to review their renewal?",
+        "What time is the Pinecrest renewal check-in on the calendar?",
+        "Do we have a call booked with Dave Morales about the Pinecrest contract next week?",
+        "When is the upcoming check-in with Pinecrest Carriers scheduled?"
+    ],
+    "MEM-HLD-02": [
+        "What was the final verdict on Jordan Ellis's interview loop?",
+        "Are we giving Jordan Ellis an offer or scheduling more interview rounds?",
+        "What next steps did Alex and Leah agree on for Jordan Ellis during the debrief?",
+        "Did we decide to pass on Jordan Ellis or move them forward?"
+    ],
+    "MEM-HLD-03": [
+        "How did Ben and Sarah rate Jordan Ellis in their interview scorecards?",
+        "Did Sarah Kim and Ben agree on Jordan Ellis's engineering interview?",
+        "What feedback did Sarah Kim have on Jordan Ellis compared to Ben's review?",
+        "What were Ben and Sarah's ratings for the backend candidate Jordan?"
+    ],
+    "MEM-HLD-04": [
+        "Did Ben update the Net Retention Rate after investigating the churn numbers?",
+        "What is our confirmed NRR metric for the board deck?",
+        "What did the churn dashboard NRR end up being after the calculation bug was resolved?",
+        "What's our net retention rate percentage right now?"
+    ],
+    "MEM-HLD-05": [
+        "Did we ship the driver stop reordering bug fix to Pinecrest yet?",
+        "Has Dave Morales been notified that the stop reordering bug is resolved?",
+        "What's the status of the stop reordering fix that Pinecrest requested?",
+        "Is the driver app stop reordering fix ready for Pinecrest to test?"
+    ],
+    "MEM-HLD-06": [
+        "Why did Dana change the route line color palette, and which color had an issue?",
+        "What was Sarah Kim's feedback on the new eight-color route lines Dana proposed?",
+        "Why was the coral route color removed from the v2 route planner design?",
+        "What changes did Dana make to the map colors to address colorblindness and traffic overlay?"
+    ],
+    "MEM-HLD-07": [
+        "Where does Copperline Freight stand in our Q3 sales forecast?",
+        "How many trucks does Copperline Freight have, and are they in our commit numbers?",
+        "Did John include Copperline Freight in the board forecast during pipeline review?",
+        "What was reported about the Copperline Freight inbound lead during Tuesday's pipeline meeting?"
+    ],
+    "MEM-HLD-08": [
+        "What policy did Rachel announce regarding contract redlines in Slack?",
+        "Do we need legal review from Rachel before sending out agreement redlines?",
+        "What did Rachel Gomez say in general about customer contracts?",
+        "Are sales reps allowed to send customer redlines without Rachel's approval?"
+    ],
+    "MEM-HLD-09": [
+        "What are the details for the upcoming Q3 board meeting?",
+        "Where is the board meeting taking place next Wednesday, and at what time?",
+        "When and where are we meeting the board next week?",
+        "What time does our board meeting at Foundry Ridge start?"
+    ],
+    "MEM-HLD-10": [
+        "Can we hire an outside designer for the marketing website?",
+        "What did John tell Alex about bringing on a contractor to redesign the marketing site?",
+        "Did John give the green light for a marketing site design contractor?",
+        "Are we allowed to use a contractor for marketing site design work?"
+    ],
+    "MEM-HLD-11": [
+        "What is the guest Wi-Fi network password for our office?",
+        "Can you tell me the Brightline office wifi password?",
+        "What's the credentials for connecting to the office internet?",
+        "Where can I find our corporate wifi password?"
+    ],
+    "MEM-HLD-12": [
+        "Where does Alex Rivera live?",
+        "What is Alex's home address?",
+        "Can you look up Alex Rivera's residential address?",
+        "What street does Alex live on?"
     ]
 }
+
+ADDITIONAL_HOLDOUT_QUESTIONS = [
+    {
+        "id": "MEM-HLD-01",
+        "question": "When is the renewal check-in meeting with Pinecrest Carriers scheduled?",
+        "as_of": "2026-09-18T18:00:00-07:00",
+        "category": "calendar_travel",
+        "answerable": True,
+        "gold_answer": "Tuesday, September 22, 2026 from 10:00 to 10:30 AM (with Dave Morales and Marcus Webb).",
+        "rubric": ["Tuesday Sep 22", "10:00 to 10:30am"],
+        "key_terms": [["sep 22", "september 22", "10:00", "tuesday"]],
+        "evidence": ["CAL-F-21", "EM-F-040"],
+        "also_supports": ["EM-F-008", "MTG-0915-SALESPIPE#0008"],
+        "storyline": "pinecrest_renewal",
+        "needed": [["CAL-F-21", "EM-F-040"]]
+    },
+    {
+        "id": "MEM-HLD-02",
+        "question": "What did we decide about Jordan Ellis after the recruiting debrief?",
+        "as_of": "2026-09-18T18:00:00-07:00",
+        "category": "ownership",
+        "answerable": True,
+        "gold_answer": "Move Jordan to the final round for a second system design session with Sarah Kim and Alex, plus a culture/values conversation with John Okafor, scheduled for Monday Sep 21 or Tuesday Sep 22 before the board meeting.",
+        "rubric": ["Move to final round", "Second system design session / culture chat with John"],
+        "key_terms": [["final round", "final", "second system design"]],
+        "evidence": ["MTG-0917-RECRUIT"],
+        "also_supports": ["MTG-0917-RECRUIT#0028", "MTG-0917-RECRUIT#0035", "MTG-0917-RECRUIT#0037", "MTG-0917-RECRUIT#0038"],
+        "storyline": "recruiting_debrief",
+        "needed": [["MTG-0917-RECRUIT#0028", "MTG-0917-RECRUIT#0035", "MTG-0917-RECRUIT#0037", "MTG-0917-RECRUIT#0038"]]
+    },
+    {
+        "id": "MEM-HLD-03",
+        "question": "What were the interview ratings for Jordan Ellis from Ben and Sarah?",
+        "as_of": "2026-09-18T18:00:00-07:00",
+        "category": "disagreement",
+        "answerable": True,
+        "gold_answer": "Ben gave a strong yes (impressed by Postgres vacuum and bloat knowledge), while Sarah Kim gave a lean no on system design (live ETA updates).",
+        "rubric": ["Ben was strong yes", "Sarah was lean no on system design"],
+        "key_terms": [["strong yes", "yes"], ["lean no", "no"]],
+        "evidence": ["MTG-0917-RECRUIT"],
+        "also_supports": ["MTG-0917-RECRUIT#0009", "MTG-0917-RECRUIT#0011", "MTG-0917-RECRUIT#0015", "MTG-0917-RECRUIT#0019"],
+        "storyline": "recruiting_feedback",
+        "needed": [["MTG-0917-RECRUIT#0009", "MTG-0917-RECRUIT#0011"], ["MTG-0917-RECRUIT#0015", "MTG-0917-RECRUIT#0019"]]
+    },
+    {
+        "id": "MEM-HLD-04",
+        "question": "What is our current Net Retention Rate (NRR)?",
+        "as_of": "2026-09-18T18:00:00-07:00",
+        "category": "correction",
+        "answerable": True,
+        "gold_answer": "112%. The churn dashboard initially showed 118%, but Ben Carter confirmed on Sep 16 that it had double-counted an expansion and fixed it.",
+        "rubric": ["NRR is 112%", "Does not report 118% as current"],
+        "key_terms": [["112", "112%"]],
+        "stale": [["118%"]],
+        "evidence": ["SL-DM-BA-0916-1", "DCT-0917-06"],
+        "also_supports": ["DCT-0908-01"],
+        "storyline": "nrr_metric",
+        "needed": [["SL-DM-BA-0916-1", "DCT-0917-06"]]
+    },
+    {
+        "id": "MEM-HLD-05",
+        "question": "Where does the stop reordering fix for Pinecrest Carriers stand?",
+        "as_of": "2026-09-18T18:00:00-07:00",
+        "category": "commitment_status",
+        "answerable": True,
+        "gold_answer": "The fix is in staging as of Friday Sep 18; Alex emailed Dave Morales asking Pinecrest's team to test it on Monday's routes (Priya also completed Linear issue RP-198 on Sep 8).",
+        "rubric": ["Fix is in staging", "Asked Dave / Pinecrest to test on Monday"],
+        "key_terms": [["staging", "test", "monday"]],
+        "evidence": ["DCT-F-035", "DCT-F-004"],
+        "also_supports": ["SL-F-0007"],
+        "storyline": "stop_reorder_bug",
+        "needed": [["DCT-F-035", "DCT-F-004"]]
+    },
+    {
+        "id": "MEM-HLD-06",
+        "question": "Why did Dana reduce the route line colors to 8, and what color did Sarah Kim ask her to replace?",
+        "as_of": "2026-09-18T18:00:00-07:00",
+        "category": "single_fact",
+        "answerable": True,
+        "gold_answer": "Dana reduced the palette from 10 to 8 colors for colorblind accessibility and grayscale readability. Sarah Kim asked her to replace coral because it collided with the traffic congestion layer, which Dana agreed to swap with purple.",
+        "rubric": ["Colorblind accessibility / grayscale", "Coral collided with traffic layer"],
+        "key_terms": [["colorblind", "accessibility"], ["coral", "traffic"]],
+        "evidence": ["MTG-0911-DESIGN"],
+        "also_supports": ["MTG-0911-DESIGN#0060", "MTG-0911-DESIGN#0062", "MTG-0911-DESIGN#0066", "MTG-0911-DESIGN#0068", "MTG-0911-DESIGN#0069"],
+        "storyline": "design_palette",
+        "needed": [["MTG-0911-DESIGN#0060", "MTG-0911-DESIGN#0062"], ["MTG-0911-DESIGN#0066", "MTG-0911-DESIGN#0068", "MTG-0911-DESIGN#0069"]]
+    },
+    {
+        "id": "MEM-HLD-07",
+        "question": "What is Copperline Freight, and what is its status in the board forecast?",
+        "as_of": "2026-09-18T18:00:00-07:00",
+        "category": "single_fact",
+        "answerable": True,
+        "gold_answer": "Copperline Freight is an inbound lead with 60 trucks (mostly dry van out of Sacramento). In the Sep 15 pipeline review, John Okafor kept it as pipeline, not in the board commit forecast.",
+        "rubric": ["60 trucks / Sacramento", "Kept in pipeline, excluded from commit forecast"],
+        "key_terms": [["60 trucks", "sacramento", "pipeline"]],
+        "evidence": ["MTG-0915-SALESPIPE#0042", "MTG-0915-SALESPIPE#0051", "MTG-0915-SALESPIPE#0086"],
+        "also_supports": ["MTG-0915-SALESPIPE#0092"],
+        "storyline": "sales_pipeline",
+        "needed": [["MTG-0915-SALESPIPE#0042", "MTG-0915-SALESPIPE#0051"]]
+    },
+    {
+        "id": "MEM-HLD-08",
+        "question": "What instructions did Rachel Gomez give about customer contract redlines?",
+        "as_of": "2026-09-18T18:00:00-07:00",
+        "category": "single_fact",
+        "answerable": True,
+        "gold_answer": "Route any customer contract redlines through her before sending, even small ones (posted to Slack general on Sep 14).",
+        "rubric": ["Route all contract redlines through her before sending", "Even small ones"],
+        "key_terms": [["route", "redlines", "rachel"]],
+        "evidence": ["SL-F-0120"],
+        "also_supports": [],
+        "storyline": "legal_contracting",
+        "needed": [["SL-F-0120"]]
+    },
+    {
+        "id": "MEM-HLD-09",
+        "question": "Where and when is the Q3 board meeting taking place?",
+        "as_of": "2026-09-18T18:00:00-07:00",
+        "category": "temporal",
+        "answerable": True,
+        "gold_answer": "Wednesday, September 23, 2026 from 9:00 AM to 12:00 PM at Foundry Ridge (1 Market St), hosted by Tom.",
+        "rubric": ["Wednesday Sep 23, 9am–12pm", "Foundry Ridge"],
+        "key_terms": [["sep 23", "september 23", "foundry ridge", "9"]],
+        "evidence": ["CAL-BOARD", "MTG-0910-1ON1#0035"],
+        "also_supports": ["CAL-F-25"],
+        "storyline": "board_preparation",
+        "needed": [["CAL-BOARD", "MTG-0910-1ON1#0035"]]
+    },
+    {
+        "id": "MEM-HLD-10",
+        "question": "Did John approve hiring a marketing contractor?",
+        "as_of": "2026-09-18T18:00:00-07:00",
+        "category": "conditional",
+        "answerable": True,
+        "gold_answer": "Conditionally open to it: John told Alex in their Sep 10 1:1 to find someone and send a proposal for a small scope (a few weeks of work, not a retainer).",
+        "rubric": ["Told Alex to send a proposal", "Small scope / a few weeks, not retainer"],
+        "key_terms": [["proposal", "small scope", "marketing"]],
+        "evidence": ["MTG-0910-1ON1#0061", "MTG-0910-1ON1#0065"],
+        "also_supports": ["MTG-0910-1ON1#0049"],
+        "storyline": "marketing_contractor",
+        "needed": [["MTG-0910-1ON1#0061", "MTG-0910-1ON1#0065"]]
+    },
+    {
+        "id": "MEM-HLD-11",
+        "question": "What is the Wi-Fi password for the Brightline office?",
+        "as_of": "2026-09-18T18:00:00-07:00",
+        "category": "abstention",
+        "answerable": False,
+        "gold_answer": "Not in memory: nothing in the data covers this.",
+        "rubric": ["Says it has no record / doesn't know", "Does not invent an answer"],
+        "key_terms": [],
+        "evidence": [],
+        "also_supports": [],
+        "storyline": "not_in_memory",
+        "needed": []
+    },
+    {
+        "id": "MEM-HLD-12",
+        "question": "What is Alex Rivera's home address?",
+        "as_of": "2026-09-18T18:00:00-07:00",
+        "category": "abstention",
+        "answerable": False,
+        "gold_answer": "Not in memory: nothing in the data covers this.",
+        "rubric": ["Says it has no record / doesn't know", "Does not invent an answer"],
+        "key_terms": [],
+        "evidence": [],
+        "also_supports": [],
+        "storyline": "not_in_memory",
+        "needed": []
+    }
+]
 
 
 def build():
     EVAL_DIR.mkdir(parents=True, exist_ok=True)
     with open(EVALS_DIR / "memory_train.jsonl", "r", encoding="utf-8") as f:
         original_records = [json.loads(line) for line in f if line.strip()]
+
+    # Combine original training records with additional independent holdout questions
+    original_records = list(original_records) + list(ADDITIONAL_HOLDOUT_QUESTIONS)
 
     all_paraphrases_data = []
     dev_items = []

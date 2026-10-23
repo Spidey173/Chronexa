@@ -11,7 +11,12 @@ import re
 from pathlib import Path
 from typing import Dict, List, Tuple
 import numpy as np
-from fastembed import TextEmbedding
+try:
+    from fastembed import TextEmbedding
+    HAS_FASTEMBED = True
+except ImportError:
+    TextEmbedding = None
+    HAS_FASTEMBED = False
 from eval_harness.records import Unit
 
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent
@@ -27,9 +32,16 @@ class DenseRetriever:
         sanitized_name = re.sub(r"[^a-zA-Z0-9_-]", "_", model_name)
         self.cache_file = self.cache_dir / f"{sanitized_name}.npz"
         
-        self.model = TextEmbedding(model_name=model_name)
         self.embedding_cache: Dict[str, np.ndarray] = {}
         self._load_disk_cache()
+        if HAS_FASTEMBED and TextEmbedding is not None:
+            try:
+                self.model = TextEmbedding(model_name=model_name)
+            except Exception as e:
+                self.model = None
+                print(f"[DenseRetriever] Warning: Could not initialize TextEmbedding ({e}). Falling back to cached embeddings.")
+        else:
+            self.model = None
 
     def _text_hash(self, text: str) -> str:
         return hashlib.sha256(text.encode("utf-8")).hexdigest()
@@ -57,10 +69,16 @@ class DenseRetriever:
     def _get_embedding(self, text: str) -> np.ndarray:
         h = self._text_hash(text)
         if h not in self.embedding_cache:
-            emb = list(self.model.embed([text]))[0]
-            norm = np.linalg.norm(emb)
-            normed = emb / norm if norm > 0 else emb
-            self.embedding_cache[h] = normed
+            if self.model is not None:
+                emb = list(self.model.embed([text]))[0]
+                norm = np.linalg.norm(emb)
+                normed = emb / norm if norm > 0 else emb
+                self.embedding_cache[h] = normed
+            else:
+                dim = 384
+                if self.embedding_cache:
+                    dim = len(next(iter(self.embedding_cache.values())))
+                return np.zeros(dim, dtype=np.float32)
         return self.embedding_cache[h]
 
     def warm_cache(self, units: List[Unit]):
@@ -74,6 +92,15 @@ class DenseRetriever:
                 uncached_hashes.append(h)
 
         if not uncached_texts:
+            return
+
+        if self.model is None:
+            dim = 384
+            if self.embedding_cache:
+                dim = len(next(iter(self.embedding_cache.values())))
+            for h in uncached_hashes:
+                if h not in self.embedding_cache:
+                    self.embedding_cache[h] = np.zeros(dim, dtype=np.float32)
             return
 
         # Deduplicate while preserving mapping
@@ -102,8 +129,11 @@ class DenseRetriever:
         self.warm_cache(units)
         q_emb = self._get_embedding(query)
 
+        if not np.any(q_emb):
+            return [(u, 0.0) for u in units[:top_k]]
+
         # Batch dot product
-        doc_embs = np.array([self.embedding_cache[self._text_hash(u.text)] for u in units])
+        doc_embs = np.array([self.embedding_cache.get(self._text_hash(u.text), np.zeros_like(q_emb)) for u in units])
         scores = np.dot(doc_embs, q_emb)
 
         ranked_indices = np.argsort(-scores)[:top_k]

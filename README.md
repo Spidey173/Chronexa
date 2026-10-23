@@ -70,27 +70,33 @@ User Question / Command + Cutoff Date (as_of)
 
 Evaluated across separate Development and Holdout benchmark splits:
 - **Dev Split:** 19 original questions + 76 paraphrased variants (n=95 total). Used to calibrate retrieval rank fusion and temporal boundaries.
-- **Holdout Split:** 8 original questions + 32 paraphrased variants (n=40 total). Evaluated unobserved without tuning or data leakage.
+- **Holdout Split:** 20 original questions + 80 paraphrased variants (n=100 total). Evaluated unobserved without tuning or data leakage across sales, engineering, recruiting, design, legal, and abstention storylines.
 - **Action Benchmark:** 12 complex workplace commands evaluated for type resolution, argument extraction, and strict schema compliance.
 
 ### 1. Retrieval Performance
 
-| Split | Queries | Top-5 Recall | Top-10 Recall | Top-20 Recall | MRR | Forbidden in Top-10 |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Dev Split (Original)** | 19 | 88.9% | **94.4%** | 100.0% | 0.7870 | **0** |
-| **Dev Split (Paraphrases)** | 76 | 75.0% | **83.3%** | 100.0% | 0.6831 | **0** |
-| **Holdout Split (Original)** | 8 | 42.9% | **71.4%** | 100.0% | 0.5315 | **0** |
-| **Holdout Split (Paraphrases - Reranked)** | 32 | 53.6% | **89.3%** | 92.9% | 0.4656 | **0** |
-| **Training Memory Set** | 27 | 72.0% (whole rec) | **92.0%** | 100.0% | 0.6365 | **0** |
+| Split | Query Set | Config | Queries | Top-5 Recall | Top-10 Recall | Top-20 Recall | MRR | Forbidden in Top-10 |
+|---|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **Dev Split** | Original | `hybrid_rrf` | 19 | 88.9% | **94.4%** | 100.0% | 0.7870 | **0** |
+| **Dev Split** | Paraphrases | `hybrid_rrf` | 76 | 75.0% | **83.3%** | 100.0% | 0.6831 | **0** |
+| **Holdout Split** | Original (Baseline) | `hybrid_rrf` | 20 | 70.6% | **76.5%** | 88.2% | 0.7297 | **0** |
+| **Holdout Split** | Paraphrases (Baseline) | `hybrid_rrf` | 80 | 72.1% | **83.8%** | 88.2% | 0.5955 | **0** |
+| **Holdout Split** | Original (Reranked) | `hybrid_rrf_rerank` | 20 | 70.6% | **76.5%** | 88.2% | 0.7591 | **0** |
+| **Holdout Split** | Paraphrases (Reranked) | `hybrid_rrf_rerank` | 80 | 70.6% | **86.8%** | 88.2% | 0.6037 | **0** |
+| **Training Memory** | Full Set | `hybrid_rrf` | 27 | 72.0% | **92.0%** | 100.0% | 0.6365 | **0** |
 
-> **Honest Evaluation Note:** On the unobserved holdout set, baseline Top-10 recall is **71.4%** (original) and **89.3%** (paraphrases with cross-encoder reranking). The drop on unseen phrasing illustrates real-world vocabulary gaps (e.g. unindexed meeting nicknames) that require domain-specific synonym expansion.
+> **Evaluation Reproduction:** Every score above is 100% reproducible via clean commands without cloud API dependencies:
+> - Reproduce Baseline Holdout: `./run.sh eval-holdout hybrid_rrf`
+> - Reproduce Reranked Holdout: `./run.sh eval-holdout hybrid_rrf_rerank`
+> - Reproduce Dev Benchmark: `./run.sh eval-dev hybrid_rrf`
+> On the earlier 32-paraphrase subset, Top-10 recall was 78.6% baseline and 89.3% reranked; on the expanded 100-query holdout suite, it measures **83.8%** baseline and **86.8%** reranked on paraphrases, and **76.5%** on original questions, with zero future temporal leakage.
 
 ### 2. Action Assistant Compliance
 
 - **Dataset:** 12 workplace commands (Slack messages, calendar events, email drafts, clarification triggers, confirmation requests).
 - **Schema Pass Rate:** **12 / 12 (100.0%)**
 - **Argument Accuracy:** **100.0%**
-- **Safety Enforcement:** Validated against [`src/actions/schema.py`](file:///Users/spidey./Downloads/Spidey/Chronexa/src/actions/schema.py). Unknown actions, malformed email addresses, non-ISO timestamps, inverted calendar times (`start >= end`), and unauthorized extra arguments raise `ActionValidationError`.
+- **Safety Enforcement:** Validated against [`src/actions/schema.py`](src/actions/schema.py). Unknown actions, malformed email addresses, non-ISO timestamps, inverted calendar times (`start >= end`), and unauthorized extra arguments raise `ActionValidationError`.
 
 ---
 
@@ -129,10 +135,10 @@ cp .env.example .env
 
 ### 3. Execution Commands via `run.sh`
 
-The runner script [`run.sh`](file:///Users/spidey./Downloads/Spidey/Chronexa/run.sh) provides simple commands for all operations:
+The runner script [`run.sh`](run.sh) provides simple commands for all operations:
 
 ```bash
-# 1. Run the automated test suite (27 unit tests):
+# 1. Run the automated test suite (42 unit and integration tests):
 ./run.sh test
 
 # 2. Run the dry-run action assistant benchmark:
@@ -171,38 +177,47 @@ python3 src/pipeline.py --query "What blockers did Priya mention for QA?" --as-o
 
 Each run displays the strictly visible message pool size, the grounded synthesized answer (with local fallback if offline), cited source records, and the top candidate units with timestamps.
 
-### 5. 🚀 Live Local Search Server & Dashboard Demo
+### 5. 🚀 Live Local Search & Action Server & Dashboard Demo
 
-To turn the browser dashboard from a static replay into a **100% live search engine** that queries all 1,316 workplace records in real-time:
+To turn the browser dashboard from a static replay into a **100% live engine** that executes real-time queries and dry-run actions across all 1,316 workplace records:
 
 ```bash
 # Launch the built-in local API server (port 8000 default):
 ./run.sh serve
-# or: python3 src/server.py 8000
+# or: python3 src/server.py --port 8000
 ```
 
-1. Open **[http://localhost:8000](http://localhost:8000)** in your browser.
+1. Open **[http://127.0.0.1:8000](http://127.0.0.1:8000)** in your browser.
 2. The top banner will immediately update to:  
    `🟢 LIVE LOCAL PIPELINE ACTIVE · FULL CORPUS SEARCH CONNECTED`
-3. Enter **any arbitrary question** or adjust the historical date slider. The UI will execute a live POST request to `/api/search` on your local Python backend, measure real pipeline latency, and render retrieved citations and answers dynamically!
+3. **Live Search**: Enter any arbitrary question or adjust the historical date slider. The UI executes a live POST request to `/api/search` on your local Python backend using the pre-warmed hybrid BM25 + dense engine and renders retrieved citations and synthesized answers dynamically.
+4. **Live Action Assistant**: Enter natural language commands (e.g. *"Open Figma"*, *"Message Sarah on Slack that the geocoding fix looks good"*, *"Delete all my emails from Marcus"*). The UI posts to `/api/action`, invoking `ActionParser` to produce strictly validated dry-run action JSON with destructive confirmation and ambiguity guards.
 
-*(If opened statically via `file:///` or on hosted edge without the Python server running, the dashboard automatically and honestly falls back to pre-indexed benchmark replay mode).*
+*(If opened directly as a static file in the browser or hosted on static edge without the Python server running, the dashboard automatically and honestly falls back to pre-indexed benchmark replay mode).*
 
 ---
 
 ## 🧪 Automated Test Suite
 
-Chronexa includes 27 focused unit tests covering safety, edge cases, and algorithmic correctness:
+Chronexa includes 42 focused unit and integration tests covering safety, edge cases, algorithmic correctness, and API endpoints:
 
-- [`tests/test_temporal.py`](file:///Users/spidey./Downloads/Spidey/Chronexa/tests/test_temporal.py): Timezone normalization (naive vs. aware datetimes), temporal boundary cutoffs, edit trail preservation, and deletion masking.
-- [`tests/test_retrieval.py`](file:///Users/spidey./Downloads/Spidey/Chronexa/tests/test_retrieval.py): BM25 exact identifier matching, synonym retrieval, and zero future leakage.
-- [`tests/test_actions.py`](file:///Users/spidey./Downloads/Spidey/Chronexa/tests/test_actions.py): Strict schema validation, rejection of unauthorized extra arguments, email/datetime format checking, ambiguity clarification, and destructive confirmation.
-- [`tests/test_injection.py`](file:///Users/spidey./Downloads/Spidey/Chronexa/tests/test_injection.py): XML breakout tag escaping and prompt injection directive neutralization.
-- [`tests/test_abstention.py`](file:///Users/spidey./Downloads/Spidey/Chronexa/tests/test_abstention.py): Calibrated abstention on unrecorded facts (e.g. SOC 2 reports, salary figures).
+- [`tests/test_temporal.py`](tests/test_temporal.py): Timezone normalization (naive vs. aware datetimes), temporal boundary cutoffs, edit trail preservation, and deletion masking.
+- [`tests/test_retrieval.py`](tests/test_retrieval.py): BM25 exact identifier matching, synonym retrieval, and zero future leakage.
+- [`tests/test_actions.py`](tests/test_actions.py): Strict schema validation, rejection of unauthorized extra arguments, email/datetime format checking, ambiguity clarification, and destructive confirmation.
+- [`tests/test_injection.py`](tests/test_injection.py): XML breakout tag escaping and prompt injection directive neutralization.
+- [`tests/test_abstention.py`](tests/test_abstention.py): Calibrated abstention on unrecorded facts (e.g. SOC 2 reports, salary figures).
+- [`tests/test_server.py`](tests/test_server.py): Local API server integration tests covering health check, live search, live action parsing, input validation bounds (`top_k`, `mode`, `as_of`), malformed JSON handling, CORS headers, payload limits, and loopback security.
 
 Run all tests:
 ```bash
-.venv/bin/python -m unittest discover tests -v
+# Recommended via project test runner:
+./run.sh test
+
+# Or standard unittest:
+python3 -m unittest discover tests -v
+
+# Or pytest (if installed in your environment):
+python3 -m pytest -q
 ```
 
 ---

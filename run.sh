@@ -37,8 +37,12 @@ case "$MODE" in
         $PYTHON src/pipeline.py --query "$2" --as-of "${3:-2026-09-18T18:00:00-07:00}" --mode "${4:-hybrid}"
         ;;
     test)
-        echo "=== Running Chronexa Automated Test Suite ==="
+        echo "=== Running Chronexa Automated Test Suite (unittest) ==="
         $PYTHON -m unittest discover tests -v
+        ;;
+    pytest)
+        echo "=== Running Chronexa Automated Test Suite (pytest) ==="
+        $PYTHON -m pytest -q
         ;;
     eval)
         echo "=== Running Chronexa Benchmark Evaluation (Dev + Holdout) ==="

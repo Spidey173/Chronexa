@@ -4,4 +4,6 @@ fastembed>=0.8.0
 google-generativeai>=0.8.0
 dateparser>=1.2.0
 certifi>=2024.0.0
+pytest>=8.0.0
+
 

@@ -5,6 +5,7 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
@@ -97,15 +98,17 @@ def search_single(
     data_dir: Path = DATA_DIR,
     mode: str = "hybrid",
     generate_answer: bool = True,
-    top_k: int = 10
+    top_k: int = 10,
+    retriever: Optional[HybridRetriever] = None,
+    generator: Optional[AnswerGenerator] = None,
 ):
     """Executes a single ad-hoc search query with temporal filtering and grounded answer generation."""
     as_of_dt = parse_iso_datetime(as_of)
     visible_units = get_visible_units(as_of_dt, data_dir=data_dir)
 
     if mode == "hybrid":
-        retriever = HybridRetriever()
-        results = retriever.search(query, visible_units, top_k=top_k, as_of=as_of)
+        active_retriever = retriever or HybridRetriever()
+        results = active_retriever.search(query, visible_units, top_k=top_k, as_of=as_of)
     else:
         bm25_idx = BM25Index(visible_units)
         results = bm25_idx.search(query, top_k=top_k)
@@ -117,8 +120,8 @@ def search_single(
     sources = []
     abstained = False
     if generate_answer:
-        generator = AnswerGenerator()
-        gen_res = generator.generate(query, as_of, retrieved_units)
+        active_generator = generator or AnswerGenerator()
+        gen_res = active_generator.generate(query, as_of, retrieved_units)
         answer_text = gen_res["answer"]
         sources = gen_res["sources"]
         abstained = gen_res["abstained"]
