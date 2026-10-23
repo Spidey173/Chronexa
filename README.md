@@ -66,12 +66,17 @@ User Question / Command + Cutoff Date (as_of)
 
 ### ⚙️ Optional Dependencies & Reduced Functionality
 
-Chronexa guards optional packages to prevent crashes when external libraries are absent. However, running without them operates with **explicitly reduced functionality**:
+Chronexa includes import guards and fallback logic for optional packages so the pipeline can operate without crashing if external dependencies are missing. 
+
+> [!NOTE]
+> The fallback code gracefully handles missing dependencies (for instance, missing `fastembed` bypasses dense vector search and cross-encoder reranking, falling back to pure BM25 search). In the test suite, these fallback paths are verified by simulating unavailable models/cache in unit tests; they do not uninstall the package to verify a clean install end-to-end.
+
+When these packages are omitted or unavailable, the system operates with **explicitly reduced functionality**:
 
 | Omitted Package | Fallback Behavior | Reduced Functionality Impact |
 |---|---|---|
-| **Without `fastembed`** | Disables dense vector search and cross-encoder reranking. `DenseRetriever` returns empty matches and `CrossEncoderReranker` acts as a passthrough. | **Lexical-only retrieval:** Retrieval runs purely via Okapi BM25. Semantic vector similarity and deep cross-attention reranking are disabled. |
-| **Without `dateparser`** | Disables natural-language relative date resolution. Falls back to explicit ISO regex (`YYYY-MM-DD`) and `datetime.strptime` patterns. | **No relative date boosting:** Relative expressions like *"yesterday"*, *"last week"*, or *"next Monday"* are not resolved for temporal score boosting or calendar chaining. Queries rely strictly on lexical matching. |
+| **Without `fastembed`** | Falls back to pure BM25 search. `DenseRetriever` returns empty matches and `CrossEncoderReranker` acts as a passthrough. | **Lexical-only retrieval:** Retrieval runs purely via Okapi BM25. Semantic vector similarity and deep cross-attention reranking are disabled. |
+| **Without `dateparser`** | Falls back to explicit ISO regex (`YYYY-MM-DD`) and `datetime.strptime` patterns. | **No relative date boosting:** Relative expressions like *"yesterday"*, *"last week"*, or *"next Monday"* are not resolved for temporal score boosting or calendar chaining. Queries rely strictly on lexical matching. |
 
 ---
 
@@ -79,7 +84,7 @@ Chronexa guards optional packages to prevent crashes when external libraries are
 
 Chronexa includes structured evaluation datasets across Development and Holdout splits:
 - **Dev Split (`evals/memory_train.jsonl`):** 19 original questions + 76 paraphrased variants used to inspect retrieval rank fusion and temporal boundaries.
-- **Holdout Split (`eval/holdout_questions.jsonl` & `eval/holdout_paraphrases.jsonl`):** 20 core workplace questions across 10 distinct storylines (sales, engineering, recruiting, design, legal, and abstention), each evaluated with 4 paraphrased phrasings (80 paraphrases, 100 total evaluation runs) to benchmark semantic phrasing robustness without data leakage.
+- **Holdout Split (`eval/holdout_original.jsonl` & `eval/holdout_paraphrases.jsonl`):** 20 core questions, each with four paraphrases (80 paraphrases, 100 total evaluation runs), providing held-out questions used to evaluate phrasing robustness across diverse user queries.
 - **Action Benchmark (`evals/actions_train.jsonl`):** 12 complex workplace commands evaluated for type resolution, argument extraction, and strict schema compliance.
 
 Run the evaluation commands locally without cloud API dependencies:
@@ -198,16 +203,16 @@ To connect the browser dashboard to your live local Python search engine:
 
 ## 🧪 Automated Test Suite
 
-Chronexa includes 46 focused unit and integration tests covering safety, edge cases, algorithmic correctness, API endpoints, and optional dependency fallbacks:
+Chronexa defines 46 test methods across unit and integration tests covering safety, edge cases, algorithmic correctness, API endpoints, and optional dependency fallbacks:
 
-- [`tests/test_temporal.py`](tests/test_temporal.py) (10 tests): Timezone normalization (naive vs. aware datetimes), temporal boundary cutoffs, edit trail preservation, deletion masking, and **dateparser-missing fallback behavior** (ensuring explicit ISO dates extract cleanly while relative expressions degrade gracefully without crashing).
-- [`tests/test_retrieval.py`](tests/test_retrieval.py) (5 tests): BM25 exact identifier matching, synonym retrieval, zero future leakage, and **fastembed-missing fallback behavior** (verifying dense retriever returns empty matches and reranker acts as safe passthrough to preserve pure BM25 ranking).
+- [`tests/test_temporal.py`](tests/test_temporal.py) (10 tests): Timezone normalization (naive vs. aware datetimes), temporal boundary cutoffs, edit trail preservation, deletion masking, and **dateparser fallback behavior** (tested by simulating parser unavailability to ensure explicit ISO dates extract cleanly while relative expressions degrade gracefully without crashing).
+- [`tests/test_retrieval.py`](tests/test_retrieval.py) (5 tests): BM25 exact identifier matching, synonym retrieval, temporal boundary enforcement (`timestamp <= as_of`), and **fastembed fallback behavior** (tested by simulating model/cache unavailability to verify dense retriever returns empty matches and reranker acts as safe passthrough to preserve pure BM25 ranking).
 - [`tests/test_actions.py`](tests/test_actions.py) (10 tests): Strict schema validation, rejection of unauthorized extra arguments, email/datetime format checking, ambiguity clarification, and destructive confirmation.
 - [`tests/test_injection.py`](tests/test_injection.py) (2 tests): XML breakout tag escaping and prompt injection directive neutralization.
 - [`tests/test_abstention.py`](tests/test_abstention.py) (4 tests): Calibrated abstention on unrecorded facts (e.g. SOC 2 reports, salary figures).
 - [`tests/test_server.py`](tests/test_server.py) (15 tests): Local API server integration tests covering health check, live search, live action parsing, input validation bounds (`top_k`, `mode`, `as_of`), malformed JSON handling, CORS headers, payload limits, and loopback security.
 
-Run all 46 tests:
+To execute and verify the 46 test methods:
 ```bash
 # Recommended via project test runner (executes pytest with verbose output):
 ./run.sh test
