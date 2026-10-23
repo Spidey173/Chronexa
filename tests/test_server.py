@@ -19,8 +19,10 @@ from src.server import ChronexaRequestHandler, MAX_REQUEST_BODY_BYTES
 class TestChronexaServer(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # Initialize engines once for fast tests
+        # Initialize engines once for fast, fully offline tests
         ChronexaRequestHandler.initialize_engines(pre_warm=False)
+        if ChronexaRequestHandler.action_parser is not None:
+            ChronexaRequestHandler.action_parser.provider = "none"
         # Bind to port 0 to get an ephemeral open port on loopback
         cls.server = HTTPServer(("127.0.0.1", 0), ChronexaRequestHandler)
         cls.port = cls.server.server_address[1]

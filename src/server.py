@@ -1,10 +1,10 @@
-"""Lightweight local HTTP server for Chronexa interactive search & action demo.
+"""Lightweight local development & demo server for Chronexa workplace search prototype.
 
-Restricted strictly to trusted local loopback (127.0.0.1) with:
-  - Loopback-only binding (default 127.0.0.1, refuses non-local clients)
+Designed strictly as a local evaluation tool and portfolio prototype server:
+  - Binds strictly to local loopback (127.0.0.1) for safe developer evaluation
   - Strict CORS origin validation (allows only localhost / 127.0.0.1 / local file://)
-  - Strict request size limit (64 KB max payload to prevent memory exhaustion)
-  - Pure Python standard library (http.server) with zero external server dependencies
+  - Strict request size limit (64 KB max payload to prevent resource exhaustion)
+  - Pure Python standard library (http.server) with zero production web server claims
 """
 import argparse
 import json
@@ -313,9 +313,10 @@ class ChronexaRequestHandler(SimpleHTTPRequestHandler):
 
 
 def run_server(host: str = "127.0.0.1", port: int = 8000):
-    """Starts the Chronexa local API server restricted strictly to trusted loopback."""
-    print(f"=== Chronexa Local Engine Server (Security Hardened) ===")
+    """Starts the Chronexa local demo server restricted strictly to trusted loopback."""
+    print(f"=== Chronexa Local Demo Server (Loopback Prototype) ===")
     print(f"Loopback Interface: {host} (refuses non-local network traffic)")
+    print(f"Notice: Local development demo server for interactive testing and portfolio review.")
     print(f"Max Request Payload: {MAX_REQUEST_BODY_BYTES // 1024} KB")
     print(f"Pre-warming shared embedding cache & engines...")
     ChronexaRequestHandler.initialize_engines(pre_warm=True)

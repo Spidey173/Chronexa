@@ -69,7 +69,7 @@ class HybridRetriever:
         for rank, (u, _) in enumerate(bm25_hits, start=1):
             rrf_scores[u.id] += bm25_weight / (rrf_k + rank)
 
-        if self.enable_dense and self.dense is not None and dense_weight > 0.0:
+        if self.enable_dense and self.dense is not None and getattr(self.dense, "is_available", lambda: True)() and dense_weight > 0.0:
             dense_hits = self.dense.search(query, visible_units, top_k=min(dense_top, len(visible_units)))
             for rank, (u, _) in enumerate(dense_hits, start=1):
                 rrf_scores[u.id] += dense_weight / (rrf_k + rank)
@@ -169,7 +169,10 @@ class HybridRetriever:
             return []
 
         # Extract dates from hop-1 evidence
-        import dateparser
+        try:
+            import dateparser
+        except ImportError:
+            dateparser = None
         from datetime import datetime, timedelta
 
         dates_found = set()
@@ -186,8 +189,13 @@ class HybridRetriever:
                 u.text, re.I
             ):
                 try:
-                    dt = dateparser.parse(m.group(0))
-                    if dt:
+                    if dateparser is not None:
+                        dt = dateparser.parse(m.group(0))
+                        if dt:
+                            dates_found.add(dt.strftime("%Y-%m-%d"))
+                    else:
+                        clean_str = re.sub(r",", "", m.group(0))
+                        dt = datetime.strptime(clean_str, "%B %d %Y" if len(clean_str.split()[0]) > 3 else "%b %d %Y")
                         dates_found.add(dt.strftime("%Y-%m-%d"))
                 except Exception:
                     pass
@@ -199,9 +207,10 @@ class HybridRetriever:
                 u.text, re.I
             ):
                 try:
-                    dt = dateparser.parse(m.group(0), settings={"PREFER_DATES_FROM": "future"})
-                    if dt:
-                        dates_found.add(dt.strftime("%Y-%m-%d"))
+                    if dateparser is not None:
+                        dt = dateparser.parse(m.group(0), settings={"PREFER_DATES_FROM": "future"})
+                        if dt:
+                            dates_found.add(dt.strftime("%Y-%m-%d"))
                 except Exception:
                     pass
 
@@ -217,9 +226,10 @@ class HybridRetriever:
                 u.text, re.I
             ):
                 try:
-                    dt = dateparser.parse(m.group(1))
-                    if dt:
-                        dates_found.add(dt.strftime("%Y-%m-%d"))
+                    if dateparser is not None:
+                        dt = dateparser.parse(m.group(1))
+                        if dt:
+                            dates_found.add(dt.strftime("%Y-%m-%d"))
                 except Exception:
                     pass
 

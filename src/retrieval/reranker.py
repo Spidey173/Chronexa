@@ -9,7 +9,13 @@ Re-scores candidate passages from hybrid BM25 + dense search using deep cross-at
 import time
 from typing import List, Tuple, Optional, Dict, Any
 
-from fastembed.rerank.cross_encoder import TextCrossEncoder
+try:
+    from fastembed.rerank.cross_encoder import TextCrossEncoder
+    HAS_FASTEMBED_RERANK = True
+except ImportError:
+    TextCrossEncoder = None
+    HAS_FASTEMBED_RERANK = False
+
 from eval_harness.records import Unit
 
 
@@ -28,12 +34,23 @@ class CrossEncoderReranker:
         self.batch_size = batch_size
         self.cache_dir = cache_dir
         
-        t0 = time.time()
-        self.encoder = TextCrossEncoder(model_name=model_name, cache_dir=cache_dir, threads=threads)
-        self.load_time_sec = time.time() - t0
+        self.encoder = None
+        self.load_time_sec = 0.0
+        if HAS_FASTEMBED_RERANK and TextCrossEncoder is not None:
+            try:
+                t0 = time.time()
+                self.encoder = TextCrossEncoder(model_name=model_name, cache_dir=cache_dir, threads=threads)
+                self.load_time_sec = time.time() - t0
+            except Exception as e:
+                self.encoder = None
+                print(f"[CrossEncoderReranker] Warning: Could not initialize cross-encoder ({e}). Falling back to passthrough.")
         
         self.truncation_count = 0
         self.total_candidates_processed = 0
+
+    def is_available(self) -> bool:
+        """Returns True if the cross-encoder model is loaded and ready."""
+        return self.encoder is not None
 
     def rerank(
         self,
@@ -44,9 +61,13 @@ class CrossEncoderReranker:
         """Reranks candidate (Unit, initial_score) pairs using cross-encoder cross-attention.
 
         Returns reranked (Unit, rerank_score) pairs. If top_k is None, returns the entire reranked pool.
+        Falls back to original ranking if cross-encoder is unavailable.
         """
         if not candidates:
             return []
+
+        if self.encoder is None:
+            return candidates[:top_k] if top_k is not None else candidates
 
         doc_texts = []
         for u, _ in candidates:
@@ -81,6 +102,9 @@ class CrossEncoderReranker:
         Takes the maximum cross-encoder score across all queries for each document.
         """
         if not candidates or not queries:
+            return candidates[:top_k] if top_k else candidates
+
+        if self.encoder is None:
             return candidates[:top_k] if top_k else candidates
 
         unique_queries = []

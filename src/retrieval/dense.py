@@ -9,7 +9,7 @@ Features:
 import hashlib
 import re
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 import numpy as np
 try:
     from fastembed import TextEmbedding
@@ -66,7 +66,11 @@ class DenseRetriever:
         except Exception as e:
             print(f"[DenseRetriever] Warning: Failed to save disk cache: {e}")
 
-    def _get_embedding(self, text: str) -> np.ndarray:
+    def is_available(self) -> bool:
+        """Returns True if the dense retriever has an active model or cached vectors."""
+        return self.model is not None or bool(self.embedding_cache)
+
+    def _get_embedding(self, text: str) -> Optional[np.ndarray]:
         h = self._text_hash(text)
         if h not in self.embedding_cache:
             if self.model is not None:
@@ -75,10 +79,7 @@ class DenseRetriever:
                 normed = emb / norm if norm > 0 else emb
                 self.embedding_cache[h] = normed
             else:
-                dim = 384
-                if self.embedding_cache:
-                    dim = len(next(iter(self.embedding_cache.values())))
-                return np.zeros(dim, dtype=np.float32)
+                return None
         return self.embedding_cache[h]
 
     def warm_cache(self, units: List[Unit]):
@@ -91,16 +92,7 @@ class DenseRetriever:
                 uncached_texts.append(u.text)
                 uncached_hashes.append(h)
 
-        if not uncached_texts:
-            return
-
-        if self.model is None:
-            dim = 384
-            if self.embedding_cache:
-                dim = len(next(iter(self.embedding_cache.values())))
-            for h in uncached_hashes:
-                if h not in self.embedding_cache:
-                    self.embedding_cache[h] = np.zeros(dim, dtype=np.float32)
+        if not uncached_texts or self.model is None:
             return
 
         # Deduplicate while preserving mapping
@@ -122,19 +114,40 @@ class DenseRetriever:
         print(f"[DenseRetriever] Successfully cached {len(unique_texts)} embeddings.")
 
     def search(self, query: str, units: List[Unit], top_k: int = 20) -> List[Tuple[Unit, float]]:
-        """Rank visible units by cosine similarity against the query."""
+        """Rank visible units by cosine similarity against the query.
+
+        Returns an empty list if embeddings cannot be generated or retrieved, preventing
+        arbitrary zero-vector ranking noise from corrupting downstream fusion.
+        """
         if not units:
             return []
 
         self.warm_cache(units)
         q_emb = self._get_embedding(query)
 
-        if not np.any(q_emb):
-            return [(u, 0.0) for u in units[:top_k]]
+        if q_emb is None or not np.any(q_emb):
+            return []
 
-        # Batch dot product
-        doc_embs = np.array([self.embedding_cache.get(self._text_hash(u.text), np.zeros_like(q_emb)) for u in units])
-        scores = np.dot(doc_embs, q_emb)
+        # Collect units with valid embeddings
+        doc_embs = []
+        valid_units = []
+        for u in units:
+            h = self._text_hash(u.text)
+            emb = self.embedding_cache.get(h)
+            if emb is not None and np.any(emb):
+                doc_embs.append(emb)
+                valid_units.append(u)
+            elif self.model is not None:
+                emb = self._get_embedding(u.text)
+                if emb is not None and np.any(emb):
+                    doc_embs.append(emb)
+                    valid_units.append(u)
+
+        if not doc_embs:
+            return []
+
+        doc_embs_arr = np.array(doc_embs)
+        scores = np.dot(doc_embs_arr, q_emb)
 
         ranked_indices = np.argsort(-scores)[:top_k]
-        return [(units[idx], float(scores[idx])) for idx in ranked_indices]
+        return [(valid_units[idx], float(scores[idx])) for idx in ranked_indices]

@@ -73,23 +73,24 @@ def resolve_dates_with_dateparser(query: str, as_of: datetime) -> List[str]:
             span_words = words[i:i + span_len]
             if any(w.lower() in DATE_INDICATORS for w in span_words):
                 phrase = " ".join(span_words)
-                try:
-                    dt = dateparser.parse(
-                        phrase,
-                        languages=["en"],
-                        settings={
-                            "RELATIVE_BASE": base,
-                            "PREFER_DATES_FROM": "past"
-                        }
-                    )
-                    if dt and abs((base - dt).days) <= 90:
-                        # Ensure year is reasonable
-                        if dt.year == base.year or dt.year == base.year - 1:
-                            # Avoid false positives on common words
-                            if phrase.lower() not in {"to", "out", "we", "on", "in", "at", "did", "do", "how", "when", "day", "days"}:
-                                resolved.add(dt.strftime("%Y-%m-%d"))
-                except Exception:
-                    pass
+                if dateparser is not None:
+                    try:
+                        dt = dateparser.parse(
+                            phrase,
+                            languages=["en"],
+                            settings={
+                                "RELATIVE_BASE": base,
+                                "PREFER_DATES_FROM": "past"
+                            }
+                        )
+                        if dt and abs((base - dt).days) <= 90:
+                            # Ensure year is reasonable
+                            if dt.year == base.year or dt.year == base.year - 1:
+                                # Avoid false positives on common words
+                                if phrase.lower() not in {"to", "out", "we", "on", "in", "at", "did", "do", "how", "when", "day", "days"}:
+                                    resolved.add(dt.strftime("%Y-%m-%d"))
+                    except Exception:
+                        pass
 
     return sorted(list(resolved))
 

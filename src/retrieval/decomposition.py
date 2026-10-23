@@ -11,7 +11,10 @@ import re
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
 
-import dateparser
+try:
+    import dateparser
+except ImportError:
+    dateparser = None
 from eval_harness.records import Unit
 from src.retrieval.temporal import resolve_dates_with_dateparser, DATE_INDICATORS
 
@@ -163,8 +166,14 @@ def _fallback_two_hop(query: str, as_of: str, hop1_hits: List[Tuple[Unit, float]
         body = u.text.split("]\n", 1)[-1] if "]\n" in u.text else u.text.split("] ", 1)[-1]
         for m in re.finditer(r"\b(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2}),?\s+(\d{4})\b", body, re.I):
             try:
-                dt = dateparser.parse(m.group(0))
-                if dt:
+                if dateparser is not None:
+                    dt = dateparser.parse(m.group(0))
+                    if dt:
+                        date_candidates.append(dt.strftime("%Y-%m-%d"))
+                else:
+                    from datetime import datetime
+                    clean_str = re.sub(r",", "", m.group(0))
+                    dt = datetime.strptime(clean_str, "%B %d %Y")
                     date_candidates.append(dt.strftime("%Y-%m-%d"))
             except Exception:
                 pass

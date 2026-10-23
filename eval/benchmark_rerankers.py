@@ -25,7 +25,10 @@ EVAL_HARNESS_DIR = ROOT_DIR / "eval_harness"
 if str(EVAL_HARNESS_DIR) not in sys.path:
     sys.path.insert(0, str(EVAL_HARNESS_DIR))
 
-from fastembed.rerank.cross_encoder import TextCrossEncoder
+try:
+    from fastembed.rerank.cross_encoder import TextCrossEncoder
+except ImportError:
+    TextCrossEncoder = None
 
 from src.config import DATA_DIR
 from src.ingestion.loader import get_visible_units
@@ -36,6 +39,9 @@ from eval_harness.score_retrieval import score as score_retrieval
 
 
 def benchmark():
+    if TextCrossEncoder is None:
+        print("[benchmark_rerankers] fastembed not installed. Skipping cross-encoder benchmark.")
+        return
     ctx = records_lib.context(DATA_DIR)
     with open("eval/dev_paraphrases.jsonl") as f:
         dev_para = [json.loads(line) for line in f if line.strip()]

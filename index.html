@@ -3856,35 +3856,73 @@ window.CHRONEXA_DATA = {
       updateTemporalTelemetry(e.target.value);
     });
 
-    // API Detection (Live Local Search Engine)
+    // Dynamic API Detection & Heartbeat Sync (Live Local Search Engine)
     window.CHRONEXA_LIVE = false;
     window.CHRONEXA_API_URL = window.location.protocol.startsWith('http') ? '' : 'http://localhost:8000';
 
+    function updateLiveBanner(isLive) {
+      window.CHRONEXA_LIVE = isLive;
+      const topBanner = document.querySelector('.top-banner');
+      if (!topBanner) return;
+      if (isLive) {
+        topBanner.style.background = 'linear-gradient(90deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.08))';
+        topBanner.style.borderColor = 'rgba(16, 185, 129, 0.35)';
+        topBanner.innerHTML = `
+          <div class="live-badge">
+            <span class="pulse-dot" style="background: #10b981; box-shadow: 0 0 8px #10b981;"></span>
+            <span style="color: #10b981;">🟢 LIVE LOCAL PIPELINE ACTIVE · FULL CORPUS SEARCH CONNECTED</span>
+          </div>
+          <div style="font-family: var(--font-mono); font-size: 0.75rem; color: #a7f3d0;">
+            <span>Local demo server on 127.0.0.1:8000 · Arbitrary questions and custom dates search live</span>
+          </div>
+        `;
+      } else {
+        topBanner.style.background = '';
+        topBanner.style.borderColor = '';
+        topBanner.innerHTML = `
+          <div class="live-badge">
+            <span class="pulse-dot"></span>
+            <span>PORTFOLIO DEMO · PRE-INDEXED BENCHMARK REPLAY</span>
+          </div>
+          <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);">
+            <span>Strict Temporal Filtering (time &le; as_of) · Run <code>./run.sh serve</code> to connect live engine</span>
+          </div>
+        `;
+      }
+    }
+
     function checkLiveBackend() {
-      fetch(`${window.CHRONEXA_API_URL}/api/health`, { method: 'GET' })
-        .then(r => r.json())
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 2000);
+
+      fetch(`${window.CHRONEXA_API_URL}/api/health`, { method: 'GET', signal: controller.signal })
+        .then(r => {
+          clearTimeout(timer);
+          if (r.ok) return r.json();
+          throw new Error('Server returned non-200');
+        })
         .then(data => {
           if (data && data.status === 'ok') {
-            window.CHRONEXA_LIVE = true;
-            const topBanner = document.querySelector('.top-banner');
-            if (topBanner) {
-              topBanner.innerHTML = `
-                <div class="live-badge">
-                  <span class="pulse-dot" style="background: #10b981; box-shadow: 0 0 8px #10b981;"></span>
-                  <span style="color: #10b981;">🟢 LIVE LOCAL PIPELINE ACTIVE · FULL CORPUS SEARCH CONNECTED</span>
-                </div>
-                <div style="font-family: var(--font-mono); font-size: 0.75rem; color: #a7f3d0;">
-                  <span>Python backend running on localhost:8000 · Arbitrary questions and custom dates search live</span>
-                </div>
-              `;
+            if (!window.CHRONEXA_LIVE) {
+              updateLiveBanner(true);
+            }
+          } else {
+            if (window.CHRONEXA_LIVE) {
+              updateLiveBanner(false);
             }
           }
         })
         .catch(() => {
-          // Stay in honest pre-indexed replay mode
+          clearTimeout(timer);
+          if (window.CHRONEXA_LIVE) {
+            updateLiveBanner(false);
+          }
         });
     }
+
+    // Initial check + 8-second periodic heartbeat to keep live status in sync
     checkLiveBackend();
+    setInterval(checkLiveBackend, 8000);
 
     function executeSearch() {
       const qRaw = queryInput.value.trim();
@@ -3968,6 +4006,8 @@ window.CHRONEXA_DATA = {
         })
         .catch(err => {
           console.warn("Live API call failed, falling back to replay:", err);
+          updateLiveBanner(false);
+          showToast("Local backend disconnected. Switched to offline replay mode.");
           renderReplaySearch(q, asOf);
         });
         return;
@@ -4242,6 +4282,8 @@ window.CHRONEXA_DATA = {
         })
         .catch(err => {
           console.warn("Live action API failed, falling back to local heuristic:", err);
+          updateLiveBanner(false);
+          showToast("Local backend disconnected. Switched to offline replay mode.");
           handleReplayAction(rawInput, cmd);
         });
         return;

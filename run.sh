@@ -37,12 +37,16 @@ case "$MODE" in
         $PYTHON src/pipeline.py --query "$2" --as-of "${3:-2026-09-18T18:00:00-07:00}" --mode "${4:-hybrid}"
         ;;
     test)
+        echo "=== Running Chronexa Automated Test Suite (pytest) ==="
+        $PYTHON -m pytest tests/ -v
+        ;;
+    unittest)
         echo "=== Running Chronexa Automated Test Suite (unittest) ==="
         $PYTHON -m unittest discover tests -v
         ;;
     pytest)
         echo "=== Running Chronexa Automated Test Suite (pytest) ==="
-        $PYTHON -m pytest -q
+        $PYTHON -m pytest tests/ -q
         ;;
     eval)
         echo "=== Running Chronexa Benchmark Evaluation (Dev + Holdout) ==="
@@ -71,8 +75,8 @@ case "$MODE" in
         $PYTHON eval_harness/score_actions.py --gold evals/actions_train.jsonl --predictions outputs/actions_train_predictions.jsonl
         ;;
     all|*)
-        echo "=== Running Chronexa Automated Test Suite ==="
-        $PYTHON -m unittest discover tests
+        echo "=== Running Chronexa Automated Test Suite (pytest) ==="
+        $PYTHON -m pytest tests/ -v
         echo ""
         echo "=== Running Chronexa Memory Pipeline ==="
         $PYTHON src/pipeline.py --mode hybrid --output outputs/memory_train_answers.jsonl

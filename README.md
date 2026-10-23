@@ -69,8 +69,8 @@ User Question / Command + Cutoff Date (as_of)
 ## 📊 Measured Benchmark Results
 
 Evaluated across separate Development and Holdout benchmark splits:
-- **Dev Split:** 19 original questions + 76 paraphrased variants (n=95 total). Used to calibrate retrieval rank fusion and temporal boundaries.
-- **Holdout Split:** 20 original questions + 80 paraphrased variants (n=100 total). Evaluated unobserved without tuning or data leakage across sales, engineering, recruiting, design, legal, and abstention storylines.
+- **Dev Split:** 19 original questions + 76 paraphrased variants (4 per question, n=95 total runs). Used to calibrate retrieval rank fusion and temporal boundaries.
+- **Holdout Split:** 20 core workplace questions across 10 distinct storylines (sales, engineering, recruiting, design, legal, and abstention), each evaluated with 4 paraphrased phrasings (80 paraphrases, 100 total evaluation runs). This explicitly tests retrieval robustness against semantic query reformulation and user phrasing variation, rather than representing 100 independent corporate scenarios.
 - **Action Benchmark:** 12 complex workplace commands evaluated for type resolution, argument extraction, and strict schema compliance.
 
 ### 1. Retrieval Performance
@@ -89,7 +89,7 @@ Evaluated across separate Development and Holdout benchmark splits:
 > - Reproduce Baseline Holdout: `./run.sh eval-holdout hybrid_rrf`
 > - Reproduce Reranked Holdout: `./run.sh eval-holdout hybrid_rrf_rerank`
 > - Reproduce Dev Benchmark: `./run.sh eval-dev hybrid_rrf`
-> On the earlier 32-paraphrase subset, Top-10 recall was 78.6% baseline and 89.3% reranked; on the expanded 100-query holdout suite, it measures **83.8%** baseline and **86.8%** reranked on paraphrases, and **76.5%** on original questions, with zero future temporal leakage.
+> On the earlier 32-paraphrase subset, Top-10 recall was 78.6% baseline and 89.3% reranked; on the expanded 20-question holdout suite (100 evaluation runs across 4 paraphrases each), it measures **83.8%** baseline and **86.8%** reranked on paraphrases, and **76.5%** on original questions, with zero future temporal leakage.
 
 ### 2. Action Assistant Compliance
 
@@ -177,12 +177,14 @@ python3 src/pipeline.py --query "What blockers did Priya mention for QA?" --as-o
 
 Each run displays the strictly visible message pool size, the grounded synthesized answer (with local fallback if offline), cited source records, and the top candidate units with timestamps.
 
-### 5. 🚀 Live Local Search & Action Server & Dashboard Demo
+### 5. 🚀 Local Demo Server & Interactive Dashboard (Loopback Prototype)
 
-To turn the browser dashboard from a static replay into a **100% live engine** that executes real-time queries and dry-run actions across all 1,316 workplace records:
+Chronexa provides a lightweight local demonstration server built on Python's standard library (`http.server`). It is designed specifically for interactive developer testing and portfolio exploration on a trusted local machine—not as a production SaaS web service. For safe local evaluation, it binds strictly to local loopback (`127.0.0.1`), enforces strict CORS origin checks, caps request bodies at 64 KB, and shares pre-warmed retrieval engines.
+
+To connect the browser dashboard to your live local Python search engine:
 
 ```bash
-# Launch the built-in local API server (port 8000 default):
+# Launch the built-in local demo server (port 8000 default):
 ./run.sh serve
 # or: python3 src/server.py --port 8000
 ```
@@ -190,10 +192,11 @@ To turn the browser dashboard from a static replay into a **100% live engine** t
 1. Open **[http://127.0.0.1:8000](http://127.0.0.1:8000)** in your browser.
 2. The top banner will immediately update to:  
    `🟢 LIVE LOCAL PIPELINE ACTIVE · FULL CORPUS SEARCH CONNECTED`
+   *(An 8-second background heartbeat keeps the UI banner in sync; if the server is stopped, the UI cleanly falls back to pre-indexed replay mode).*
 3. **Live Search**: Enter any arbitrary question or adjust the historical date slider. The UI executes a live POST request to `/api/search` on your local Python backend using the pre-warmed hybrid BM25 + dense engine and renders retrieved citations and synthesized answers dynamically.
 4. **Live Action Assistant**: Enter natural language commands (e.g. *"Open Figma"*, *"Message Sarah on Slack that the geocoding fix looks good"*, *"Delete all my emails from Marcus"*). The UI posts to `/api/action`, invoking `ActionParser` to produce strictly validated dry-run action JSON with destructive confirmation and ambiguity guards.
 
-*(If opened directly as a static file in the browser or hosted on static edge without the Python server running, the dashboard automatically and honestly falls back to pre-indexed benchmark replay mode).*
+*(If opened directly as a static file in the browser or hosted on static edge without the local Python server running, the dashboard automatically and honestly falls back to pre-indexed benchmark replay mode).*
 
 ---
 
@@ -208,16 +211,16 @@ Chronexa includes 42 focused unit and integration tests covering safety, edge ca
 - [`tests/test_abstention.py`](tests/test_abstention.py): Calibrated abstention on unrecorded facts (e.g. SOC 2 reports, salary figures).
 - [`tests/test_server.py`](tests/test_server.py): Local API server integration tests covering health check, live search, live action parsing, input validation bounds (`top_k`, `mode`, `as_of`), malformed JSON handling, CORS headers, payload limits, and loopback security.
 
-Run all tests:
+Run all 42 tests:
 ```bash
-# Recommended via project test runner:
+# Recommended via project test runner (executes pytest with verbose output):
 ./run.sh test
+
+# Or direct pytest:
+python3 -m pytest tests/ -v
 
 # Or standard unittest:
 python3 -m unittest discover tests -v
-
-# Or pytest (if installed in your environment):
-python3 -m pytest -q
 ```
 
 ---
@@ -230,7 +233,7 @@ python3 -m pytest -q
   - Reciprocal Rank Fusion (RRF) logic and candidate pool merger (`src/retrieval/ranker.py`).
   - Strict Action Schemas with field-level validators and unauthorized argument rejections (`src/actions/schema.py`).
   - XML sandboxing, prompt injection sanitization, and calibrated abstention logic (`src/generation/prompt.py`, `src/generation/generator.py`).
-  - 27-test automated verification suite (`tests/`).
+  - 42-test automated verification suite (`tests/`).
 - **External Libraries Used:**
   - `fastembed`: ONNX-based local embedding inference (`BAAI/bge-small-en-v1.5`).
   - `numpy`: Vector array operations and similarity scoring.
