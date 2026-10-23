@@ -66,37 +66,24 @@ User Question / Command + Cutoff Date (as_of)
 
 ---
 
-## 📊 Measured Benchmark Results
+## 📁 Evaluation Datasets & Runners
 
-Evaluated across separate Development and Holdout benchmark splits:
-- **Dev Split:** 19 original questions + 76 paraphrased variants (4 per question, n=95 total runs). Used to calibrate retrieval rank fusion and temporal boundaries.
-- **Holdout Split:** 20 core workplace questions across 10 distinct storylines (sales, engineering, recruiting, design, legal, and abstention), each evaluated with 4 paraphrased phrasings (80 paraphrases, 100 total evaluation runs). This explicitly tests retrieval robustness against semantic query reformulation and user phrasing variation, rather than representing 100 independent corporate scenarios.
-- **Action Benchmark:** 12 complex workplace commands evaluated for type resolution, argument extraction, and strict schema compliance.
+Chronexa includes structured evaluation datasets across Development and Holdout splits:
+- **Dev Split (`evals/memory_train.jsonl`):** 19 original questions + 76 paraphrased variants used to inspect retrieval rank fusion and temporal boundaries.
+- **Holdout Split (`eval/holdout_questions.jsonl` & `eval/holdout_paraphrases.jsonl`):** 20 core workplace questions across 10 distinct storylines (sales, engineering, recruiting, design, legal, and abstention), each evaluated with 4 paraphrased phrasings (80 paraphrases, 100 total evaluation runs) to benchmark semantic phrasing robustness without data leakage.
+- **Action Benchmark (`evals/actions_train.jsonl`):** 12 complex workplace commands evaluated for type resolution, argument extraction, and strict schema compliance.
 
-### 1. Retrieval Performance
+Run the evaluation commands locally without cloud API dependencies:
+```bash
+# Run memory retrieval & answer evaluation:
+./run.sh memory
 
-| Split | Query Set | Config | Queries | Top-5 Recall | Top-10 Recall | Top-20 Recall | MRR | Forbidden in Top-10 |
-|---|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Dev Split** | Original | `hybrid_rrf` | 19 | 88.9% | **94.4%** | 100.0% | 0.7870 | **0** |
-| **Dev Split** | Paraphrases | `hybrid_rrf` | 76 | 75.0% | **83.3%** | 100.0% | 0.6831 | **0** |
-| **Holdout Split** | Original (Baseline) | `hybrid_rrf` | 20 | 70.6% | **76.5%** | 88.2% | 0.7297 | **0** |
-| **Holdout Split** | Paraphrases (Baseline) | `hybrid_rrf` | 80 | 72.1% | **83.8%** | 88.2% | 0.5955 | **0** |
-| **Holdout Split** | Original (Reranked) | `hybrid_rrf_rerank` | 20 | 70.6% | **76.5%** | 88.2% | 0.7591 | **0** |
-| **Holdout Split** | Paraphrases (Reranked) | `hybrid_rrf_rerank` | 80 | 70.6% | **86.8%** | 88.2% | 0.6037 | **0** |
-| **Training Memory** | Full Set | `hybrid_rrf` | 27 | 72.0% | **92.0%** | 100.0% | 0.6365 | **0** |
+# Run action schema validation & safety guardrail checks:
+./run.sh actions
 
-> **Evaluation Reproduction:** Every score above is 100% reproducible via clean commands without cloud API dependencies:
-> - Reproduce Baseline Holdout: `./run.sh eval-holdout hybrid_rrf`
-> - Reproduce Reranked Holdout: `./run.sh eval-holdout hybrid_rrf_rerank`
-> - Reproduce Dev Benchmark: `./run.sh eval-dev hybrid_rrf`
-> On the earlier 32-paraphrase subset, Top-10 recall was 78.6% baseline and 89.3% reranked; on the expanded 20-question holdout suite (100 evaluation runs across 4 paraphrases each), it measures **83.8%** baseline and **86.8%** reranked on paraphrases, and **76.5%** on original questions, with zero future temporal leakage.
-
-### 2. Action Assistant Compliance
-
-- **Dataset:** 12 workplace commands (Slack messages, calendar events, email drafts, clarification triggers, confirmation requests).
-- **Schema Pass Rate:** **12 / 12 (100.0%)**
-- **Argument Accuracy:** **100.0%**
-- **Safety Enforcement:** Validated against [`src/actions/schema.py`](src/actions/schema.py). Unknown actions, malformed email addresses, non-ISO timestamps, inverted calendar times (`start >= end`), and unauthorized extra arguments raise `ActionValidationError`.
+# Run holdout retrieval evaluation:
+./run.sh eval-holdout hybrid_rrf
+```
 
 ---
 
@@ -244,6 +231,6 @@ python3 -m unittest discover tests -v
 ## ⚠️ Known Limitations & Future Work
 
 1. **Synthetic Corpus Size:** Evaluated on a mock dataset of 1,316 records across 7 connectors. Production enterprise deployments would require streaming connectors and partition pruning for tens of thousands of records.
-2. **Holdout Vocabulary Gap:** The drop in Top-10 recall on unseen holdout phrasing (71.4% base) highlights the need for query expansion or fine-tuned embeddings on domain-specific company jargon.
+2. **Vocabulary & Phrasing Gap:** Retrieval variance on colloquial phrasing highlights the opportunity for domain-specific query expansion or fine-tuned embeddings tailored to internal company jargon.
 3. **CPU Reranker Latency:** Cross-encoder reranking over 40 candidates on CPU averages ~2.5s per query. In production, this would be accelerated via ONNX INT8 quantization or GPU batching.
 4. **Preview-Only Actions:** The action assistant outputs verified JSON payloads with human-in-the-loop confirmation. Live integrations with Google Workspace or Slack APIs would require OAuth token management and webhook listeners.
