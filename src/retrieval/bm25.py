@@ -1,4 +1,4 @@
-"""Production-grade Okapi BM25 implementation with passage structure awareness,
+"""Okapi BM25 implementation with passage structure awareness,
 ISO timestamp normalization, temporal metadata indexing, named entity boosting,
 universal workplace synonym expansion, and parent record diversification.
 """
