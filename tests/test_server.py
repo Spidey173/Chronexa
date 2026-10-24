@@ -52,7 +52,10 @@ class TestChronexaServer(unittest.TestCase):
                 res_body = json.loads(resp.read().decode("utf-8"))
                 return resp.status, res_body, resp.headers
         except urllib.error.HTTPError as e:
-            res_body = json.loads(e.read().decode("utf-8")) if e.fp else {}
+            try:
+                res_body = json.loads(e.read().decode("utf-8")) if e.fp else {}
+            finally:
+                e.close()
             return e.code, res_body, e.headers
 
     def _get(self, path: str, origin: str = None) -> tuple:
@@ -66,7 +69,10 @@ class TestChronexaServer(unittest.TestCase):
                 res_body = json.loads(resp.read().decode("utf-8"))
                 return resp.status, res_body, resp.headers
         except urllib.error.HTTPError as e:
-            res_body = json.loads(e.read().decode("utf-8")) if e.fp else {}
+            try:
+                res_body = json.loads(e.read().decode("utf-8")) if e.fp else {}
+            finally:
+                e.close()
             return e.code, res_body, e.headers
 
     def test_health_endpoint(self):
@@ -192,7 +198,10 @@ class TestChronexaServer(unittest.TestCase):
             with urllib.request.urlopen(req) as resp:
                 self.fail("Expected 400 for malformed JSON")
         except urllib.error.HTTPError as e:
-            self.assertEqual(e.code, 400)
+            try:
+                self.assertEqual(e.code, 400)
+            finally:
+                e.close()
 
     def test_payload_too_large_rejected(self):
         url = f"{self.base_url}/api/search"
@@ -203,7 +212,10 @@ class TestChronexaServer(unittest.TestCase):
             with urllib.request.urlopen(req) as resp:
                 self.fail("Expected 413 for oversized payload")
         except urllib.error.HTTPError as e:
-            self.assertEqual(e.code, 413)
+            try:
+                self.assertEqual(e.code, 413)
+            finally:
+                e.close()
 
     def test_security_headers_and_cors(self):
         status, body, headers = self._get("/api/health", origin="http://localhost:8000")

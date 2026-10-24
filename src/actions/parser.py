@@ -90,10 +90,20 @@ class ActionParser:
         except Exception:
             pass
 
-        self.groq_key = os.environ.get("GROQ_API_KEY")
-        self.openai_key = os.environ.get("OPENAI_API_KEY")
-        self.gemini_key = os.environ.get("GEMINI_API_KEY")
-        self.anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
+        def _is_valid_key(key: Optional[str]) -> bool:
+            if not key or not key.strip():
+                return False
+            k = key.strip().lower()
+            return not (k.startswith("your_") or k.startswith("<") or k == "placeholder" or "api_key_here" in k)
+
+        groq_k = os.environ.get("GROQ_API_KEY")
+        self.groq_key = groq_k if _is_valid_key(groq_k) else None
+        oai_k = os.environ.get("OPENAI_API_KEY")
+        self.openai_key = oai_k if _is_valid_key(oai_k) else None
+        gem_k = os.environ.get("GEMINI_API_KEY")
+        self.gemini_key = gem_k if _is_valid_key(gem_k) else None
+        ant_k = os.environ.get("ANTHROPIC_API_KEY")
+        self.anthropic_key = ant_k if _is_valid_key(ant_k) else None
 
         if os.environ.get("CHRONEXA_OFFLINE") == "1":
             self.provider = "none"

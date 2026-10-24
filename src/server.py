@@ -342,5 +342,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Chronexa secure local server")
     parser.add_argument("--host", default="127.0.0.1", help="Host interface (defaults to 127.0.0.1 loopback only)")
     parser.add_argument("--port", type=int, default=8000, help="Port (default: 8000)")
+    parser.add_argument("port_pos", nargs="?", type=int, default=None, help="Port (optional positional alternative)")
     args = parser.parse_args()
-    run_server(host=args.host, port=args.port)
+    selected_port = args.port_pos if args.port_pos is not None else args.port
+    run_server(host=args.host, port=selected_port)

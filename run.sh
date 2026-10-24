@@ -27,7 +27,7 @@ MODE="${1:-all}"
 case "$MODE" in
     serve)
         echo "=== Launching Chronexa Local Live Search Server ==="
-        $PYTHON src/server.py "${2:-8000}"
+        $PYTHON src/server.py --port "${2:-8000}"
         ;;
     query)
         if [ -z "$2" ]; then
@@ -70,7 +70,7 @@ case "$MODE" in
         ;;
     actions)
         echo "=== Running Chronexa Action Assistant ==="
-        $PYTHON src/actions/runner.py --commands evals/actions_train.jsonl --output outputs/actions_train_predictions.jsonl
+        $PYTHON src/actions/runner.py --commands evals/actions_train.jsonl --output outputs/actions_train_predictions.jsonl --offline
         echo "=== Scoring Actions ==="
         $PYTHON eval_harness/score_actions.py --gold evals/actions_train.jsonl --predictions outputs/actions_train_predictions.jsonl
         ;;
@@ -82,7 +82,7 @@ case "$MODE" in
         $PYTHON src/pipeline.py --mode hybrid --output outputs/memory_train_answers.jsonl
         echo ""
         echo "=== Running Chronexa Action Assistant ==="
-        $PYTHON src/actions/runner.py --commands evals/actions_train.jsonl --output outputs/actions_train_predictions.jsonl
+        $PYTHON src/actions/runner.py --commands evals/actions_train.jsonl --output outputs/actions_train_predictions.jsonl --offline
         echo ""
         echo "=========================================="
         echo "           EVALUATION RESULTS             "

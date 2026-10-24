@@ -13,11 +13,14 @@ ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
+import os
 from src.config import EVALS_DIR, OUTPUTS_DIR
 from src.actions.parser import ActionParser
 
 
-def run_actions(commands_path: Path, output_path: Path):
+def run_actions(commands_path: Path, output_path: Path, offline: bool = False):
+    if offline:
+        os.environ["CHRONEXA_OFFLINE"] = "1"
     with open(commands_path, "r", encoding="utf-8") as f:
         commands = [json.loads(line) for line in f if line.strip()]
 
@@ -48,9 +51,10 @@ def main():
     parser = argparse.ArgumentParser(description="Chronexa Action Assistant Runner")
     parser.add_argument("--commands", default=str(EVALS_DIR / "actions_train.jsonl"), help="Path to action commands")
     parser.add_argument("--output", default=str(OUTPUTS_DIR / "actions_train_predictions.jsonl"), help="Path to output")
+    parser.add_argument("--offline", action="store_true", help="Run 100 percent locally in offline mode without external API delays")
     args = parser.parse_args()
 
-    run_actions(Path(args.commands), Path(args.output))
+    run_actions(Path(args.commands), Path(args.output), offline=args.offline)
 
 
 if __name__ == "__main__":
