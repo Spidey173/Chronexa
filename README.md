@@ -1,102 +1,97 @@
-# ⏱️ Chronexa: Enterprise Workplace-Memory Engine & Safe Action Assistant
+# ⏱️ Chronexa: Workplace-Memory Search & Safe Action Previews
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Tests Passing](https://img.shields.io/badge/tests-46%20passed-success.svg)](tests/)
 [![FastEmbed Local ONNX](https://img.shields.io/badge/embeddings-FastEmbed%20ONNX-orange.svg)](https://github.com/qdrant/fastembed)
-[![Temporal Sandboxing](https://img.shields.io/badge/temporal%20safety-zero%20leakage-emerald.svg)](src/retrieval/temporal.py)
-[![Dry-Run Action Schema](https://img.shields.io/badge/TextOS-strict%20allowlist-purple.svg)](src/actions/schema.py)
+[![Point-in-Time Boundaries](https://img.shields.io/badge/temporal%20filter-timestamp%20%3C%3D%20as__of-emerald.svg)](src/retrieval/temporal.py)
+[![Dry-Run Action Schema](https://img.shields.io/badge/actions-dry--run%20preview-purple.svg)](src/actions/schema.py)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Chronexa** is an enterprise workplace-memory search and safe action execution platform. It indexes and searches across scattered corporate communications—**Slack messages and threads, Gmail conversations, Google Calendar events, meeting transcripts, and voice dictation notes**—with strict historical point-in-time (`as_of`) temporal boundaries and translates natural language commands into schema-validated, dry-run action plans.
+**Chronexa** is an engineering portfolio project demonstrating a prototype workplace-memory assistant. It searches across mock enterprise communications—**Slack messages and threads, Gmail conversations, Google Calendar events, meeting transcripts, and voice dictation notes**—with strict historical point-in-time (`as_of`) date filtering and generates schema-validated dry-run action plans.
+
+> **Project Scope:**  
+> This is a portfolio proof-of-concept operating on a local synthetic corpus (~1,300 records across 7 mock data sources). Actions are strictly dry-run JSON previews with human confirmation guardrails; no live external SaaS APIs (OAuth, real email sending, or Slack posting) are executed.
 
 ---
 
-## 🎯 The Three Core Problems Chronexa Solves
+## 🔍 Technical Focus Areas
 
-Standard Retrieval-Augmented Generation (RAG) architectures and workplace AI assistants fail in corporate environments due to three structural flaws:
+This project explores three practical challenges in workplace search and assistants:
 
-1. **Temporal Inconsistency & Future Data Leakage:**  
-   Standard vector databases index all documents uniformly. If an executive asks *"What is our scheduled launch date?"* with a context date of September 9, naive RAG retrieves messages from September 16 announcing delays, corrupting historical decision audits. Chronexa enforces **pre-retrieval physical boundaries** (`delivery_time <= as_of`), masks deleted records, and applies chronological edit trails in real time.
+1. **Point-in-Time Temporal Boundaries (`timestamp <= as_of`):**  
+   Standard search pipelines index all documents uniformly. When asking what a project's timeline was on September 9, naive search can leak delays announced a week later. Chronexa applies pre-retrieval physical boundaries (`delivery_time <= as_of`), masks deleted messages, and reconciles message edit histories chronologically.
 
-2. **The Lexical vs. Semantic Vocabulary Gap:**  
-   Keyword search fails on conversational paraphrasing (*"the roadmap slip"* vs. *"geocoding regression"*); pure vector search fails on precise identifiers, employee IDs, customer codes, and exact calendar timestamps. Chronexa fuses **passage-structured Okapi BM25** with **local FastEmbed dense vectors** via **Reciprocal Rank Fusion (RRF, k=60)**.
+2. **Hybrid Lexical & Semantic Retrieval:**  
+   Colloquial questions benefit from semantic similarity, while exact project codes, ticket IDs, and person names require lexical precision. Chronexa combines **passage-structured Okapi BM25** with **local FastEmbed dense vectors (`BAAI/bge-small-en-v1.5`)** fused via **Reciprocal Rank Fusion (RRF, k=60)**.
 
-3. **Unsafe Autonomous Side-Effects:**  
-   Autonomous AI agents should never blindly trigger external mutations (sending emails, modifying executive calendar events, deleting message archives). Chronexa's **TextOS Action Assistant** parses commands into strongly-typed, schema-validated dry-run actions, enforcing strict field allowlists, triggering human confirmation for destructive operations, and requesting clarification for ambiguous entities.
+3. **Dry-Run Action Schema Validation:**  
+   Translates user commands into structured JSON actions validated against allowlisted schemas (`slack.send_message`, `gmail.send`, `calendar.create_event`, `calendar.update_event`, `reminder.create`, `app.open`, `memory.ask`, `clarify`, `confirm`). It rejects unknown/extra arguments, asks for clarification on ambiguous names, and requires confirmation for destructive operations.
 
 ---
 
-## 🏗️ System Architecture & Data Flow
+## 🏗️ Architecture & Data Flow
 
 ```text
-                       User Query / Action Command
-                                    │
-                                    ▼
+                  User Question / Command + Cutoff Date (as_of)
+                                       │
+                                       ▼
        ┌────────────────────────────────────────────────────────┐
-       │ 1. Point-in-Time Temporal Sandbox (src/ingestion/)     │
-       │    - Multi-connector ingestion across 7 data streams   │
-       │    - Strict cutoff: discards any unit where t > as_of  │
-       │    - Applies chronological edit history up to as_of    │
-       │    - Masks records deleted prior to as_of moment       │
-       └────────────────────────────┬───────────────────────────┘
-                                    │
-                                    ▼
+       │ 1. Point-in-Time Filter (src/ingestion/)               │
+       │    - Loads records across 7 workplace mock connectors  │
+       │    - Normalizes ISO-8601 & timezone offsets (-07:00)   │
+       │    - Discards any record where timestamp > as_of       │
+       │    - Applies chronological edit trails and deletions   │
+       └───────────────────────────┬────────────────────────────┘
+                                   │
+                                   ▼
        ┌────────────────────────────────────────────────────────┐
        │ 2. Hybrid Retrieval Engine (src/retrieval/)            │
-       │    ├── Lexical Index: Passage-Structured Okapi BM25    │
+       │    ├── Lexical Index: Okapi BM25 with Snowball stemmer │
        │    ├── Dense Vectors: Local BGE-small ONNX CPU         │
-       │    ├── Rank Fusion: Reciprocal Rank Fusion (RRF k=60)  │
-       │    └── Context Injection: Dynamic meeting dialog turns │
-       └────────────────────────────┬───────────────────────────┘
-                                    │
-                                    ▼
+       │    └── Rank Fusion: Reciprocal Rank Fusion (RRF k=60)  │
+       └───────────────────────────┬────────────────────────────┘
+                                   │
+                                   ▼
        ┌────────────────────────────────────────────────────────┐
-       │ 3. Evidence Sandboxing & Defense (src/generation/)     │
-       │    - XML tag document sandboxing (<record id="...">)   │
-       │    - Indirect prompt injection neutralization          │
-       │    - Calibrated abstention for unrecorded data         │
-       └────────────────────────────┬───────────────────────────┘
-                                    │
-                     ┌──────────────┴──────────────┐
-                     ▼                             ▼
+       │ 3. Evidence Sandboxing & Formatting (src/generation/)  │
+       │    - Wraps retrieved records in <record> XML tags      │
+       │    - Sanitizes potential prompt injection directives   │
+       │    - Calibrated abstention when records are absent     │
+       └───────────────────────────┬────────────────────────────┘
+                                   │
+                    ┌──────────────┴──────────────┐
+                    ▼                             ▼
        ┌───────────────────────────┐ ┌───────────────────────────┐
-       │ Grounded Answer Synthesis │ │ TextOS Action Preview     │
-       │ - Verified citations      │ │ - Strict schema validator │
-       │ - Exact key-term match    │ │ - Disambiguation guard    │
-       │ - Local & API providers   │ │ - Destructive confirm     │
+       │ Grounded Answer Synthesis │ │ Dry-Run Action Preview    │
+       │ - Evidence citations      │ │ - Schema validation       │
+       │ - Point-in-time answers   │ │ - Unknown arg rejection   │
+       │ - Local & API providers   │ │ - Disambiguation & confirm│
        └───────────────────────────┘ └───────────────────────────┘
 ```
 
 ---
 
-## ✨ Key Capabilities & Engineering Highlights
+## ⚙️ Component Summary
 
-| Capability | Module | Technical Description |
-|---|---|---|
-| **Zero Future Leakage** | `src/retrieval/temporal.py` | Strict temporal filtering ensures no record delivered after `as_of` enters the retrieval pool. Fully handles timezone offsets (`-07:00`), ISO 8601 strings, and naive fallback conversion. |
-| **Sub-Millisecond Vector Search** | `src/retrieval/dense.py` | Pre-stacks cached unit embeddings into a contiguous 2D float32 matrix `(2641, 384)`. Vector search uses BLAS matrix-vector dot products executing in under 1 ms on CPU. |
-| **Passage-Structured BM25** | `src/retrieval/bm25.py` | Pure Python Okapi BM25 implementation featuring custom tokenization, Rust-accelerated Snowball stemming (`py_rust_stemmers`), entity boosting, and normalized timestamp indexing. |
-| **TextOS Safe Action Assistant** | `src/actions/` | Translates natural language commands into dry-run JSON actions. Validates against strict allowlisted schemas (`slack.send_message`, `gmail.send`, `calendar.create_event`, `calendar.update_event`, `reminder.create`, `app.open`, `memory.ask`, `clarify`, `confirm`) and rejects unauthorized arguments. |
-| **Adversarial Injection Defense** | `src/generation/prompt.py` | Defuses adversarial prompt injection embedded in mock emails and Slack messages (e.g., hidden exfiltration directives) via XML boundary isolation and directive scrubbing. |
-| **Live Interactive Dashboard** | `index.html` & `src/server.py` | Standalone, dark-mode glassmorphic web dashboard connected to a lightweight loopback API server (`127.0.0.1:8000`) with real-time time-travel date slider and action preview inspector. |
-
----
-
-## 💻 Tech Stack & Dependencies
-
-- **Core Runtime:** Python 3.10+ (tested through Python 3.14 on macOS and Linux)
-- **Dense Embeddings:** `fastembed` (ONNX Runtime CPU, `BAAI/bge-small-en-v1.5`)
-- **Array Computing:** `numpy` (BLAS vectorized cosine similarity)
-- **Stemming & NLP:** `py_rust_stemmers` (high-performance Snowball stemmer)
-- **Temporal Parsing:** `dateparser`, Python standard library `zoneinfo` and `datetime`
-- **Testing Framework:** `pytest` (46 unit and integration tests)
-- **Local Server:** Standard library `http.server` with custom JSON routing, CORS, and payload security guards
+| Component | Status | Implementation Details |
+|---|:---:|---|
+| **Point-in-Time Boundary** | Implemented | Discards any unit where `timestamp > as_of`. Masks deleted records and preserves chronological edit trails. (`src/ingestion/loader.py`, `src/retrieval/temporal.py`). |
+| **BM25 Lexical Index** | Implemented | Pure Python Okapi BM25 with Snowball stemming (`py_rust_stemmers`), entity boosting, and ISO timestamp normalization. (`src/retrieval/bm25.py`). |
+| **Dense Embeddings** | Implemented | Local FastEmbed ONNX runtime (`BAAI/bge-small-en-v1.5`) with persistent `.npz` vector caching and pre-stacked matrix dot-products. (`src/retrieval/dense.py`). |
+| **Hybrid Rank Fusion** | Implemented | Reciprocal Rank Fusion (RRF) merging BM25 and dense results, with conversational meeting turn expansion. (`src/retrieval/hybrid.py`). |
+| **Dry-Run Action Parser** | Implemented | Translates commands into validated action objects. Enforces strict schema allowlists and rejects extra arguments. (`src/actions/`). |
+| **Injection Defense** | Implemented | XML document sandboxing and redaction of indirect injection directives. (`src/generation/prompt.py`). |
+| **Browser Demo (`index.html`)** | Implemented | Standalone client-side dashboard with interactive date slider and action preview inspector. Connects to the local server or replays pre-computed outputs. |
+| **Live External Mutations** | Out of Scope | Actions are strictly dry-run preview plans; no live OAuth integrations, external emails, or Slack API calls are executed. |
 
 ---
 
-## 🚀 Quickstart & Setup
+## 🛠️ Setup & Running Locally
 
-### 1. Clone & Set Up Virtual Environment
+### Prerequisites
+- Python 3.10+ (tested through Python 3.14 on macOS and Linux)
+
+### 1. Installation
 
 ```bash
 git clone https://github.com/Spidey173/Chronexa.git
@@ -117,9 +112,9 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-| Environment Variable | Default | Purpose |
+| Variable | Default | Purpose |
 |---|:---:|---|
-| `CHRONEXA_OFFLINE` | `0` | Set to `1` to run 100% locally on CPU without external API network calls. |
+| `CHRONEXA_OFFLINE` | `0` | Set to `1` to run completely offline on local CPU without any external API calls. |
 | `GROQ_API_KEY` | `""` | Optional Groq key for fast cloud LLM answer synthesis (`qwen/qwen3.8-27b`). |
 | `OPENAI_API_KEY` | `""` | Optional OpenAI key for GPT-4o-mini generation. |
 | `GEMINI_API_KEY` | `""` | Optional Google Gemini key for Gemini Flash models. |
@@ -127,63 +122,60 @@ cp .env.example .env
 
 ---
 
-## 🛠️ CLI & Runner Commands (`run.sh`)
+## 💻 Runner Commands (`run.sh`)
 
-The unified execution script [`run.sh`](run.sh) manages all tasks:
+The script [`run.sh`](run.sh) wraps common workflows:
 
 ```bash
-# 1. Run the complete automated test suite (46 unit & integration tests):
+# 1. Run the automated test suite (46 unit and integration tests via pytest):
 ./run.sh test
 
-# 2. Launch the local live search server:
+# 2. Launch the local demonstration server (loopback only on 127.0.0.1:8000):
 ./run.sh serve 8000
 
-# 3. Execute an ad-hoc query directly from the terminal:
-./run.sh query "When are we launching Route Planner v2?" "2026-09-10T12:00:00-07:00"
-
-# 4. Compare point-in-time answers across different cutoff dates:
-# On Sept 9 (initial target):
+# 3. Run a query directly from the terminal with a historical date cutoff:
 ./run.sh query "When are we launching Route Planner v2?" "2026-09-09T09:00:00-07:00"
-# On Sept 18 (after launch slipped to Oct 21):
+
+# 4. Same question after subsequent delays were announced (sliding cutoff date):
 ./run.sh query "When are we launching Route Planner v2?" "2026-09-18T18:00:00-07:00"
 
-# 5. Run the TextOS Action Assistant runner:
+# 5. Run the dry-run action assistant runner:
 ./run.sh actions
 
-# 6. Run complete end-to-end pipeline verification:
+# 6. Run end-to-end verification (tests + memory search + actions):
 ./run.sh all
 ```
 
 ---
 
-## 🖥️ Interactive Web Dashboard & Local Server
+## 🖥️ Local Demonstration Dashboard
 
-Chronexa features an interactive, dark-mode web application:
+Chronexa includes a client-side interface (`index.html`) backed by a lightweight loopback server (`src/server.py`):
 
-1. Launch the local Python server:
+1. Start the server:
    ```bash
    ./run.sh serve 8000
    ```
-2. Open **`http://127.0.0.1:8000`** in your browser.
-3. The dashboard connects to the live backend:
-   - **Historical Date Slider:** Slide between Sept 8 and Sept 18 to observe how temporal boundaries dynamically mask future communications.
-   - **Live Workplace Search:** Type any query to inspect hybrid BM25 + dense ranking, candidate score breakdowns, and grounded synthesized answers.
-   - **TextOS Action Playground:** Test natural language commands (e.g. *"Message Sarah on Slack that the geocoding fix looks good"*, *"Delete all my emails from Marcus"*), preview schema-validated JSON actions, and test ambiguity disambiguation.
+2. Navigate to **`http://127.0.0.1:8000`** in your browser.
+3. The dashboard provides:
+   - **Point-in-Time Date Slider:** Adjust the cutoff date to see how search results change as new communications arrive over time.
+   - **Search Query Input:** Runs hybrid search against the mock dataset and displays retrieved citations with grounded answers.
+   - **Action Assistant Inspector:** Enter natural language commands (e.g., *"Message Sarah on Slack that the geocoding fix looks good"*, *"Delete all my emails from Marcus"*) to inspect schema-validated JSON actions, ambiguity prompts, and confirmation dialogues.
 
 ---
 
 ## 🧪 Automated Test Suite (46 Tests)
 
-Every core invariant is verified by unit and integration tests in [`tests/`](tests/):
+The test suite in [`tests/`](tests/) covers boundary conditions, validation schemas, fallbacks, and security guards:
 
-- [`tests/test_temporal.py`](tests/test_temporal.py) (10 tests): ISO 8601 parsing, timezone normalization, temporal boundary cutoffs, message edit preservation, deletion masking, and graceful dateparser fallbacks.
-- [`tests/test_retrieval.py`](tests/test_retrieval.py) (5 tests): BM25 identifier matching, synonym expansion, zero future leakage validation, and fastembed offline fallback handling.
-- [`tests/test_actions.py`](tests/test_actions.py) (10 tests): Strict schema enforcement, rejection of unauthorized extra arguments, email validation, ambiguity clarification, and destructive confirmation.
+- [`tests/test_temporal.py`](tests/test_temporal.py) (10 tests): ISO 8601 parsing, timezone offsets, temporal cutoffs, message edit preservation, deletion masking, and dateparser fallbacks.
+- [`tests/test_retrieval.py`](tests/test_retrieval.py) (5 tests): BM25 term matching, synonym expansion, zero future leakage validation, and fastembed fallback handling.
+- [`tests/test_actions.py`](tests/test_actions.py) (10 tests): Schema enforcement, rejection of unauthorized extra arguments, email validation, ambiguity clarification, and destructive confirmation.
 - [`tests/test_injection.py`](tests/test_injection.py) (2 tests): XML breakout escaping and prompt injection neutralization.
-- [`tests/test_abstention.py`](tests/test_abstention.py) (4 tests): Calibrated abstention on unrecorded company data.
-- [`tests/test_server.py`](tests/test_server.py) (15 tests): HTTP health check, live search API, action parser API, input validation bounds, payload caps, CORS headers, and loopback security.
+- [`tests/test_abstention.py`](tests/test_abstention.py) (4 tests): Calibrated abstention on unrecorded facts.
+- [`tests/test_server.py`](tests/test_server.py) (15 tests): HTTP health check, live search API, action parser API, input bounds, payload caps, CORS headers, and loopback security.
 
-Run tests anytime with:
+Run tests directly:
 ```bash
 pytest tests/ -v
 ```
@@ -194,23 +186,23 @@ pytest tests/ -v
 
 ```text
 Chronexa/
-├── data/                      # Multi-source enterprise corpus
-│   ├── connectors/            # Slack, Gmail, Google Calendar, ChatGPT, Codex
+├── data/                      # Synthetic multi-source mock enterprise corpus
+│   ├── connectors/            # Mock Slack, Gmail, Google Calendar, ChatGPT, Codex
 │   └── native/                # Meeting recordings & voice dictation transcripts
-├── src/                       # Core system architecture
-│   ├── actions/               # TextOS schema validators, entity resolver, parser
-│   ├── generation/            # Grounded answer synthesis & injection defense
-│   ├── ingestion/             # Point-in-time loader & contextual chunker
-│   ├── retrieval/             # BM25, FastEmbed dense retriever, hybrid RRF
-│   ├── config.py              # Path definitions & global environment settings
-│   ├── pipeline.py            # Unified query-to-answer CLI pipeline
-│   └── server.py              # Lightweight loopback demo HTTP server
+├── src/                       # Core system implementation
+│   ├── actions/               # Action schemas, validators, entity resolution, parser
+│   ├── generation/            # Answer generator and prompt injection defense
+│   ├── ingestion/             # Point-in-time loader and contextual chunker
+│   ├── retrieval/             # Okapi BM25, FastEmbed dense retriever, hybrid RRF
+│   ├── config.py              # Path configuration and environment loading
+│   ├── pipeline.py            # CLI query-to-answer pipeline runner
+│   └── server.py              # Lightweight loopback demonstration server
 ├── tests/                     # 46 automated unit and integration tests
-├── eval/                      # Evaluation datasets & benchmark runners
-├── eval_harness/              # Ground truth scoring harnesses & validation metrics
-├── index.html                 # Interactive dark-mode web application
+├── eval/                      # Evaluation datasets and reference test queries
+├── eval_harness/              # Scoring scripts and validation utilities
+├── index.html                 # Interactive demonstration dashboard
 ├── run.sh                     # Unified runner script
-├── requirements.txt           # Python package dependencies
+├── requirements.txt           # Python dependencies
 └── vercel.json                # Static edge hosting configuration
 ```
 
