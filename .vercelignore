@@ -1,0 +1,17 @@
+.venv
+__pycache__
+*.pyc
+.git
+.env
+.env.example
+data/
+eval/
+eval_harness/
+evals/
+examples/
+outputs/
+src/
+results_*.json
+run.sh
+requirements.txt
+demo_dataset.json
