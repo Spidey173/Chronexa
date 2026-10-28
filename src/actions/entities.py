@@ -73,29 +73,85 @@ class EntityResolver:
                                     self.contacts[first] = email_part
                                 self.contacts[email_part.lower()] = email_part
 
-    def resolve_slack_user(self, name: str) -> Optional[str]:
-        """Resolves a person's name or handle to their Slack User ID."""
+    def get_candidate_slack_users(self, name: str) -> List[Dict]:
+        """Returns all Slack users matching the given name or handle."""
         q = name.lower().strip()
+        candidates = []
         for u in self.users:
             real = u.get("real_name", "").lower().strip()
             handle = u.get("name", "").lower().strip()
-            if q == real or q == handle or q == real.split()[0]:
-                return u["id"]
+            first = real.split()[0] if real else ""
+            if q == real or q == handle or q == first or (len(q) >= 3 and q in real):
+                candidates.append(u)
+        return candidates
+
+    def get_candidate_contacts(self, name: str) -> List[Tuple[str, str]]:
+        """Returns all (name, email) contacts matching the given name query."""
+        q = name.lower().strip()
+        candidates = []
+        seen_emails = set()
+        for k, v in self.contacts.items():
+            first = k.split()[0] if k else ""
+            if q == k or q == first or (len(q) >= 3 and q in k):
+                if v not in seen_emails:
+                    seen_emails.add(v)
+                    candidates.append((k, v))
+        return candidates
+
+    def is_ambiguous_name(self, name: str, context: str = "") -> bool:
+        """Returns True if the name could refer to multiple distinct contacts without sufficient context."""
+        cands_slack = self.get_candidate_slack_users(name)
+        cands_email = self.get_candidate_contacts(name)
+        c_low = context.lower()
+        if "slack" in c_low and len(cands_slack) == 1:
+            return False
+        if ("email" in c_low or "mail" in c_low) and len(cands_email) == 1:
+            return False
+        total = len({u.get("id") for u in cands_slack}) + len({e for _, e in cands_email if not any(u.get("email") == e for u in cands_slack)})
+        return total > 1
+
+    def resolve_slack_user(self, name: str, context: str = "") -> Optional[str]:
+        """Resolves a person's name or handle to their Slack User ID with optional context disambiguation."""
+        q = name.lower().strip()
+        cands = self.get_candidate_slack_users(q)
+        if len(cands) == 1:
+            return cands[0]["id"]
+        elif len(cands) > 1:
+            # Check context for disambiguation
+            c_low = context.lower()
+            for u in cands:
+                real = u.get("real_name", "").lower()
+                role = u.get("profile", {}).get("title", "").lower()
+                if any(w in c_low for w in real.split()) or any(w in c_low for w in role.split()):
+                    return u["id"]
+            return cands[0]["id"]
         return None
 
     def resolve_slack_channel(self, name: str) -> Optional[str]:
         """Resolves a channel name to its channel ID."""
         clean = name.lstrip("#").lower().strip()
+        clean_norm = clean.replace(" ", "-")
         for c in self.channels:
-            if clean == c.get("name", "").lower().strip():
+            c_name = c.get("name", "").lower().strip()
+            if clean == c_name or clean_norm == c_name or clean.replace("-", " ") == c_name.replace("-", " "):
                 return c["id"]
         return None
 
-    def resolve_email(self, name: str) -> Optional[str]:
+    def resolve_email(self, name: str, context: str = "") -> Optional[str]:
         """Resolves any internal or external contact to their primary email."""
         q = name.lower().strip()
         if q in self.contacts:
             return self.contacts[q]
+        cands = self.get_candidate_contacts(q)
+        if len(cands) == 1:
+            return cands[0][1]
+        elif len(cands) > 1:
+            c_low = context.lower()
+            for cand_name, cand_email in cands:
+                domain = cand_email.split("@")[-1].split(".")[0]
+                if domain in c_low or any(w in c_low for w in cand_name.split()):
+                    return cand_email
+            return cands[0][1]
         # Partial match
         for k, v in self.contacts.items():
             if q in k or k in q:

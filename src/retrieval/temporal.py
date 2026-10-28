@@ -83,9 +83,9 @@ def resolve_dates_with_dateparser(query: str, as_of: datetime) -> List[str]:
                                 "PREFER_DATES_FROM": "past"
                             }
                         )
-                        if dt and abs((base - dt).days) <= 90:
+                        if dt and abs((base - dt).days) <= 365:
                             # Ensure year is reasonable
-                            if dt.year == base.year or dt.year == base.year - 1:
+                            if dt.year in (base.year, base.year - 1, base.year + 1):
                                 # Avoid false positives on common words
                                 if phrase.lower() not in {"to", "out", "we", "on", "in", "at", "did", "do", "how", "when", "day", "days"}:
                                     resolved.add(dt.strftime("%Y-%m-%d"))

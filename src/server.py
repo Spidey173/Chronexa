@@ -12,6 +12,7 @@ import os
 import sys
 import urllib.parse
 from http.server import HTTPServer, SimpleHTTPRequestHandler
+from socketserver import ThreadingMixIn
 from pathlib import Path
 from typing import Any, Optional
 
@@ -31,6 +32,11 @@ from src.retrieval.temporal import parse_iso_datetime
 MAX_REQUEST_BODY_BYTES = 64 * 1024  # 64 KB limit
 ALLOWED_LOCAL_HOSTS = {"127.0.0.1", "::1", "localhost"}
 ALLOWED_MODES = {"hybrid", "bm25"}
+
+
+class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
+    """Multi-threaded HTTP server so concurrent requests and heavy search/rerank calls do not block."""
+    daemon_threads = True
 
 
 class ChronexaRequestHandler(SimpleHTTPRequestHandler):
@@ -147,6 +153,22 @@ class ChronexaRequestHandler(SimpleHTTPRequestHandler):
                 return
 
             self._handle_search(query, as_of, mode, top_k)
+            return
+
+        # Security: strictly prevent directory traversal, dotfiles, source files, and secrets
+        clean_path = urllib.parse.unquote(parsed.path).lstrip("/")
+        clean_path = clean_path.split("?")[0].split("#")[0]
+
+        # Block dotfiles (.env, .git, .pytest_cache)
+        parts = Path(clean_path).parts
+        if any(part.startswith(".") for part in parts):
+            self._send_json_error(403, "Access to hidden files and system configuration is forbidden.")
+            return
+
+        # Block source code, credentials, test files, and raw data stores
+        blocked_extensions = (".env", ".py", ".pyc", ".sh", ".jsonl", ".sqlite", ".npz", ".log", ".bak")
+        if any(clean_path.lower().endswith(ext) for ext in blocked_extensions) or clean_path.startswith(("src/", "eval/", "tests/", "data/", "eval_harness/")):
+            self._send_json_error(403, "Access to backend code, environment variables, and internal files is forbidden.")
             return
 
         # Default static file serving (e.g. index.html)
@@ -324,7 +346,7 @@ def run_server(host: str = "127.0.0.1", port: int = 8000):
     print(f"Corpus index and shared engines ready ({len(raw_units)} units).")
 
     server_address = (host, port)
-    httpd = HTTPServer(server_address, ChronexaRequestHandler)
+    httpd = ThreadedHTTPServer(server_address, ChronexaRequestHandler)
     print(f"\n🚀 Chronexa local API server running at: http://{host}:{port}/")
     print(f"   Dashboard UI: http://{host}:{port}/")
     print(f"   Health Check: http://{host}:{port}/api/health")

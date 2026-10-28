@@ -1009,7 +1009,7 @@
           <span>CHRONEXA</span>
         </div>
         <div class="brand-tag">
-          Enterprise Temporal Memory Engine<br>
+          Workplace Temporal Memory Engine<br>
           <span style="color: #cbd5e1;">& TextOS Action Assistant</span>
         </div>
       </div>
@@ -1034,38 +1034,38 @@
     <section class="hero-section">
       <div>
         <h1 class="hero-title">
-          Grounded Work Memory Search with <span class="highlight">Zero Future Leakage</span>.
+          Grounded Work Memory Search with <span class="highlight">Point-in-Time Filtering</span>.
         </h1>
         <p class="hero-subtitle">
-          Search across fragmented Slack messages, Gmail threads, Google Calendar events, and meeting transcripts strictly as of an arbitrary historical timestamp. Evaluated across separate Dev and Holdout benchmarks.
+          Prototype workplace-memory assistant searching across mock Slack messages, Gmail threads, Google Calendar events, and meeting transcripts strictly as of an arbitrary historical timestamp.
         </p>
         <div class="hero-pills">
-          <span class="badge-pill">📅 Pre-Retrieval Time Boundary</span>
+          <span class="badge-pill">📅 Pre-Retrieval Cutoff</span>
           <span class="badge-pill badge-cyan">🔍 Hybrid RRF Fusion</span>
-          <span class="badge-pill badge-emerald">⚡ Local CPU Pipeline</span>
-          <span class="badge-pill">🛡️ Strict Action Guardrails</span>
+          <span class="badge-pill badge-emerald">⚡ Local CPU Runtime</span>
+          <span class="badge-pill">🛡️ Dry-Run Action Previews</span>
         </div>
       </div>
       <div class="metrics-grid">
         <div class="metric-card">
-          <div class="metric-val">94.4%</div>
-          <div class="metric-label">Dev Top-10 Retrieval</div>
-          <div class="metric-delta">86.8% Holdout (n=100 queries)</div>
+          <div class="metric-val">7 Sources</div>
+          <div class="metric-label">Mock Workplace Connectors</div>
+          <div class="metric-delta">Slack, Gmail, Cal, Meetings</div>
         </div>
         <div class="metric-card">
-          <div class="metric-val">0.0%</div>
-          <div class="metric-label">Future Temporal Leakage</div>
-          <div class="metric-delta">Strict Physical Filtering</div>
+          <div class="metric-val">1,316</div>
+          <div class="metric-label">Corpus Passage Units</div>
+          <div class="metric-delta">Synthetic Test Dataset</div>
         </div>
         <div class="metric-card">
-          <div class="metric-val">12 / 12</div>
-          <div class="metric-label">Dry-Run Action Schema</div>
-          <div class="metric-delta">100% Parameter Precision</div>
+          <div class="metric-val">as_of</div>
+          <div class="metric-label">Temporal Cutoff Boundary</div>
+          <div class="metric-delta">Pre-Retrieval Filtering</div>
         </div>
         <div class="metric-card">
-          <div class="metric-val">CPU Local</div>
-          <div class="metric-label">FastEmbed + BM25</div>
-          <div class="metric-delta">No Cloud API Required</div>
+          <div class="metric-val">Dry-Run</div>
+          <div class="metric-label">Action Assistant Plans</div>
+          <div class="metric-delta">No Live External Mutations</div>
         </div>
       </div>
     </section>
@@ -1082,7 +1082,7 @@
         <span>⚡ TextOS Action Assistant</span>
       </button>
       <button class="nav-tab-btn" data-tab="tab-architecture">
-        <span>📊 Architecture & Telemetry</span>
+        <span>📊 Architecture & Design</span>
       </button>
       <button class="nav-tab-btn" data-tab="tab-corpus">
         <span>🗂️ Workplace Corpus Inspector</span>
@@ -1103,14 +1103,14 @@
         </div>
 
         <!-- Presets Carousel -->
-        <div class="presets-title">⚡ Quick-Load Curated Benchmark Scenarios (Watch Facts Shift Over Time):</div>
+        <div class="presets-title">⚡ Quick-Load Curated Scenarios (Watch Facts Shift Over Time):</div>
         <div class="presets-carousel" id="presetPills">
           <!-- Rendered via JS -->
         </div>
 
         <!-- Full Scenario Selector -->
         <div class="form-group" style="margin-bottom: 16px;">
-          <label class="form-label" for="fullScenarioSelect">Or Select Any of 27 Official Benchmark Questions:</label>
+          <label class="form-label" for="fullScenarioSelect">Or Select Evaluation Question:</label>
           <select id="fullScenarioSelect" class="form-select">
             <!-- Rendered via JS -->
           </select>
@@ -1174,14 +1174,14 @@
             <div class="tel-sub">Pure In-Memory Index</div>
           </div>
           <div class="tel-item">
-            <div class="tel-label">Future Temporal Leakage</div>
-            <div class="tel-val" style="color: var(--accent-emerald);">0.0%</div>
-            <div class="tel-sub">Mathematically Guaranteed</div>
+            <div class="tel-label">Temporal Boundary</div>
+            <div class="tel-val" style="color: var(--accent-emerald);">timestamp &le; as_of</div>
+            <div class="tel-sub">Pre-retrieval Filter</div>
           </div>
           <div class="tel-item">
-            <div class="tel-label">Grounding Confidence</div>
-            <div class="tel-val" style="color: var(--accent-cyan);">100%</div>
-            <div class="tel-sub">Strict Citation Audit</div>
+            <div class="tel-label">Evidence Grounding</div>
+            <div class="tel-val" style="color: var(--accent-cyan);">Cited</div>
+            <div class="tel-sub">Matched Source Documents</div>
           </div>
         </div>
 
@@ -1245,7 +1245,7 @@
             </h2>
             <p class="panel-subtitle">Translates unstructured natural language instructions into validated tool execution calls with dynamic entity resolution and safety guardrails.</p>
           </div>
-          <span class="badge-pill badge-cyan">12 / 12 Perfect Score</span>
+          <span class="badge-pill badge-cyan">12 / 12 Validated</span>
         </div>
 
         <div class="presets-title">Select Sample Instruction to Execute (or Type Below):</div>
@@ -1288,15 +1288,15 @@
       </div>
     </section>
 
-    <!-- TAB 4: ARCHITECTURE & TELEMETRY -->
+    <!-- TAB 4: ARCHITECTURE & DESIGN -->
     <section id="tab-architecture" class="tab-pane">
       <div class="glass-panel">
         <div class="panel-header">
           <div>
             <h2 class="panel-title">
-              <span>📊 Engineering Decisions & Benchmark Telemetry</span>
+              <span>📊 Architecture & Implementation Decisions</span>
             </h2>
-            <p class="panel-subtitle">Comprehensive analysis of why Structured Lexical & Hybrid RRF beats generic dense vector search on enterprise work data.</p>
+            <p class="panel-subtitle">Technical analysis comparing Structured Lexical & Hybrid RRF with generic dense vector search on workplace communication data.</p>
           </div>
         </div>
 
@@ -1320,7 +1320,7 @@
             <h3 class="arch-title">🛡️ Chronexa's 5 Core Pillars</h3>
             <ul class="arch-list">
               <li>
-                <strong>1. Pre-Retrieval Physical Boundary:</strong> Records where <code>timestamp &gt; as_of</code> are completely excluded before indexing. 0% leakage mathematically guaranteed.
+                <strong>1. Pre-Retrieval Physical Boundary:</strong> Records where <code>timestamp &gt; as_of</code> are excluded before indexing to prevent future information leakage.
               </li>
               <li>
                 <strong>2. ISO Timestamp Normalization:</strong> Dates like <code>2026-09-10</code> are indexed as individual temporal tokens (<code>2026</code>, <code>sep</code>, <code>10</code>).
@@ -1339,52 +1339,52 @@
         </div>
 
         <div style="margin-top: 24px;">
-          <h3 class="arch-title">📋 Official Benchmark Telemetry</h3>
+          <h3 class="arch-title">⚙️ Prototype Pipeline Architecture</h3>
           <table class="benchmark-table">
             <thead>
               <tr>
-                <th>Component / Metric</th>
-                <th>Target Standard</th>
-                <th>Chronexa Score</th>
-                <th>Engineering Achievement</th>
+                <th>Component</th>
+                <th>Type</th>
+                <th>Technical Approach</th>
+                <th>Execution Scope</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td><strong>Dev Split Top-10 Retrieval</strong></td>
-                <td>&gt; 85.0%</td>
-                <td style="color: var(--accent-emerald); font-weight: 700;">94.4% (Orig) / 83.3% (Para)</td>
-                <td>18/19 gold coverage on original dev queries (n=95 total)</td>
+                <td><strong>Point-in-Time Filter</strong></td>
+                <td>Ingestion Gate</td>
+                <td>Pre-retrieval timestamp cutoff (timestamp &le; as_of) masking deleted and future items</td>
+                <td>Local In-Memory</td>
               </tr>
               <tr>
-                <td><strong>Holdout Top-10 Retrieval</strong></td>
-                <td>&gt; 70.0%</td>
-                <td style="color: var(--accent-emerald); font-weight: 700;">76.5% (Orig) / 86.8% (Para)</td>
-                <td>Expanded independent holdout suite (20 original, 80 paraphrases, n=100 total)</td>
-              </tr>
-              <tr>
-                <td><strong>Future Leakage Rate</strong></td>
-                <td>0.0%</td>
-                <td style="color: var(--accent-emerald); font-weight: 700;">0.0%</td>
-                <td>Physical pre-filtering (timestamp &le; as_of) excludes all future records</td>
-              </tr>
-              <tr>
-                <td><strong>Local Search Pipeline</strong></td>
+                <td><strong>Lexical Index</strong></td>
+                <td>BM25</td>
+                <td>Pure-Python Okapi BM25 with Snowball stemming and tokenized ISO date handling</td>
                 <td>Local CPU</td>
-                <td style="color: var(--accent-cyan); font-weight: 700;">Hybrid RRF (CPU)</td>
-                <td>Okapi BM25 + FastEmbed (BGE-small) running local without cloud APIs</td>
               </tr>
               <tr>
-                <td><strong>TextOS Dry-Run Actions</strong></td>
-                <td>100% Valid</td>
-                <td style="color: var(--accent-emerald); font-weight: 700;">12 / 12 (100%)</td>
-                <td>Strict schema validation rejecting extra args & preview-only execution</td>
+                <td><strong>Dense Embeddings</strong></td>
+                <td>Semantic Vector</td>
+                <td>FastEmbed ONNX runtime (BAAI/bge-small-en-v1.5) with pre-cached vector dot products</td>
+                <td>Local CPU</td>
               </tr>
               <tr>
-                <td><strong>Calibrated Abstention</strong></td>
-                <td>100% Guard</td>
-                <td style="color: var(--accent-emerald); font-weight: 700;">100% Safe</td>
-                <td>Safely abstains when facts are absent (e.g. Dana salary, SOC 2)</td>
+                <td><strong>Rank Fusion</strong></td>
+                <td>Hybrid RRF</td>
+                <td>Reciprocal Rank Fusion (k=60) balancing exact keyword tokens and semantic concepts</td>
+                <td>Local CPU</td>
+              </tr>
+              <tr>
+                <td><strong>Dry-Run Actions</strong></td>
+                <td>Action Parser</td>
+                <td>Strict schema validation (allowlists, typing, unknown argument rejection)</td>
+                <td>JSON Preview Only</td>
+              </tr>
+              <tr>
+                <td><strong>Grounding Defense</strong></td>
+                <td>Guardrails</td>
+                <td>XML record sandboxing, prompt injection sanitization, and explicit abstention</td>
+                <td>Local Pipeline</td>
               </tr>
             </tbody>
           </table>
@@ -1440,7 +1440,7 @@
   <footer>
     <div class="footer-inner">
       <div>
-        <strong>Chronexa</strong> · Enterprise Temporal Memory & TextOS Assistant<br>
+        <strong>Chronexa</strong> · Workplace-Memory Search & Safe Action Previews<br>
         Developed by <strong>Pruthvi R</strong> · Associate AI / RAG & Python Engineer
       </div>
       <div class="footer-links">
@@ -1449,14 +1449,14 @@
         <a href="https://www.linkedin.com/in/pruthvir173/" target="_blank" rel="noopener">LinkedIn</a>
       </div>
       <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-emerald);">
-        ● Hosted on Vercel Edge · 100% Uptime
+        ● Static Client Demo · Local Python Server
       </div>
     </div>
   </footer>
 
   <!-- Chronexa Data & Application Logic -->
   <script>
-// Chronexa Enterprise Temporal Memory Engine - Benchmark & Corpus Data
+// Chronexa Workplace Temporal Memory Engine - Benchmark & Corpus Data
 window.CHRONEXA_DATA = {
   "benchmarks": [
     {
@@ -3792,29 +3792,40 @@ window.CHRONEXA_DATA = {
       }
     }
 
+    // Grounded milestone anchors mapping timeline points to actual visible units in the corpus
+    const MILESTONE_ANCHORS = [
+      { t: new Date('2026-08-18T09:00:00-07:00').getTime(), count: 1 },
+      { t: new Date('2026-08-25T00:00:00-07:00').getTime(), count: 3 },
+      { t: new Date('2026-09-01T00:00:00-07:00').getTime(), count: 4 },
+      { t: new Date('2026-09-05T00:00:00-07:00').getTime(), count: 12 },
+      { t: new Date('2026-09-08T00:00:00-07:00').getTime(), count: 12 },
+      { t: new Date('2026-09-09T09:00:00-07:00').getTime(), count: 225 },
+      { t: new Date('2026-09-10T12:00:00-07:00').getTime(), count: 487 },
+      { t: new Date('2026-09-12T12:00:00-07:00').getTime(), count: 740 },
+      { t: new Date('2026-09-14T12:00:00-07:00').getTime(), count: 834 },
+      { t: new Date('2026-09-15T12:00:00-07:00').getTime(), count: 975 },
+      { t: new Date('2026-09-16T14:00:00-07:00').getTime(), count: 1028 },
+      { t: new Date('2026-09-17T12:00:00-07:00').getTime(), count: 1196 },
+      { t: new Date('2026-09-18T18:00:00-07:00').getTime(), count: 1314 },
+      { t: new Date('2026-09-19T00:00:00-07:00').getTime(), count: 1316 }
+    ];
+
     function calculateVisibleUnits(isoString) {
       try {
         const targetT = new Date(isoString).getTime();
-        const sep9 = new Date('2026-09-09T09:00:00-07:00').getTime();
-        const sep12 = new Date('2026-09-12T12:00:00-07:00').getTime();
-        const sep16 = new Date('2026-09-16T14:00:00-07:00').getTime();
-        const sep18 = new Date('2026-09-18T18:00:00-07:00').getTime();
+        if (isNaN(targetT)) return 1316;
+        if (targetT <= MILESTONE_ANCHORS[0].t) return 1;
+        if (targetT >= MILESTONE_ANCHORS[MILESTONE_ANCHORS.length - 1].t) return 1316;
 
-        if (targetT <= sep9) {
-          const ratio = Math.max(0.1, targetT / sep9);
-          return Math.round(225 * Math.min(1, ratio));
-        } else if (targetT <= sep12) {
-          const factor = (targetT - sep9) / (sep12 - sep9);
-          return Math.round(225 + factor * (740 - 225));
-        } else if (targetT <= sep16) {
-          const factor = (targetT - sep12) / (sep16 - sep12);
-          return Math.round(740 + factor * (1030 - 740));
-        } else if (targetT <= sep18) {
-          const factor = (targetT - sep16) / (sep18 - sep16);
-          return Math.round(1030 + factor * (1316 - 1030));
-        } else {
-          return 1316;
+        for (let i = 0; i < MILESTONE_ANCHORS.length - 1; i++) {
+          const a = MILESTONE_ANCHORS[i];
+          const b = MILESTONE_ANCHORS[i + 1];
+          if (targetT >= a.t && targetT <= b.t) {
+            const fraction = (targetT - a.t) / (b.t - a.t);
+            return Math.round(a.count + fraction * (b.count - a.count));
+          }
         }
+        return 1316;
       } catch (e) {
         return 1316;
       }

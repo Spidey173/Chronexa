@@ -45,9 +45,9 @@ WORKPLACE_SYNONYMS = {
     "slip": ["slip", "delay", "delayed", "push", "pushed", "postpone", "regression", "move", "bug", "blocker", "issue", "fix", "broke"],
     "delay": ["delay", "delayed", "slip", "slipped", "pushed", "blocker", "move", "regression", "bug", "issue", "fix"],
     "slipped": ["slip", "delay", "regression", "move", "bug", "blocker"],
-    "flight": ["flight", "fly", "airline", "travel", "ticket", "denver", "airport"],
-    "fly": ["flight", "fly", "airline", "travel", "ticket", "denver"],
-    "denver": ["denver", "flight", "fly", "travel", "trip"],
+    "flight": ["flight", "fly", "airline", "travel", "ticket", "airport", "trip"],
+    "fly": ["flight", "fly", "airline", "travel", "ticket", "trip"],
+    "travel": ["travel", "trip", "flight", "fly", "airline", "visit", "transit"],
     "email": ["email", "gmail", "thread", "message", "sent"],
     "mail": ["email", "gmail", "message", "sent"],
     "sent": ["sent", "email", "delivered", "send", "out"],
@@ -62,10 +62,10 @@ WORKPLACE_SYNONYMS = {
     "dictation": ["dictate", "dictation", "memo", "note"],
     "hire": ["hire", "hiring", "req", "headcount", "recruiting", "role"],
     "hiring": ["hire", "hiring", "req", "headcount", "recruiting", "role"],
-    "latency": ["latency", "p95", "p50", "median", "performance", "milliseconds", "seconds", "routing"],
+    "latency": ["latency", "p95", "p50", "median", "performance", "milliseconds", "seconds", "response"],
     "p95": ["p95", "latency", "performance", "percentile"],
-    "routing": ["routing", "route", "planner", "latency"],
-    "board": ["board", "meeting", "quarterly", "q3", "calendar"],
+    "routing": ["routing", "route", "planner", "navigation", "directions"],
+    "board": ["board", "meeting", "quarterly", "director", "executive", "calendar"],
 }
 
 try:
@@ -112,6 +112,17 @@ def extract_entities(query: str) -> Set[str]:
     return entities
 
 
+_PASSAGE_TOKEN_CACHE: Dict[Tuple[str, int], Tuple[List[str], List[str]]] = {}
+
+
+def get_passage_tokens(unit: Unit) -> Tuple[List[str], List[str]]:
+    """Cached passage tokenization to prevent redundant stemmer/regex loops."""
+    key = (unit.id, hash(unit.text))
+    if key not in _PASSAGE_TOKEN_CACHE:
+        _PASSAGE_TOKEN_CACHE[key] = tokenize_passage(unit)
+    return _PASSAGE_TOKEN_CACHE[key]
+
+
 def tokenize_passage(unit: Unit) -> Tuple[List[str], List[str]]:
     """Splits unit text into header metadata tokens and body content tokens."""
     text = normalize_text(unit.text)
@@ -142,14 +153,24 @@ def tokenize_query(query: str, use_synonyms: bool = True) -> List[str]:
     norm_q = normalize_text(query)
     raw = re.findall(r"[a-zA-Z0-9]+", norm_q.lower())
     tokens = []
+    seen_stems = set()
     for t in raw:
         if t not in STOPWORDS:
-            tokens.append(stem_word(t))
+            s = stem_word(t)
+            if s not in seen_stems:
+                tokens.append(s)
+                seen_stems.add(s)
             if use_synonyms and t in WORKPLACE_SYNONYMS:
                 for syn in WORKPLACE_SYNONYMS[t]:
-                    tokens.append(stem_word(syn))
+                    syn_s = stem_word(syn)
+                    if syn_s not in seen_stems:
+                        tokens.append(syn_s)
+                        seen_stems.add(syn_s)
     for d in extract_dates(query):
-        tokens.append(stem_word(d))
+        s = stem_word(d)
+        if s not in seen_stems:
+            tokens.append(s)
+            seen_stems.add(s)
     return tokens
 
 
@@ -197,7 +218,7 @@ class BM25Index:
         
         total_len = 0
         for u in units:
-            h_toks, b_toks = tokenize_passage(u)
+            h_toks, b_toks = get_passage_tokens(u)
             n_tokens = len(h_toks) + len(b_toks)
             self.doc_lens.append(n_tokens)
             total_len += n_tokens

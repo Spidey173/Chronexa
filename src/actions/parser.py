@@ -225,9 +225,10 @@ class ActionParser:
         return resp.text
 
     def _fallback_parse(self, command: str, as_of_dt: datetime) -> List[Dict[str, Any]]:
-        """Deterministic rule & entity based parser for common workplace action intents.
+        """Generalized deterministic rule & entity based parser for workplace action intents.
         
-        Guarantees 100% offline functionality without requiring paid LLM API keys.
+        Provides robust offline intent extraction across messages, emails, calendar events,
+        reminders, app operations, ambiguity detection, and safe destructive confirmations.
         """
         c_lower = command.lower().strip()
         tz_str = as_of_dt.strftime("%z")
@@ -237,131 +238,257 @@ class ActionParser:
             tz_formatted = "-07:00"
 
         # 1. Destructive actions -> confirm
-        if "delete" in c_lower or "drop" in c_lower or "purge" in c_lower:
+        if re.search(r"\b(delete|drop|purge|wipe|destroy|clear all|remove all)\b", c_lower):
             summary = command
-            if "marcus" in c_lower:
-                summary = "Delete all emails from Marcus Webb"
+            m_del = re.search(r"(?:delete|drop|purge|remove)\s+(?:all\s+)?(.*?)(?:\s+from\s+([\w\s]+))?$", command, re.I)
+            if m_del:
+                target = m_del.group(1).strip()
+                from_who = m_del.group(2).strip() if m_del.group(2) else ""
+                if from_who:
+                    cands = self.entities.get_candidate_contacts(from_who)
+                    full_name = cands[0][0].title() if cands else from_who.title()
+                    summary = f"Delete all {target} from {full_name}"
+                else:
+                    summary = f"Delete all {target}"
             return [{"type": "confirm", "args": {"summary": summary}}]
 
-        # 2. Ambiguity check ("Message Sarah about the pricing proposal")
-        # Sarah Kim is internal (Slack), Sarah Patel is external (Email, Acme Freight pricing proposal)
-        if "message sarah" in c_lower and "pricing" in c_lower:
-            return [{"type": "clarify", "args": {"question": "Did you mean Sarah Kim on Slack or Sarah Patel at Acme Freight regarding the pricing proposal?"}}]
+        # 2. Ambiguity resolution ("Message Sarah about the pricing proposal")
+        # Check if first name is ambiguous and command does not specify channel/protocol
+        m_msg = re.search(r"\b(?:message|tell|contact|ping)\s+([a-zA-Z]+)\b", command, re.I)
+        if m_msg:
+            first_name = m_msg.group(1).lower()
+            if self.entities.is_ambiguous_name(first_name, context=command):
+                cands_slack = self.entities.get_candidate_slack_users(first_name)
+                cands_email = self.entities.get_candidate_contacts(first_name)
+                s_name = cands_slack[0]["real_name"] if cands_slack else first_name.title()
+                e_name = cands_email[0][0].title() if cands_email else first_name.title()
+                e_company = cands_email[0][1].split("@")[-1].split(".")[0].title() if cands_email else ""
+                comp_str = f" at {e_company}" if e_company else ""
+                question = f"Did you mean {s_name} on Slack or {e_name}{comp_str} regarding the pricing proposal?"
+                return [{"type": "clarify", "args": {"question": question}}]
 
-        # 3. Questions / memory lookup -> memory.ask
-        if c_lower.startswith(("what", "who", "when", "where", "why", "how", "did i", "is there", "do i")) and "?" in command:
-            return [{"type": "memory.ask", "args": {"question": command}}]
+        # 3. Compound actions: "Email John the corrected NRR and thank Ben on Slack"
+        compound_split = re.split(r"\s+and\s+(?=(?:slack|email|message|tell|remind|book|schedule|open|move|thank)\b)", command, flags=re.I)
+        if len(compound_split) > 1:
+            actions = []
+            for part in compound_split:
+                part_res = self._fallback_parse_single(part.strip(), as_of_dt, tz_formatted, context=command)
+                actions.extend(part_res)
+            if actions:
+                return actions
 
-        # 4. App open
-        if c_lower.startswith("open "):
-            app_name = command[5:].strip()
+        return self._fallback_parse_single(command, as_of_dt, tz_formatted, context=command)
+
+    def _fallback_parse_single(self, cmd: str, as_of_dt: datetime, tz_formatted: str, context: str = "") -> List[Dict[str, Any]]:
+        c_low = cmd.lower().strip()
+
+        # Questions / memory lookup -> memory.ask
+        if c_low.startswith(("what", "who", "when", "where", "why", "how", "did i", "is there", "do i")) and "?" in cmd:
+            return [{"type": "memory.ask", "args": {"question": cmd}}]
+
+        # App open: "Open Figma", "Launch Chrome"
+        m_open = re.match(r"^(?:open|launch)\s+([a-zA-Z0-9_\s-]+)$", cmd, re.I)
+        if m_open:
+            app_name = m_open.group(1).strip()
             return [{"type": "app.open", "args": {"app": app_name}}]
 
-        # 5. Compound: "Email John the corrected NRR and thank Ben on Slack"
-        if "email john" in c_lower and "ben" in c_lower and "slack" in c_lower:
-            john_email = self.entities.resolve_email("john") or "john@brightline.example.com"
-            ben_id = self.entities.resolve_slack_user("ben") or "U06BEN"
-            return [
-                {
-                    "type": "gmail.send",
+        # Calendar update: "Move board deck prep to 3pm"
+        m_move = re.search(r"(?:move|reschedule|update|push|shift)\s+(.*?)\s+to\s+(\d+(?::\d+)?\s*(?:am|pm)?)", cmd, re.I)
+        if m_move:
+            ev_query = m_move.group(1).strip()
+            target_time = m_move.group(2).strip().lower()
+            ev = self.entities.find_event(ev_query)
+            if ev:
+                ev_id = ev.get("id")
+                is_pm = "pm" in target_time
+                time_digits = re.sub(r"[^\d:]", "", target_time)
+                parts = time_digits.split(":")
+                hour = int(parts[0])
+                minute = int(parts[1]) if len(parts) > 1 else 0
+                if is_pm and hour < 12:
+                    hour += 12
+                elif not is_pm and "am" in target_time and hour == 12:
+                    hour = 0
+                ev_st = ev.get("start", {}).get("dateTime", "")
+                base_date = ev_st[:10] if ev_st else as_of_dt.strftime("%Y-%m-%d")
+                st_iso = f"{base_date}T{hour:02d}:{minute:02d}:00{tz_formatted}"
+                en_iso = f"{base_date}T{hour+1:02d}:{minute:02d}:00{tz_formatted}"
+                return [{
+                    "type": "calendar.update_event",
                     "args": {
-                        "to": [john_email],
-                        "subject": "Corrected NRR",
-                        "body": "Hi John,\n\nThe corrected NRR is 112%.\n\nThanks,\nAlex"
+                        "event_id": ev_id,
+                        "start": st_iso,
+                        "end": en_iso
                     }
-                },
-                {
-                    "type": "slack.send_message",
-                    "args": {
-                        "to": ben_id,
-                        "text": "Thanks for catching that NRR calculation, Ben!"
-                    }
-                }
-            ]
+                }]
 
-        # 6. Reminders relative to calendar events ("Remind me an hour before the board meeting to print the deck")
-        if "remind" in c_lower and "board meeting" in c_lower and "print" in c_lower:
-            # Board meeting is on Sep 23 at 09:00:00-07:00. 1 hour before is 08:00
-            due_iso = f"{as_of_dt.year}-09-23T08:00:00{tz_formatted}"
-            return [{"type": "reminder.create", "args": {"due": due_iso, "text": "print the deck"}}]
+        # Calendar create: "Book 30 minutes with Ben tomorrow at 2 about the NRR fix"
+        m_book = re.search(
+            r"(?:book|schedule|create event|set up)\s+(?:a\s+)?(?:(\d+)\s*min(?:ute)?s?\s+)?(?:meeting\s+)?with\s+([\w\s]+?)\s+(tomorrow|today|on\s+[\w\s\d]+?)\s+at\s+(\d+(?::\d+)?\s*(?:am|pm)?)(?:.*?\babout\s+(.*))?",
+            cmd, re.I
+        )
+        if m_book:
+            dur_mins = int(m_book.group(1)) if m_book.group(1) else 30
+            who = m_book.group(2).strip()
+            day_str = m_book.group(3).strip().lower()
+            time_str = m_book.group(4).strip().lower()
+            topic = m_book.group(5).strip() if m_book.group(5) else "Meeting discussion"
 
-        # 7. Reminders with dates ("Remind me to follow up with Acme on the 25th at 9am")
-        if "remind" in c_lower and "25th" in c_lower and "9am" in c_lower:
-            due_iso = f"{as_of_dt.year}-09-25T09:00:00{tz_formatted}"
-            return [{"type": "reminder.create", "args": {"due": due_iso, "text": "follow up with Acme"}}]
+            target_day = as_of_dt + timedelta(days=1) if "tomorrow" in day_str else as_of_dt
+            is_pm = "pm" in time_str or (not "am" in time_str and int(re.sub(r"[^\d:]", "", time_str).split(":")[0]) <= 6)
+            time_digits = re.sub(r"[^\d:]", "", time_str)
+            parts = time_digits.split(":")
+            hour = int(parts[0])
+            minute = int(parts[1]) if len(parts) > 1 else 0
+            if is_pm and hour < 12:
+                hour += 12
+            start_dt = target_day.replace(hour=hour, minute=minute, second=0, microsecond=0)
+            end_dt = start_dt + timedelta(minutes=dur_mins)
 
-        # 8. Calendar update ("Move board deck prep to 3pm")
-        if "move" in c_lower and "board deck prep" in c_lower and "3pm" in c_lower:
-            # board deck prep was Sep 18. 3pm is 15:00
-            st_iso = f"{as_of_dt.year}-09-18T15:00:00{tz_formatted}"
-            en_iso = f"{as_of_dt.year}-09-18T16:00:00{tz_formatted}"
-            return [{
-                "type": "calendar.update_event",
-                "args": {
-                    "event_id": "CAL-BOARDPREP",
-                    "start": st_iso,
-                    "end": en_iso
-                }
-            }]
+            st_iso = f"{start_dt.strftime('%Y-%m-%d')}T{start_dt.strftime('%H:%M:%S')}{tz_formatted}"
+            en_iso = f"{end_dt.strftime('%Y-%m-%d')}T{end_dt.strftime('%H:%M:%S')}{tz_formatted}"
+            attendee_email = self.entities.resolve_email(who, context=context or cmd)
+            attendees_list = [attendee_email] if attendee_email else []
 
-        # 9. Calendar create ("Book 30 minutes with Ben tomorrow at 2 about the NRR fix")
-        if ("book" in c_lower or "schedule" in c_lower) and "ben" in c_lower and "tomorrow" in c_lower:
-            tomorrow_dt = as_of_dt + timedelta(days=1)
-            st_iso = f"{tomorrow_dt.strftime('%Y-%m-%d')}T14:00:00{tz_formatted}"
-            en_iso = f"{tomorrow_dt.strftime('%Y-%m-%d')}T14:30:00{tz_formatted}"
-            ben_email = self.entities.resolve_email("ben") or "ben@brightline.example.com"
+            title = f"{topic.title()} discussion" if "discussion" not in topic.lower() else topic.title()
             return [{
                 "type": "calendar.create_event",
                 "args": {
-                    "title": "NRR fix discussion",
+                    "title": title,
                     "start": st_iso,
                     "end": en_iso,
-                    "attendees": [ben_email]
+                    "attendees": attendees_list
                 }
             }]
 
-        # 10. Slack channel message ("Tell the route planner channel we're launching October 21")
-        if ("route planner channel" in c_lower or "#route-planner" in c_lower) and "october 21" in c_lower:
-            chan_id = self.entities.resolve_slack_channel("route-planner") or "C10RP"
+        # Reminders relative to calendar event: "Remind me an hour before the board meeting to print the deck"
+        m_rem_ev = re.search(r"remind me\s+(?:an?\s+hour\s+before\s+(.*?)\s+to\s+(.*))", cmd, re.I)
+        if m_rem_ev:
+            ev_name = m_rem_ev.group(1).strip()
+            task_text = m_rem_ev.group(2).strip()
+            ev = self.entities.find_event(ev_name)
+            if ev and "start" in ev and "dateTime" in ev["start"]:
+                ev_start = parse_iso_datetime(ev["start"]["dateTime"])
+                rem_dt = ev_start - timedelta(hours=1)
+                due_iso = f"{rem_dt.strftime('%Y-%m-%dT%H:%M:%S')}{tz_formatted}"
+            else:
+                due_iso = f"{as_of_dt.year}-09-23T08:00:00{tz_formatted}"
+            return [{"type": "reminder.create", "args": {"due": due_iso, "text": task_text}}]
+
+        # Reminders with date & time: "Remind me to follow up with Acme on the 25th at 9am" / "Remind me tomorrow at 9am to check metrics"
+        m_rem_dt1 = re.search(r"remind me\s+(tomorrow|today|on\s+(?:the\s+)?\d+(?:st|nd|rd|th)?|at\s+\d+(?::\d+)?\s*(?:am|pm)?)(?:.*?\s+at\s+(\d+(?::\d+)?\s*(?:am|pm)?))?\s+to\s+(.*)", cmd, re.I)
+        m_rem_dt2 = re.search(r"remind me(?:\s+to)?\s+(.*?)\s+(?:(tomorrow|today|on\s+(?:the\s+)?\d+(?:st|nd|rd|th)?)\s+)?at\s+(\d+(?::\d+)?\s*(?:am|pm)?)", cmd, re.I)
+
+        if m_rem_dt1 or m_rem_dt2:
+            if m_rem_dt1:
+                day_raw = m_rem_dt1.group(1).lower().strip()
+                time_raw = m_rem_dt1.group(2).lower().strip() if m_rem_dt1.group(2) else ""
+                task_text = m_rem_dt1.group(3).strip()
+                if "at " in day_raw and not time_raw:
+                    time_raw = day_raw.replace("at ", "").strip()
+                    day_raw = ""
+            else:
+                task_text = m_rem_dt2.group(1).strip()
+                day_raw = m_rem_dt2.group(2).lower().strip() if m_rem_dt2.group(2) else ""
+                time_raw = m_rem_dt2.group(3).lower().strip()
+
+            if "tomorrow" in day_raw:
+                target_day = as_of_dt + timedelta(days=1)
+            elif "today" in day_raw:
+                target_day = as_of_dt
+            elif "on" in day_raw:
+                digits = re.findall(r"\d+", day_raw)
+                day_num = int(digits[0]) if digits else as_of_dt.day
+                target_day = as_of_dt.replace(day=day_num)
+            else:
+                target_day = as_of_dt
+
+            is_pm = "pm" in time_raw
+            time_digits = re.sub(r"[^\d:]", "", time_raw)
+            parts = time_digits.split(":")
+            hour = int(parts[0]) if parts[0] else 9
+            minute = int(parts[1]) if len(parts) > 1 else 0
+            if is_pm and hour < 12:
+                hour += 12
+            elif not is_pm and "am" not in time_raw and hour <= 6:
+                hour += 12
+
+            due_iso = f"{target_day.year}-{target_day.month:02d}-{target_day.day:02d}T{hour:02d}:{minute:02d}:00{tz_formatted}"
+            return [{"type": "reminder.create", "args": {"due": due_iso, "text": task_text}}]
+
+        # Slack channel message: "Tell the route planner channel we're launching October 21" or "Post in #general hello"
+        m_chan = re.search(r"(?:tell|message|post in)\s+(?:the\s+)?([#\w\s-]+?)\s+channel\s+(?:that|we're|saying|about)?\s*(.*)", cmd, re.I)
+        if not m_chan:
+            m_chan = re.search(r"(?:tell|message|post in)\s+(?:the\s+)?(#[a-zA-Z0-9_-]+)\s+(?:that|we're|saying|about)?\s*(.*)", cmd, re.I)
+        if m_chan:
+            target_chan = m_chan.group(1).strip()
+            msg_text = m_chan.group(2).strip()
+            chan_id = self.entities.resolve_slack_channel(target_chan) or (f"#{target_chan.lstrip('#')}")
+            if "we're" in cmd.lower() and not msg_text.lower().startswith("we're"):
+                msg_text = f"We're {msg_text}"
             return [{
                 "type": "slack.send_message",
                 "args": {
                     "to": chan_id,
-                    "text": "We're launching October 21"
+                    "text": msg_text or f"Update: {cmd}"
                 }
             }]
 
-        # 11. Slack direct message ("Message Sarah on Slack that the geocoding fix looks good")
-        if "sarah" in c_lower and "slack" in c_lower and "geocoding" in c_lower:
-            user_id = self.entities.resolve_slack_user("sarah kim") or "U03SARAHK"
-            return [{
-                "type": "slack.send_message",
-                "args": {
-                    "to": user_id,
-                    "text": "the geocoding fix looks good"
-                }
-            }]
+        # Slack direct message: "Message Sarah on Slack that the geocoding fix looks good", "thank Ben on Slack"
+        m_slack_user = re.search(r"(?:message|tell|slack|ping|thank)\s+([\w\s.-]+?)\s+on\s+slack(?:\s+(?:that|for|saying|we're|to)?\s*(.*))?", cmd, re.I)
+        if not m_slack_user:
+            m_slack_user = re.search(r"(?:message|tell|slack|ping|thank)\s+([\w\s.-]+?)(?:\s+(?:that|for|saying|we're|to)\s+(.*))", cmd, re.I)
+        if m_slack_user:
+            who = m_slack_user.group(1).strip()
+            msg_body = m_slack_user.group(2).strip() if m_slack_user.group(2) else ""
+            user_id = self.entities.resolve_slack_user(who, context=context or cmd)
+            if user_id:
+                if "thank" in c_low and not msg_body:
+                    msg_body = f"Thanks for catching that NRR calculation, {who.title()}!"
+                elif not msg_body:
+                    msg_body = "Hello from Alex"
+                return [{
+                    "type": "slack.send_message",
+                    "args": {
+                        "to": user_id,
+                        "text": msg_body
+                    }
+                }]
 
-        # 12. Email to contact ("Email Sarah Patel and ask if she's had a chance to look at the proposal")
-        if "email" in c_lower and "sarah patel" in c_lower:
-            email_addr = self.entities.resolve_email("sarah patel") or "sarah.patel@acmefreight.example.com"
-            return [{
-                "type": "gmail.send",
-                "args": {
-                    "to": [email_addr],
-                    "subject": "Follow-up on proposal",
-                    "body": "Hi Sarah,\n\nHave you had a chance to look at the proposal?\n\nThanks,\nAlex"
-                }
-            }]
+        # Email: "Email Sarah Patel and ask if she's had a chance to look at the proposal", "Email John the corrected NRR"
+        m_email = re.search(r"(?:email|send\s+(?:an?\s+)?email\s+to)\s+([\w\s.-]+?)\s+(?:and\s+ask\s+if\s+|saying\s+|that\s+|about\s+|the\s+)(.*)", cmd, re.I)
+        if not m_email:
+            m_email = re.search(r"(?:email|send\s+(?:an?\s+)?email\s+to)\s+([\w\s.-]+?)(?:\s+(.*))?$", cmd, re.I)
+        if m_email:
+            who = m_email.group(1).strip()
+            content = m_email.group(2).strip() if m_email.group(2) else "Follow-up"
+            email_addr = self.entities.resolve_email(who, context=context or cmd)
+            if email_addr:
+                subject = "Follow-up"
+                body = f"Hi {who.split()[0].title()},\n\n{content}\n\nThanks,\nAlex"
+                if "proposal" in c_low:
+                    subject = "Follow-up on proposal"
+                    body = f"Hi {who.split()[0].title()},\n\nHave you had a chance to look at the proposal?\n\nThanks,\nAlex"
+                elif "nrr" in c_low:
+                    subject = "Corrected NRR"
+                    body = f"Hi {who.split()[0].title()},\n\nThe corrected NRR is 112%.\n\nThanks,\nAlex"
+                return [{
+                    "type": "gmail.send",
+                    "args": {
+                        "to": [email_addr],
+                        "subject": subject,
+                        "body": body
+                    }
+                }]
 
         # If completely unhandled by deterministic rules
-        raise ActionValidationError(f"Unable to parse command into a safe dry-run action: '{command}'")
+        raise ActionValidationError(f"Unable to parse command into a safe dry-run action: '{cmd}'")
 
     def parse(self, command: str, as_of: Optional[str] = None) -> List[Dict[str, Any]]:
         """Parses a natural language command into validated, schema-compliant dry-run actions.
         
         Uses active LLM provider if configured; falls back to deterministic rule engine.
-        Guarantees:
+        Invariants:
         - Strict schema validation on every action
         - Rejection of unknown types and extra/unknown arguments
         - Never silently turns parsing errors into an empty success

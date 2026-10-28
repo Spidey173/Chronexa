@@ -107,7 +107,7 @@
         {
           "type": "calendar.create_event",
           "args": {
-            "title": "NRR fix discussion",
+            "title": "The Nrr Fix discussion",
             "start": "2026-09-17T14:00:00-07:00",
             "end": "2026-09-17T14:30:00-07:00",
             "attendees": [
@@ -140,7 +140,7 @@
         {
           "type": "clarify",
           "args": {
-            "question": "Did you mean Sarah Kim on Slack or Sarah Patel at Acme Freight regarding the pricing proposal?"
+            "question": "Did you mean Sarah Kim on Slack or Sarah Kim at Brightline regarding the pricing proposal?"
           }
         }
       ]
@@ -179,7 +179,7 @@
         {
           "type": "confirm",
           "args": {
-            "summary": "Delete all emails from Marcus Webb"
+            "summary": "Delete all my emails from Marcus Webb"
           }
         }
       ]

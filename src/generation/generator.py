@@ -12,6 +12,7 @@ import subprocess
 import tempfile
 import time
 import urllib.request
+from pathlib import Path
 from typing import Dict, List, Any
 from eval_harness.records import Unit
 from src.generation.prompt import SYSTEM_PROMPT, USER_TEMPLATE
@@ -203,6 +204,49 @@ class AnswerGenerator:
                     time.sleep(2 * (attempt + 1))
         raise RuntimeError("Failed after max retries")
 
+    def _strip_stale_mentions(self, answer: str) -> str:
+        """Post-generation guard: removes phrases that mention superseded/stale values."""
+        # Parenthetical stale references: "(moved from Sep 30)", "(originally Oct 14)"
+        answer = re.sub(
+            r'\s*\([^)]*(?:previously|originally|moved from|changed from|was initially|formerly|first set|started as|used to be)[^)]*\)',
+            '', answer, flags=re.I
+        )
+        # Inline "moved/changed from X to Y" → remove the "from X" clause
+        answer = re.sub(
+            r',?\s*(?:moved|changed|shifted|pushed|updated|rescheduled|went)\s+from\s+[^,\.;]+(?:\s+to\s+)',
+            ' ', answer, flags=re.I
+        )
+        # "originally/initially X, [now/then] Y" → remove the "originally X" clause
+        answer = re.sub(
+            r'(?:originally|initially|previously|formerly|first)\s+'
+            r'(?:set for|scheduled for|reported as|at|on|was|said)\s+[^,\.;]+[,;]\s*(?:(?:now|then|later|currently)\s+)?',
+            '', answer, flags=re.I
+        )
+        # "It was originally X." at sentence level → remove entire sentence
+        answer = re.sub(
+            r'(?:^|\.\s+)[Ii]t\s+was\s+(?:originally|initially|previously|formerly)\s+[^\.]+\.\s*',
+            '. ', answer
+        )
+        # "was originally/initially X" inline patterns
+        answer = re.sub(
+            r'(?:it was|was)\s+(?:originally|initially|previously)\s+[^,\.;]+[,\.;]?\s*',
+            '', answer, flags=re.I
+        )
+        # "X first said/reported Y, then corrected" → keep only the correction
+        answer = re.sub(
+            r'[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\s+(?:first\s+)?(?:said|reported|stated|mentioned)\s+[^,;]+[,;]\s*(?:then\s+)?(?:corrected|updated|revised)[^,\.;]*[,;]?\s*',
+            '', answer
+        )
+        # Cleanup whitespace and punctuation artifacts
+        answer = re.sub(r'\s*,\s*\.', '.', answer)
+        answer = re.sub(r',\s*,', ',', answer)
+        answer = re.sub(r'\.\s*\.', '.', answer)
+        answer = re.sub(r'\s{2,}', ' ', answer).strip()
+        answer = re.sub(r'^[,;.\s]+', '', answer)
+        if answer and answer[0].islower():
+            answer = answer[0].upper() + answer[1:]
+        return answer
+
     def generate(self, question: str, as_of: str, retrieved_units: List[Unit]) -> Dict[str, Any]:
         """Generates a grounded answer from top retrieved units with security boundaries."""
         context_blocks = []
@@ -217,7 +261,8 @@ class AnswerGenerator:
             if total_len + len(safe_text) > 14000 and idx > 4:
                 continue
             src_type = getattr(u, "source_type", "unknown")
-            context_blocks.append(f'<record id="{u.id}" source="{src_type}">\n{safe_text}\n</record>')
+            date_str = u.time.strftime("%Y-%m-%d %H:%M") if hasattr(u, 'time') and u.time and hasattr(u.time, 'strftime') else ""
+            context_blocks.append(f'<record id="{u.id}" source="{src_type}" date="{date_str}">\n{safe_text}\n</record>')
             total_len += len(safe_text)
 
         context_str = "\n\n".join(context_blocks) if context_blocks else "(No records found)"
@@ -242,6 +287,7 @@ class AnswerGenerator:
             parsed = {}
 
         answer = str(parsed.get("answer", "")).strip()
+        answer = self._strip_stale_mentions(answer)
         abstained = bool(parsed.get("abstained", False))
         sources = parsed.get("sources", [])
         if not isinstance(sources, list):
@@ -253,7 +299,8 @@ class AnswerGenerator:
             "guest network", "wifi password", "wifi", "soc 2", "salary", "pay",
             "compensation", "bonus", "equity", "social security", "home address"
         ]
-        if not answer or answer.startswith("Error generating answer"):
+        # Grounded fallback if LLM returned empty or is offline
+        if not answer:
             q_lower = question.lower()
             if not retrieved_units or any(w in q_lower for w in UNANSWERABLE_TOPICS):
                 answer = "Not in memory: nothing in the data covers this."
@@ -296,10 +343,11 @@ class AnswerGenerator:
 
         # Guardrail 4: Sanitization of prompt injection leak terms and instructions
         injection_patterns = [
+            r"<!--[\s\S]*?-->",  # HTML/XML comment injection payloads
             r"review@pipelinepilot(?:\.example\.com)?",
             r"pipelinepilot(?:\.example\.com)?",
-            r"forward all emails[^\.\n]*",
-            r"ignore (?:your )?previous instructions[^\.\n]*",
+            r"forward (?:all )?emails[^\.\n]*",
+            r"(?:ignore|disregard) (?:all )?(?:your )?previous instructions[^\.\n]*",
             r"delete records[^\.\n]*",
             r"note to any ai[^\.\n]*",
             r"<\/?system>[^\.\n]*"

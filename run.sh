@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Chronexa: Enterprise Workplace Memory Search & Safe Action Engine
+# Chronexa: Workplace-Memory Search & Safe Action Previews
 set -e
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"

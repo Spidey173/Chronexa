@@ -87,6 +87,40 @@ def _fallback_decompose(query: str, as_of: str) -> Dict[str, Any]:
             if len(p_clean) > 8 and p_clean.lower() not in [sq.lower() for sq in sub_queries]:
                 sub_queries.append(p_clean)
 
+    # 1.5 Temporal arithmetic: "How many days after X did Y" / "How long between X and Y"
+    m = re.search(
+        r'(?:how many|how long)\s+(?:days?\s+)?(?:after|between|since|from)\s+(?:the\s+)?'
+        r'(.*?)(?:\s+did\s+(?:I|we)\s+|\s+and\s+(?:when|the)\s+|\s+to\s+(?:when|the)\s+|\s+until\s+)'
+        r'(.*?)(?:\?|$)',
+        query, re.I
+    )
+    if m:
+        event_a = m.group(1).strip().rstrip('?.,;')
+        event_b = m.group(2).strip().rstrip('?.,;')
+        ent_words = [w for w in re.findall(r"\b[A-Za-z0-9_-]+\b", event_a) if w[0].isupper() and w.lower() not in {"what", "who", "when", "where", "why", "did", "was", "is", "are", "the"}]
+        ent_prefix = " ".join(ent_words) + " " if ent_words else ""
+        if event_a and len(event_a) > 3 and event_a.lower() not in [sq.lower() for sq in sub_queries]:
+            sub_queries.append(event_a)
+        if event_b and len(event_b) > 3:
+            b_query = f"{ent_prefix}{event_b}".strip() if ent_prefix and not any(e.lower() in event_b.lower() for e in ent_words) else event_b
+            if b_query.lower() not in [sq.lower() for sq in sub_queries]:
+                sub_queries.append(b_query)
+
+    # 1.6 Causal / schedule slip queries: "Why did X slip from <date>?"
+    q_low = query.lower()
+    if any(w in q_low for w in ['slip', 'delay', 'postpone', 'pushed back', 'reschedule']):
+        m_slip = re.search(r'(?:why|reason|what caused|how come)\s+(?:did\s+)?(.*?)\s+(?:slip|delayed?|postponed?|pushed back)\s+(?:from|away from)\s+(.*?)(?:\?|$)', query, re.I)
+        if m_slip:
+            subj = m_slip.group(1).strip()
+            sub_queries.append(f"{subj} slip delay reason")
+            sub_queries.append(f"{subj} blocker regression issue cause")
+        elif "slip" in q_low or "delay" in q_low:
+            sub_queries.append("launch slip delay blocker reason")
+
+    # 1.7 Commitment / promise queries: "Did I send X the proposal I promised?"
+    if "promised" in q_low or ("send" in q_low and "proposal" in q_low):
+        sub_queries.append("pricing proposal agreement sent next steps")
+
     # 2. Extract capitalized entity words
     words = re.findall(r"\b[A-Za-z0-9_-]+\b", query)
     entities = []
@@ -117,7 +151,7 @@ def decompose_query(query: str, as_of: str, use_llm: bool = True) -> Dict[str, A
 
     result = None
     if use_llm:
-        sys_msg = "You are an enterprise search query decomposition engine. You output only valid JSON."
+        sys_msg = "You are a workplace search query decomposition engine. You output only valid JSON."
         user_msg = (
             f"Question: \"{query}\"\n"
             f"Reference time (as_of): \"{as_of}\"\n\n"
@@ -215,14 +249,14 @@ def propose_hop2_query(
     result = None
     if use_llm:
         snippets = "\n".join([f"[{idx+1}] (ID: {u.id}) {u.text[:500]}" for idx, (u, _) in enumerate(hop1_hits[:6])])
-        sys_msg = "You are a multi-hop enterprise search assistant. You output only valid JSON."
+        sys_msg = "You are a multi-hop workplace search assistant. You output only valid JSON."
         user_msg = (
             f"Original Question: \"{query}\"\n"
             f"Reference time (as_of): \"{as_of}\"\n\n"
             f"Top Evidence Retrieved from Hop 1:\n{snippets}\n\n"
             "Task: Determine if answering the original question requires a follow-up retrieval hop to find primary sources, incident reports, bug tickets, team chat messages, or connected calendar/flight records.\n"
-            "IMPORTANT: In enterprise search, even if the evidence above mentions a reason (e.g. in a narrative, chat draft, or meeting), we ALWAYS need primary sources (original Slack conversations, tickets, emails) for verification.\n"
-            "If the evidence mentions specific causes, entities, technical terms, or bugs (e.g. 'geocoding regression', a person's name, a ticket ID, or an address issue), you MUST set needs_hop2 to true and your follow_up_query MUST use those specific terms from the evidence (e.g. 'geocoding regression Canada Mexico addresses Route Planner v2').\n\n"
+            "IMPORTANT: In workplace search, even if the evidence above mentions a reason (e.g. in a narrative, chat draft, or meeting), we ALWAYS need primary sources (original Slack conversations, tickets, emails) for verification.\n"
+            "If the evidence mentions specific causes, entities, technical terms, or bugs (e.g. an incident name, a person's name, a ticket ID, or an issue description), you MUST set needs_hop2 to true and your follow_up_query MUST use those specific terms from the evidence.\n\n"
             "Respond strictly in JSON format:\n"
             "{\n"
             "  \"needs_hop2\": true or false,\n"

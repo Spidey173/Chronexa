@@ -232,7 +232,7 @@ class EvaluationRunner:
             as_of_str = item["as_of"]
             as_of_dt = _parse_dt(as_of_str)
 
-            # Strictly visible units under as_of temporal boundary (guarantees forbidden@10 == 0)
+            # Strictly visible units under as_of temporal boundary (filters out units where ts > as_of)
             visible = get_visible_units(as_of_dt, data_dir=self.data_dir, enriched=False)
 
             hits, all_cands, calls = self.retrieve(

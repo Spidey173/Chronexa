@@ -7,7 +7,7 @@ Combines:
 - Query decomposition for multi-faceted questions
 - 2-hop iterative retrieval for calendar-anchor and entity-chain queries
 - Adjacent-segment injection for meeting context completeness
-- Parent-record diversification to guarantee multi-document coverage
+- Parent-record diversification for multi-document coverage
 - Cross-encoder reranking for deep semantic relevance
 - Temporal date boosting via dateparser resolution
 """
@@ -55,10 +55,11 @@ class HybridRetriever:
         dense_weight: float = 1.0,
         bm25_top: int = 80,
         dense_top: int = 80,
+        bm25_idx: Optional[BM25Index] = None,
     ) -> defaultdict:
         """Core RRF fusion returning {unit_id: rrf_score} dict."""
-        bm25_idx = BM25Index(visible_units, use_synonyms=self.use_synonyms)
-        bm25_hits = bm25_idx.search(
+        active_bm25 = bm25_idx or BM25Index(visible_units, use_synonyms=self.use_synonyms)
+        bm25_hits = active_bm25.search(
             query,
             top_k=min(bm25_top, len(visible_units)),
             max_per_record=10,
@@ -132,8 +133,8 @@ class HybridRetriever:
             "meetings", "events today", "itinerary"
         ])
         is_travel_query = any(w in q_lower for w in [
-            "fly", "flight", "travel", "trip", "denver", "chicago", "new york",
-            "board meeting", "offsite"
+            "fly", "flight", "travel", "trip", "ticket", "airline", "airport",
+            "hotel", "offsite", "conference", "board meeting", "transit"
         ])
 
         if not (is_calendar_query or is_travel_query):
@@ -254,7 +255,7 @@ class HybridRetriever:
     ) -> List[Tuple[Unit, float]]:
         """Searches strictly visible units using Reciprocal Rank Fusion of BM25 and Dense embeddings.
 
-        Guarantees that only units in visible_units can be returned (zero temporal leakage).
+        Ensures that only units in visible_units can be returned (enforcing point-in-time visibility).
         Integrates sub-query decomposition, 2-hop retrieval, adjacent-segment injection,
         multi-stream cross-encoder reranking, and parent record diversification.
         """
@@ -264,13 +265,19 @@ class HybridRetriever:
         unit_by_id = {u.id: u for u in visible_units}
         streams = []
 
+        # Construct shared BM25 index once for visible units to reuse across all sub-queries
+        bm25_shared = BM25Index(visible_units, use_synonyms=self.use_synonyms)
+
         # 1. Primary RRF fusion on the original query
         rrf_scores = self._rrf_fuse(
             query, visible_units, rrf_k=rrf_k,
-            bm25_weight=bm25_weight, dense_weight=dense_weight
+            bm25_weight=bm25_weight, dense_weight=dense_weight,
+            bm25_idx=bm25_shared
         )
 
-        # Temporal date boosting
+        # Temporal date boosting (reduced for causal "why" queries)
+        q_lower = query.lower()
+        is_causal_query = any(w in q_lower for w in ['why', 'slip', 'reason', 'cause', 'what happened'])
         try:
             from src.retrieval.temporal import resolve_dates_with_dateparser
             from datetime import datetime
@@ -280,12 +287,14 @@ class HybridRetriever:
                 as_of_dt = datetime.now()
             resolved_dates = resolve_dates_with_dateparser(query, as_of_dt)
             if resolved_dates:
+                # For causal queries, only lightly boost date matches (cause may be on a different date)
+                boost_factor = 1.05 if is_causal_query else 1.15
                 for uid in list(rrf_scores.keys()):
                     u = unit_by_id.get(uid)
                     if u:
                         u_date = u.time.strftime("%Y-%m-%d") if u.time else ""
                         if u_date in resolved_dates or any(d in u.text for d in resolved_dates):
-                            rrf_scores[uid] *= 1.15
+                            rrf_scores[uid] *= boost_factor
         except Exception:
             pass
 
@@ -307,7 +316,7 @@ class HybridRetriever:
 
         selected_main = self._inject_adjacent_segments(selected_main, unit_by_id, visible_units, max_inject=12)
         if self.enable_rerank and self.reranker is not None and len(selected_main) > 0:
-            reranked_main = self.reranker.rerank(query, selected_main[:min(45, len(selected_main))], top_k=20)
+            reranked_main = self.reranker.rerank(query, selected_main[:min(60, len(selected_main))], top_k=20)
         else:
             reranked_main = selected_main[:20]
         streams.append([(self._resolve_parent(u, unit_by_id), sc) for u, sc in reranked_main])
@@ -319,7 +328,7 @@ class HybridRetriever:
             sub_queries = decomp.get("sub_queries", [])
             valid_sqs = [sq.strip() for sq in sub_queries if sq.strip().lower() != query.strip().lower() and len(sq.strip()) > 8 and "calculate" not in sq.lower()]
             for sq in valid_sqs[:2]:
-                sq_scores = self._rrf_fuse(sq, visible_units, rrf_k=rrf_k, bm25_weight=bm25_weight, dense_weight=dense_weight)
+                sq_scores = self._rrf_fuse(sq, visible_units, rrf_k=rrf_k, bm25_weight=bm25_weight, dense_weight=dense_weight, bm25_idx=bm25_shared)
                 sq_ranked = sorted(sq_scores.items(), key=lambda x: x[1], reverse=True)
                 pool_sq = [(unit_by_id[uid], s) for uid, s in sq_ranked[:30] if uid in unit_by_id]
                 pool_sq = self._inject_adjacent_segments(pool_sq, unit_by_id, visible_units, max_inject=10)
@@ -334,7 +343,6 @@ class HybridRetriever:
         # 3. 2-hop retrieval stream
         try:
             from src.retrieval.decomposition import propose_hop2_query
-            from src.retrieval.bm25 import BM25Index
             seen_evidence_recs = set()
             hop1_evidence = []
             for u, sc in reranked_main:
@@ -344,8 +352,7 @@ class HybridRetriever:
                     hop1_evidence.append((u, sc))
                 if len(hop1_evidence) >= 4:
                     break
-            bm25_idx = BM25Index(visible_units)
-            for u, sc in bm25_idx.search(query, top_k=6):
+            for u, sc in bm25_shared.search(query, top_k=6):
                 rec_id = u.record if hasattr(u, "record") and u.record else u.id.split("#")[0]
                 if rec_id not in seen_evidence_recs:
                     seen_evidence_recs.add(rec_id)
@@ -356,7 +363,7 @@ class HybridRetriever:
             hop2_result = propose_hop2_query(query, as_of or "", hop1_evidence, use_llm=True)
             if hop2_result.get("needs_hop2") and hop2_result.get("follow_up_query"):
                 follow_up = hop2_result["follow_up_query"].strip()
-                hop2_scores = self._rrf_fuse(follow_up, visible_units, rrf_k=rrf_k, bm25_weight=bm25_weight, dense_weight=dense_weight)
+                hop2_scores = self._rrf_fuse(follow_up, visible_units, rrf_k=rrf_k, bm25_weight=bm25_weight, dense_weight=dense_weight, bm25_idx=bm25_shared)
                 hop2_ranked = sorted(hop2_scores.items(), key=lambda x: x[1], reverse=True)
                 pool_h2 = [(unit_by_id[uid], s) for uid, s in hop2_ranked[:30] if uid in unit_by_id]
                 pool_h2 = self._inject_adjacent_segments(pool_h2, unit_by_id, visible_units, max_inject=10)
@@ -410,3 +417,4 @@ class HybridRetriever:
                 break
 
         return final[:top_k]
+

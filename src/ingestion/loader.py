@@ -1,7 +1,7 @@
 """High-performance caching data loader with optional passage enrichment and temporal boundary filtering.
 
 Loads records into memory, then filters strictly by `as_of` timestamp:
-- Guarantees zero future temporal leakage (delivery_time <= as_of)
+- Filters out future records strictly where delivery_time > as_of
 - Masks deleted records
 - Applies in-place message edits up to as_of
 - Supports enriched contextual windowing (speaker turns, surrounding dialog, rich metadata)
@@ -30,12 +30,24 @@ def _apply_edits(text: str, newer_text: str) -> str:
     """Safely replaces edited message text while preserving multi-line enriched headers."""
     if "\n" in text:
         lines = text.split("\n")
-        prefix, sep, _ = lines[-1].partition(": ")
-        if sep:
-            lines[-1] = f"{prefix}: {newer_text} (edited)"
+        # Identify header/context lines vs message lines
+        body_idx = -1
+        for i, line in enumerate(lines):
+            # Check if this line introduces the message author (e.g. "Name: ...")
+            if not line.startswith(("[", "Context:")) and ": " in line:
+                body_idx = i
+                break
+        if body_idx != -1:
+            header_lines = lines[:body_idx]
+            prefix, _, _ = lines[body_idx].partition(": ")
+            return "\n".join(header_lines + [f"{prefix}: {newer_text} (edited)"])
         else:
-            lines[-1] = f"{newer_text} (edited)"
-        return "\n".join(lines)
+            prefix, sep, _ = lines[-1].partition(": ")
+            if sep:
+                lines[-1] = f"{prefix}: {newer_text} (edited)"
+            else:
+                lines[-1] = f"{newer_text} (edited)"
+            return "\n".join(lines)
     else:
         prefix, sep, _ = text.partition(": ")
         if sep:

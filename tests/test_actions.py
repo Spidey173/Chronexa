@@ -99,6 +99,30 @@ class TestActionAssistant(unittest.TestCase):
         self.assertEqual(actions[0]["type"], "app.open")
         self.assertEqual(actions[0]["args"]["app"], "Figma")
 
+    def test_offline_fallback_generalized_arbitrary_commands(self):
+        parser = ActionParser()
+        parser.provider = "none"
+
+        # 1. Arbitrary app open
+        act1 = parser.parse("Open Terminal", "2026-09-16T10:00:00-07:00")
+        self.assertEqual(act1[0]["type"], "app.open")
+        self.assertEqual(act1[0]["args"]["app"], "Terminal")
+
+        # 2. Arbitrary slack message to resolved user
+        act2 = parser.parse("Message Dana on Slack saying the design looks fantastic", "2026-09-16T10:00:00-07:00")
+        self.assertEqual(act2[0]["type"], "slack.send_message")
+        self.assertIn("design looks fantastic", act2[0]["args"]["text"].lower())
+
+        # 3. Arbitrary email
+        act3 = parser.parse("Email Dave about the quarterly review notes", "2026-09-16T10:00:00-07:00")
+        self.assertEqual(act3[0]["type"], "gmail.send")
+        self.assertIn("dave", act3[0]["args"]["to"][0].lower())
+
+        # 4. Arbitrary calendar booking
+        act4 = parser.parse("Book 45 minutes with Ben tomorrow at 3 about architecture design", "2026-09-16T10:00:00-07:00")
+        self.assertEqual(act4[0]["type"], "calendar.create_event")
+        self.assertIn("architecture", act4[0]["args"]["title"].lower())
+
 
 if __name__ == "__main__":
     unittest.main()

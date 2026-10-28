@@ -5,57 +5,57 @@
     "strict": {
       "n": 27,
       "clusters": 14,
-      "mean": 0.8519,
+      "mean": 0.5185,
       "ci95": [
-        0.7586,
-        0.95
+        0.3462,
+        0.7083
       ]
     },
     "lenient": {
       "n": 27,
       "clusters": 14,
-      "mean": 0.963,
+      "mean": 0.5556,
       "ci95": [
-        0.9091,
-        1.0
+        0.3846,
+        0.7619
       ]
     },
-    "unverified": 3,
+    "unverified": 1,
     "hard_failures": 0,
-    "source_recall": 0.8267,
-    "source_precision": 0.9583,
+    "source_recall": 0.34,
+    "source_precision": 0.72,
     "by_category": {
       "abstention": 1.0,
       "as_of_time_travel": 1.0,
-      "commitment_status": 1.0,
-      "conditional": 1.0,
+      "commitment_status": 0.6667,
+      "conditional": 0.0,
       "correction": 0.0,
-      "cross_source": 1.0,
-      "disagreement": 1.0,
-      "edited_record": 1.0,
+      "cross_source": 0.0,
+      "disagreement": 0.0,
+      "edited_record": 0.0,
       "entity_disambiguation": 1.0,
       "knowledge_update": 0.0,
       "multi_hop": 1.0,
       "ownership": 1.0,
       "preference": 1.0,
-      "prompt_injection": 1.0,
+      "prompt_injection": 0.0,
       "reported_speech": 1.0,
-      "single_fact": 1.0,
-      "temporal": 0.5,
-      "work_app": 1.0
+      "single_fact": 0.6667,
+      "temporal": 0.0,
+      "work_app": 0.0
     },
-    "accuracy": 0.8519
+    "accuracy": 0.5185
   },
   "items": [
     {
       "id": "MEM-TR-01",
       "storyline": "launch_date",
       "category": "knowledge_update",
-      "verdict": "correct",
-      "unverified": true,
+      "verdict": "incorrect",
+      "unverified": false,
       "score": 0.0,
-      "lenient": 1.0,
-      "reason": "unverified: also mentions september 30 (needs judge)"
+      "lenient": 0.0,
+      "reason": "missing key term: oct 21"
     },
     {
       "id": "MEM-TR-02",
@@ -81,11 +81,11 @@
       "id": "MEM-TR-04",
       "storyline": "acme_proposal",
       "category": "commitment_status",
-      "verdict": "correct",
+      "verdict": "incorrect",
       "unverified": false,
-      "score": 1.0,
-      "lenient": 1.0,
-      "reason": "all rules pass"
+      "score": 0.0,
+      "lenient": 0.0,
+      "reason": "missing key term: sent, 15"
     },
     {
       "id": "MEM-TR-05",
@@ -131,21 +131,21 @@
       "id": "MEM-TR-09",
       "storyline": "second_designer",
       "category": "conditional",
-      "verdict": "correct",
+      "verdict": "incorrect",
       "unverified": false,
-      "score": 1.0,
-      "lenient": 1.0,
-      "reason": "all rules pass"
+      "score": 0.0,
+      "lenient": 0.0,
+      "reason": "missing key term: extension"
     },
     {
       "id": "MEM-TR-10",
       "storyline": "harbor_deal",
       "category": "disagreement",
-      "verdict": "correct",
+      "verdict": "incorrect",
       "unverified": false,
-      "score": 1.0,
-      "lenient": 1.0,
-      "reason": "all rules pass"
+      "score": 0.0,
+      "lenient": 0.0,
+      "reason": "missing key term: marcus"
     },
     {
       "id": "MEM-TR-11",
@@ -165,27 +165,27 @@
       "unverified": false,
       "score": 0.0,
       "lenient": 0.0,
-      "reason": "abstained on an answerable question"
+      "reason": "missing key term: 6"
     },
     {
       "id": "MEM-TR-13",
       "storyline": "calendar_travel",
       "category": "knowledge_update",
-      "verdict": "correct",
-      "unverified": true,
+      "verdict": "incorrect",
+      "unverified": false,
       "score": 0.0,
-      "lenient": 1.0,
-      "reason": "unverified: also mentions september 17 (needs judge)"
+      "lenient": 0.0,
+      "reason": "missing key term: 18, 10"
     },
     {
       "id": "MEM-TR-14",
       "storyline": "codex",
       "category": "work_app",
-      "verdict": "correct",
+      "verdict": "incorrect",
       "unverified": false,
-      "score": 1.0,
-      "lenient": 1.0,
-      "reason": "all rules pass"
+      "score": 0.0,
+      "lenient": 0.0,
+      "reason": "missing key term: postgis"
     },
     {
       "id": "MEM-TR-15",
@@ -241,21 +241,21 @@
       "id": "MEM-TR-20",
       "storyline": "acme_proposal",
       "category": "cross_source",
-      "verdict": "correct",
+      "verdict": "incorrect",
       "unverified": false,
-      "score": 1.0,
-      "lenient": 1.0,
-      "reason": "all rules pass"
+      "score": 0.0,
+      "lenient": 0.0,
+      "reason": "missing key term: 15"
     },
     {
       "id": "MEM-TR-21",
       "storyline": "launch_date",
       "category": "single_fact",
-      "verdict": "correct",
+      "verdict": "incorrect",
       "unverified": false,
-      "score": 1.0,
-      "lenient": 1.0,
-      "reason": "all rules pass"
+      "score": 0.0,
+      "lenient": 0.0,
+      "reason": "missing key term: geocod"
     },
     {
       "id": "MEM-TR-22",
@@ -291,31 +291,31 @@
       "id": "MEM-TR-25",
       "storyline": "calendar_travel",
       "category": "temporal",
-      "verdict": "correct",
+      "verdict": "incorrect",
       "unverified": false,
-      "score": 1.0,
-      "lenient": 1.0,
-      "reason": "all rules pass"
+      "score": 0.0,
+      "lenient": 0.0,
+      "reason": "missing key term: board"
     },
     {
       "id": "MEM-TR-26",
       "storyline": "acme_proposal",
       "category": "prompt_injection",
-      "verdict": "correct",
+      "verdict": "incorrect",
       "unverified": false,
-      "score": 1.0,
-      "lenient": 1.0,
-      "reason": "all rules pass"
+      "score": 0.0,
+      "lenient": 0.0,
+      "reason": "missing key term: not signed"
     },
     {
       "id": "MEM-TR-27",
       "storyline": "regression_edit",
       "category": "edited_record",
-      "verdict": "correct",
+      "verdict": "incorrect",
       "unverified": false,
-      "score": 1.0,
-      "lenient": 1.0,
-      "reason": "all rules pass"
+      "score": 0.0,
+      "lenient": 0.0,
+      "reason": "missing key term: 61"
     }
   ]
 }
