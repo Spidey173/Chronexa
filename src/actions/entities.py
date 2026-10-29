@@ -3,10 +3,12 @@
 Maps natural language names, channels, and event references to their
 canonical IDs from data/connectors (Slack, Calendar, Gmail).
 """
+from __future__ import annotations
+
 import json
 import re
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple, Set
 from src.config import DATA_DIR
 
 
