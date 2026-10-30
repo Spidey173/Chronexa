@@ -19,7 +19,7 @@
 | **Problem** | Traditional RAG models index documents uniformly, causing future facts (delays, re-orgs, edits) to leak into historical questions, while autonomous action models risk destructive OAuth side-effects. |
 | **Architecture** | **Pre-retrieval temporal boundaries** (`timestamp <= as_of & NOT deleted`), dual-stream **FastEmbed BGE dense vectors + passage-cached BM25** fused via Reciprocal Rank Fusion (RRF, k=60), cross-encoder joint reranking, and allowlisted dry-run JSON schema validation. |
 | **Evidence & Benchmarks** | **Holdout (n=100 unseen) Top-10 Retrieval: 86.8%**, Dev (n=36) Top-10: 94.4%, Recall@5: 75.0%, MRR: 0.683, **0.0% future knowledge leakage**, and 12/12 passing action benchmark schemas. |
-| **Scope & Boundaries** | **Synthetic Corpus**: ~1,316 mock workplace records across 7 connectors (Slack, Jira, Docs, Notion, GitHub, Linear, GCal). **Deployment**: Search UI live on Vercel; action proposals execute on validated dry-run schemas with zero destructive OAuth side-effects. |
+| **Scope & Boundaries** | **Synthetic Data**: ~1,316 synthetic workplace records across 7 mock connectors (Slack, Jira, Docs, Notion, GitHub, Linear, GCal). **Local Benchmark Environment**: Benchmarked in local Python 3.12 environment (Holdout n=100 Top-10: 86.8%, 0.0% leakage). **Live UI + Local Backend**: Search UI live on Vercel; action proposals execute on validated dry-run schemas with local background server; zero destructive OAuth side-effects. |
 | **Verified Test Suite** | **50 / 50 Pytests passing** (temporal boundaries, BM25 token caching, dense ONNX dot products, cross-encoder reranking, dry-run schema validation). |
 
 ---
