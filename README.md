@@ -77,9 +77,36 @@
 
 ---
 
-## 🚀 Deployment & Operations
+## 🚀 Quickstart & Deployment (Cross-Platform: macOS, Windows, Linux)
 
-### 1. Local Development (Docker Compose)
+Chronexa runs identically on **macOS** (Apple Silicon & Intel), **Windows** (native or WSL2), and **Linux**. You can run it either directly with **Python 3.10+** (great for downloaded GitHub ZIPs and quick local evaluation) or via **Docker** (recommended for production).
+
+### Option 1: Native Python / Downloaded GitHub ZIP (No Docker Needed)
+
+If you cloned the repo or clicked **Download ZIP** on GitHub:
+
+```bash
+# 1. Create a virtual environment
+python -m venv .venv
+
+# 2. Activate the virtual environment
+# On macOS / Linux:
+source .venv/bin/activate
+# On Windows (PowerShell / Command Prompt):
+.venv\Scripts\activate
+
+# 3. Install core production dependencies (~16 packages, no dev bloat)
+pip install -r requirements.txt
+
+# Optional: Install development & test dependencies if running pytest/hypothesis
+pip install -r requirements-dev.txt
+
+# 4. Start the server (runs out-of-the-box with local SQLite and FAISS vector index)
+python src/server.py
+```
+The API is available at [http://localhost:8000](http://localhost:8000) with interactive Swagger documentation at [http://localhost:8000/docs](http://localhost:8000/docs).
+
+### Option 2: Docker Compose (Full Container Stack)
 
 Spin up the complete containerized stack (FastAPI backend + PostgreSQL 16 database):
 
