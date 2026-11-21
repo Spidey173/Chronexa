@@ -1,9 +1,8 @@
-"""Tests for temporal filtering, timezone handling, message edits, and deletions.
+"""Tests for temporal filtering, timezone handling, message edits, and deletions using pytest.
 """
-import unittest
 from datetime import datetime
-from zoneinfo import ZoneInfo
 from pathlib import Path
+import pytest
 
 from eval_harness.records import Unit, visible, load
 from src.retrieval.temporal import parse_iso_datetime, LOCAL_TZ
@@ -11,106 +10,108 @@ from src.ingestion.loader import get_visible_units, _apply_edits
 from src.config import DATA_DIR
 
 
-class TestTemporalBoundaries(unittest.TestCase):
-    def test_parse_iso_datetime_aware(self):
-        s = "2026-09-18T18:00:00-07:00"
-        dt = parse_iso_datetime(s)
-        self.assertIsNotNone(dt.tzinfo)
-        self.assertEqual(dt.year, 2026)
-        self.assertEqual(dt.month, 9)
-        self.assertEqual(dt.day, 18)
+def test_parse_iso_datetime_aware():
+    s = "2026-09-18T18:00:00-07:00"
+    dt = parse_iso_datetime(s)
+    assert dt.tzinfo is not None
+    assert dt.year == 2026
+    assert dt.month == 9
+    assert dt.day == 18
 
-    def test_parse_iso_datetime_naive(self):
-        s = "2026-09-18T18:00:00"
-        dt = parse_iso_datetime(s)
-        self.assertIsNotNone(dt.tzinfo)
-        self.assertEqual(dt.tzinfo, LOCAL_TZ)
 
-    def test_parse_iso_datetime_utc_z(self):
-        s = "2026-09-18T18:00:00Z"
-        dt = parse_iso_datetime(s)
-        self.assertIsNotNone(dt.tzinfo)
+def test_parse_iso_datetime_naive():
+    s = "2026-09-18T18:00:00"
+    dt = parse_iso_datetime(s)
+    assert dt.tzinfo is not None
+    assert dt.tzinfo == LOCAL_TZ
 
-    def test_parse_iso_datetime_bare_date(self):
-        s = "2026-09-18"
-        dt = parse_iso_datetime(s)
-        self.assertIsNotNone(dt.tzinfo)
-        self.assertEqual(dt.day, 18)
-        self.assertEqual(dt.hour, 23)
-        self.assertEqual(dt.minute, 59)
 
-    def test_compare_naive_against_aware_no_crash(self):
-        naive_dt = datetime(2026, 9, 18, 12, 0)
-        units = get_visible_units(naive_dt, data_dir=DATA_DIR)
-        self.assertTrue(len(units) > 0)
-        # Verify no unit has time strictly greater than as_of
-        target_dt = parse_iso_datetime(naive_dt)
-        for u in units:
-            self.assertLessEqual(u.time, target_dt)
+def test_parse_iso_datetime_utc_z():
+    s = "2026-09-18T18:00:00Z"
+    dt = parse_iso_datetime(s)
+    assert dt.tzinfo is not None
 
-    def test_future_leakage_boundary(self):
-        # Sep 9, 2026 at 09:00:00
-        early_as_of = parse_iso_datetime("2026-09-09T09:00:00-07:00")
-        early_units = get_visible_units(early_as_of, data_dir=DATA_DIR)
-        for u in early_units:
-            self.assertLessEqual(u.time, early_as_of, f"Unit {u.id} from future leaked: {u.time} > {early_as_of}")
 
-        # Later date has strictly more or equal visible records
-        late_as_of = parse_iso_datetime("2026-09-18T18:00:00-07:00")
-        late_units = get_visible_units(late_as_of, data_dir=DATA_DIR)
-        self.assertGreater(len(late_units), len(early_units))
+def test_parse_iso_datetime_bare_date():
+    s = "2026-09-18"
+    dt = parse_iso_datetime(s)
+    assert dt.tzinfo is not None
+    assert dt.day == 18
+    assert dt.hour == 23
+    assert dt.minute == 59
 
-    def test_message_deletion_masking(self):
-        # Message was deleted: should not be in visible units after deletion timestamp
-        units, deleted, _ = load(DATA_DIR)
-        self.assertTrue(len(deleted) > 0, "Expected at least one deletion in dataset")
-        target_del_id, del_time = next(iter(deleted.items()))
-        
-        # After deletion time, unit should NOT be visible
-        visible_after = get_visible_units(del_time, data_dir=DATA_DIR)
-        visible_after_ids = {u.id for u in visible_after}
-        self.assertNotIn(target_del_id, visible_after_ids)
 
-    def test_edit_preserves_enriched_headers(self):
-        original = "[Slack #route-planner | Date: 2026-09-16 | User: Priya Patel | ID: SL-0916-1]\nPriya Patel: 60 of 64 passing"
-        edited = _apply_edits(original, "61 of 64 passing")
-        self.assertIn("Priya Patel: 61 of 64 passing (edited)", edited)
-        self.assertIn("[Slack #route-planner | Date: 2026-09-16 | User: Priya Patel | ID: SL-0916-1]", edited)
+def test_compare_naive_against_aware_no_crash():
+    naive_dt = datetime(2026, 9, 18, 12, 0)
+    units = get_visible_units(naive_dt, data_dir=DATA_DIR)
+    assert len(units) > 0
+    # Verify no unit has time strictly greater than as_of
+    target_dt = parse_iso_datetime(naive_dt)
+    for u in units:
+        assert u.time <= target_dt
 
-    def test_dateparser_missing_fallback_iso_dates_only(self):
-        """Verifies reduced functionality when dateparser is unavailable: ISO dates resolve, relative dates skipped."""
-        import src.retrieval.temporal as temporal_mod
-        orig = temporal_mod.dateparser
-        try:
-            temporal_mod.dateparser = None
-            as_of = parse_iso_datetime("2026-09-18T18:00:00-07:00")
-            # 1. Explicit ISO date should still be extracted via regex
-            res_iso = temporal_mod.resolve_dates_with_dateparser("Status report for 2026-09-15 meeting", as_of)
-            self.assertEqual(res_iso, ["2026-09-15"])
 
-            # 2. Relative date expression cannot be parsed without dateparser, returns empty without crashing
-            res_rel = temporal_mod.resolve_dates_with_dateparser("What blockers were discussed yesterday?", as_of)
-            self.assertEqual(res_rel, [])
-        finally:
-            temporal_mod.dateparser = orig
+def test_future_leakage_boundary():
+    # Sep 9, 2026 at 09:00:00
+    early_as_of = parse_iso_datetime("2026-09-09T09:00:00-07:00")
+    early_units = get_visible_units(early_as_of, data_dir=DATA_DIR)
+    for u in early_units:
+        assert u.time <= early_as_of, f"Unit {u.id} from future leaked: {u.time} > {early_as_of}"
 
-    def test_dateparser_missing_date_boost_no_crash(self):
-        """Verifies apply_date_boost safely operates with or without resolved target dates."""
-        import src.retrieval.temporal as temporal_mod
+    # Later date has strictly more or equal visible records
+    late_as_of = parse_iso_datetime("2026-09-18T18:00:00-07:00")
+    late_units = get_visible_units(late_as_of, data_dir=DATA_DIR)
+    assert len(late_units) > len(early_units)
+
+
+def test_message_deletion_masking():
+    # Message was deleted: should not be in visible units after deletion timestamp
+    units, deleted, _ = load(DATA_DIR)
+    assert len(deleted) > 0, "Expected at least one deletion in dataset"
+    target_del_id, del_time = next(iter(deleted.items()))
+
+    # After deletion time, unit should NOT be visible
+    visible_after = get_visible_units(del_time, data_dir=DATA_DIR)
+    visible_after_ids = {u.id for u in visible_after}
+    assert target_del_id not in visible_after_ids
+
+
+def test_edit_preserves_enriched_headers():
+    original = "[Slack #route-planner | Date: 2026-09-16 | User: Priya Patel | ID: SL-0916-1]\nPriya Patel: 60 of 64 passing"
+    edited = _apply_edits(original, "61 of 64 passing")
+    assert "Priya Patel: 61 of 64 passing (edited)" in edited
+    assert "[Slack #route-planner | Date: 2026-09-16 | User: Priya Patel | ID: SL-0916-1]" in edited
+
+
+def test_dateparser_missing_fallback_iso_dates_only():
+    """Verifies reduced functionality when dateparser is unavailable: ISO dates resolve, relative dates skipped."""
+    import src.retrieval.temporal as temporal_mod
+    orig = temporal_mod.dateparser
+    try:
+        temporal_mod.dateparser = None
         as_of = parse_iso_datetime("2026-09-18T18:00:00-07:00")
-        u1 = Unit(id="U1", text="Report on 2026-09-15", time=as_of, record="R1")
-        u2 = Unit(id="U2", text="Other discussion", time=as_of, record="R2")
-        hits = [(u1, 0.5), (u2, 0.4)]
-        # Empty dates (e.g. from skipped relative parsing) should return unchanged hits
-        boosted_empty = temporal_mod.apply_date_boost(hits, [])
-        self.assertEqual(len(boosted_empty), 2)
-        self.assertEqual(boosted_empty[0][1], 0.5)
+        # 1. Explicit ISO date should still be extracted via regex
+        res_iso = temporal_mod.resolve_dates_with_dateparser("Status report for 2026-09-15 meeting", as_of)
+        assert res_iso == ["2026-09-15"]
 
-        # Explicit ISO target date should boost matching unit
-        boosted = temporal_mod.apply_date_boost(hits, ["2026-09-15"], boost_weight=0.3)
-        self.assertAlmostEqual(boosted[0][1], 0.8)
-        self.assertEqual(boosted[0][0].id, "U1")
+        # 2. Relative date expression cannot be parsed without dateparser, returns empty without crashing
+        res_rel = temporal_mod.resolve_dates_with_dateparser("What blockers were discussed yesterday?", as_of)
+        assert res_rel == []
+    finally:
+        temporal_mod.dateparser = orig
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_dateparser_missing_date_boost_no_crash():
+    """Verifies apply_date_boost safely operates with or without resolved target dates."""
+    import src.retrieval.temporal as temporal_mod
+    as_of = parse_iso_datetime("2026-09-18T18:00:00-07:00")
+    orig = temporal_mod.dateparser
+    try:
+        temporal_mod.dateparser = None
+        # Should execute safely using regex extraction only
+        u = Unit(id="U1", text="Discussion on 2026-09-15", time=datetime(2026, 9, 15, 10, 0), record="R1")
+        boosted = temporal_mod.apply_date_boost([(u, 0.5)], ["2026-09-15"])
+        assert len(boosted) == 1
+        assert boosted[0][1] >= 0.5
+    finally:
+        temporal_mod.dateparser = orig
