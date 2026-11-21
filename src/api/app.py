@@ -1,0 +1,134 @@
+"""FastAPI Application factory and lifespan configuration."""
+from contextlib import asynccontextmanager
+from pathlib import Path
+from fastapi import FastAPI, Request, status
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+from src.config import settings, ROOT_DIR
+from src.api.routes import router
+from src.api.deps import EngineState
+from src.db.session import engine, Base
+
+MAX_REQUEST_BODY_BYTES = 64 * 1024
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Initialize DB tables (for sqlite / test runs if migrations not run)
+    Base.metadata.create_all(bind=engine)
+    # Pre-warm AI engines
+    EngineState.get_instance(pre_warm=False)
+    yield
+
+
+app = FastAPI(
+    title="Chronexa API",
+    description="Workplace Memory System & Safe Action Assistant API with Point-in-Time Retrieval and Human-in-the-Loop Dry-Runs",
+    version="2.0.0",
+    lifespan=lifespan
+)
+
+# Custom CORS & Security Middleware
+@app.middleware("http")
+async def security_and_limits_middleware(request: Request, call_next):
+    # 1. Block access to hidden files (.env, .git) and internal source/data directories
+    path = request.url.path
+    if (
+        "/.env" in path
+        or "/.git" in path
+        or path.startswith(("/src/", "/tests/", "/eval/", "/data/"))
+        or any(part.startswith(".") for part in Path(path).parts)
+    ):
+        return JSONResponse(
+            status_code=status.HTTP_403_FORBIDDEN,
+            content={
+                "error": "Forbidden: Access to hidden files, system configuration, and internal source code is forbidden.",
+                "detail": "Forbidden: Access denied",
+                "status": "error"
+            }
+        )
+
+    # 2. Enforce maximum request body size (64 KB)
+    content_length = request.headers.get("content-length")
+    if content_length:
+        try:
+            if int(content_length) > MAX_REQUEST_BODY_BYTES:
+                return JSONResponse(
+                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                    content={
+                        "error": f"Payload Too Large: Maximum allowed body is {MAX_REQUEST_BODY_BYTES} bytes.",
+                        "detail": f"Payload Too Large: Maximum allowed body is {MAX_REQUEST_BODY_BYTES} bytes.",
+                        "status": "error"
+                    }
+                )
+        except ValueError:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={"error": "Invalid Content-Length header", "status": "error"}
+            )
+
+    response = await call_next(request)
+
+    # 3. Security headers
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+
+    return response
+
+
+# CORS configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# Standardized error response handlers with both "error" and "detail"
+@app.exception_handler(StarletteHTTPException)
+async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": str(exc.detail),
+            "detail": str(exc.detail),
+            "status": "error"
+        }
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    first_err = exc.errors()[0] if exc.errors() else {"msg": "Validation error"}
+    err_msg = f"{first_err.get('loc', ['parameter'])[-1]}: {first_err.get('msg', 'invalid')}"
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content={
+            "error": err_msg,
+            "detail": exc.errors(),
+            "status": "error"
+        }
+    )
+
+
+# Include API routes
+app.include_router(router)
+
+
+# Root route: serve index.html if it exists, or API info
+@app.get("/", include_in_schema=False)
+def serve_root():
+    index_path = ROOT_DIR / "index.html"
+    if index_path.exists():
+        return FileResponse(str(index_path))
+    return {
+        "service": "Chronexa API",
+        "version": "2.0.0",
+        "status": "online",
+        "docs": "/docs"
+    }

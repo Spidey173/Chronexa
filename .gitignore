@@ -22,3 +22,6 @@ eval/results.md
 
 # Recruiter demo (deployed to Vercel only)
 index.html
+*.db
+*.sqlite
+*.sqlite3
