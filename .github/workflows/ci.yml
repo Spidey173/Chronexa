@@ -7,8 +7,29 @@ on:
     branches: [ main ]
 
 jobs:
+  lint:
+    name: Code Quality & Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install linter
+        run: pip install flake8
+
+      - name: Run syntax error & undefined names check
+        run: |
+          # Stop build on syntax errors or undefined symbols
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=.venv,__pycache__,alembic/versions
+
   test:
     name: Test & Evaluate (Python ${{ matrix.python-version }})
+    needs: [lint]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -34,9 +55,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run automated tests (pytest)
+      - name: Run automated tests with coverage
         run: |
-          pytest tests/ -v
+          pytest tests/ -v --cov=src --cov-report=term-missing --cov-report=xml
 
       - name: Run action assistant benchmark
         run: |
@@ -50,3 +71,18 @@ jobs:
           python src/pipeline.py --mode hybrid --output outputs/memory_train_answers.jsonl
           python eval_harness/score_retrieval.py --gold evals/memory_train.jsonl --answers outputs/memory_train_answers.jsonl
           python eval_harness/score_memory.py --gold evals/memory_train.jsonl --answers outputs/memory_train_answers.jsonl --judge none
+
+  build-image:
+    name: Build Container Image
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image
+        run: |
+          docker build -t chronexa:latest .

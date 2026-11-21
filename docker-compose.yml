@@ -1,0 +1,44 @@
+version: "3.8"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chronexa-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DATABASE_URL=postgresql://chronexa_user:chronexa_password@postgres:5432/chronexa_db
+      - JWT_SECRET_KEY=change_this_to_a_secure_random_secret_in_production
+      - JWT_ALGORITHM=HS256
+      - INTEGRATION_MODE=mock
+      - CHRONEXA_OFFLINE=1
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: chronexa-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: chronexa_user
+      POSTGRES_PASSWORD: chronexa_password
+      POSTGRES_DB: chronexa_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chronexa_user -d chronexa_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
