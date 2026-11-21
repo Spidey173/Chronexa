@@ -3,6 +3,7 @@ import uuid
 from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, status, Query
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 
 from src.db.session import get_db, SessionLocal
 from src.db.models import User, ActionProposal, AuditLog
@@ -26,6 +27,22 @@ from src.auth import create_access_token, get_password_hash, verify_password
 router = APIRouter()
 
 
+def get_or_create_default_user(db: Session) -> User:
+    """Helper for legacy compatibility routes when no auth header is sent."""
+    u = db.query(User).filter(User.email == "demo@chronexa.local").first()
+    if not u:
+        u = User(
+            id=str(uuid.uuid4()),
+            email="demo@chronexa.local",
+            role="operator",
+            hashed_password=get_password_hash("demo123")
+        )
+        db.add(u)
+        db.commit()
+        db.refresh(u)
+    return u
+
+
 # ---------------------------------------------------------------------------
 # Background Execution Worker
 # ---------------------------------------------------------------------------
@@ -39,6 +56,7 @@ def execute_proposal_background(proposal_id: str, approver_id: Optional[str] = N
 
         # Fetch user credentials if available
         user_creds = None
+        user_id_for_audit = approver_id or proposal.user_id
         if proposal.user_id:
             user = db.query(User).filter(User.id == proposal.user_id).first()
             if user and user.oauth_tokens:
@@ -53,9 +71,9 @@ def execute_proposal_background(proposal_id: str, approver_id: Optional[str] = N
             proposal.status = "failed"
             proposal.execution_result = {"error": str(e)}
 
-        # Write execution to audit log
+        # Write execution to audit log with user id
         audit = AuditLog(
-            user_id=approver_id or proposal.user_id,
+            user_id=user_id_for_audit,
             action="execute",
             resource_type="action_proposal",
             resource_id=proposal.id,
@@ -176,16 +194,14 @@ def search_query_get(
 
 
 # ---------------------------------------------------------------------------
-# Action Endpoints (/actions/propose, /actions/{id}/approve, /actions/{id}/reject)
+# Action Proposal Logic
 # ---------------------------------------------------------------------------
-@router.post("/actions/propose", response_model=ActionProposalResponse, tags=["Actions"])
-@router.post("/api/action", include_in_schema=False)
-def propose_action(
+def _propose_action_impl(
     req: ActionProposeRequest,
-    db: Session = Depends(get_db),
-    engine: EngineState = Depends(get_engine),
-    current_user: Optional[User] = Depends(get_optional_current_user)
-):
+    db: Session,
+    engine: EngineState,
+    current_user: User
+) -> ActionProposalResponse:
     if not req.command or not req.command.strip():
         raise HTTPException(status_code=400, detail="Missing or invalid 'command' parameter (must be non-empty string)")
 
@@ -203,7 +219,7 @@ def propose_action(
 
     proposal = ActionProposal(
         id=str(uuid.uuid4()),
-        user_id=current_user.id if current_user else None,
+        user_id=current_user.id,
         command=req.command,
         as_of=req.as_of,
         status="proposed",
@@ -211,9 +227,9 @@ def propose_action(
     )
     db.add(proposal)
 
-    # Write audit log
+    # Write audit log with user id
     audit = AuditLog(
-        user_id=current_user.id if current_user else None,
+        user_id=current_user.id,
         action="propose",
         resource_type="action_proposal",
         resource_id=proposal.id,
@@ -235,6 +251,32 @@ def propose_action(
     )
 
 
+@router.post("/actions/propose", response_model=ActionProposalResponse, tags=["Actions"])
+def propose_action(
+    req: ActionProposeRequest,
+    db: Session = Depends(get_db),
+    engine: EngineState = Depends(get_engine),
+    current_user: User = Depends(get_current_user)
+):
+    """Enforces JWT Bearer token authentication with user identity on every request."""
+    return _propose_action_impl(req, db, engine, current_user)
+
+
+@router.post("/api/action", include_in_schema=False)
+def api_action_compat(
+    req: ActionProposeRequest,
+    db: Session = Depends(get_db),
+    engine: EngineState = Depends(get_engine),
+    current_user: Optional[User] = Depends(get_optional_current_user)
+):
+    """Legacy compatibility route for index.html."""
+    user = current_user or get_or_create_default_user(db)
+    return _propose_action_impl(req, db, engine, user)
+
+
+# ---------------------------------------------------------------------------
+# Approve & Reject Endpoints (RBAC Enforced)
+# ---------------------------------------------------------------------------
 @router.post("/actions/{proposal_id}/approve", response_model=ActionApproveResponse, tags=["Actions"])
 def approve_action(
     proposal_id: str,
@@ -242,6 +284,7 @@ def approve_action(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role("operator"))
 ):
+    """Only operator+ can approve actions; writes to audit_log with user id."""
     proposal = db.query(ActionProposal).filter(ActionProposal.id == proposal_id).first()
     if not proposal:
         raise HTTPException(status_code=404, detail=f"Action proposal '{proposal_id}' not found")
@@ -285,6 +328,7 @@ def reject_action(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    """Rejects proposal and writes to audit_log with user id."""
     proposal = db.query(ActionProposal).filter(ActionProposal.id == proposal_id).first()
     if not proposal:
         raise HTTPException(status_code=404, detail=f"Action proposal '{proposal_id}' not found")
@@ -298,7 +342,7 @@ def reject_action(
 
     proposal.status = "rejected"
 
-    # Write rejection to audit log
+    # Write rejection to audit log with user id
     audit = AuditLog(
         user_id=current_user.id,
         action="reject",
@@ -342,11 +386,10 @@ def get_action_proposal(
 # ---------------------------------------------------------------------------
 # Auth / Token Endpoints
 # ---------------------------------------------------------------------------
-from pydantic import BaseModel
-
 class LoginRequest(BaseModel):
     email: str
     password: str
+
 
 class RegisterRequest(BaseModel):
     email: str
@@ -354,11 +397,13 @@ class RegisterRequest(BaseModel):
     role: str = "viewer"  # viewer, operator, admin
     oauth_tokens: Optional[Dict[str, Any]] = None
 
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     role: str
     user_id: str
+
 
 @router.post("/auth/register", response_model=TokenResponse, tags=["Auth"])
 def register_user(req: RegisterRequest, db: Session = Depends(get_db)):
