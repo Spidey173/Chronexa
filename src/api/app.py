@@ -1,4 +1,7 @@
 """FastAPI Application factory and lifespan configuration."""
+import time
+from collections import defaultdict
+from typing import Dict, List
 from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI, Request, status
@@ -13,6 +16,28 @@ from src.api.deps import EngineState
 from src.db.session import engine, Base
 
 MAX_REQUEST_BODY_BYTES = 64 * 1024
+
+# In-memory per-IP sliding window rate limiter
+_RATE_LIMIT_PER_MINUTE = getattr(settings, "RATE_LIMIT_PER_MINUTE", 60)
+_RATE_LIMIT_WINDOW_SEC = 60.0
+_ip_request_timestamps: Dict[str, List[float]] = defaultdict(list)
+
+
+def _is_rate_limited(client_ip: str) -> bool:
+    now = time.time()
+    cutoff = now - _RATE_LIMIT_WINDOW_SEC
+    timestamps = [t for t in _ip_request_timestamps[client_ip] if t > cutoff]
+    if len(timestamps) >= _RATE_LIMIT_PER_MINUTE:
+        _ip_request_timestamps[client_ip] = timestamps
+        return True
+    timestamps.append(now)
+    _ip_request_timestamps[client_ip] = timestamps
+    return False
+
+
+def reset_rate_limits():
+    """Helper for testing to reset rate limit states."""
+    _ip_request_timestamps.clear()
 
 
 @asynccontextmanager
@@ -51,7 +76,19 @@ async def security_and_limits_middleware(request: Request, call_next):
             }
         )
 
-    # 2. Enforce maximum request body size (64 KB)
+    # 2. Per-IP Rate Limiting (60 requests/minute)
+    client_ip = request.client.host if request.client else "127.0.0.1"
+    if _is_rate_limited(client_ip):
+        return JSONResponse(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            content={
+                "error": "Too Many Requests: Rate limit exceeded (60 req/min). Please try again shortly.",
+                "detail": "Rate limit exceeded",
+                "status": "error"
+            }
+        )
+
+    # 3. Enforce maximum request body size (64 KB)
     content_length = request.headers.get("content-length")
     if content_length:
         try:
@@ -79,12 +116,25 @@ async def security_and_limits_middleware(request: Request, call_next):
     return response
 
 
-# CORS configuration
+# CORS configuration: Restricted to official frontend and localhost for development
+allowed_origins = [
+    "https://chronexa17.vercel.app",
+    "http://localhost:3000",
+    "http://localhost:8000",
+    "http://localhost:8001",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:8000",
+    "http://127.0.0.1:8001",
+]
+if getattr(settings, "CORS_ALLOWED_ORIGINS", None):
+    extra = [o.strip() for o in settings.CORS_ALLOWED_ORIGINS.split(",") if o.strip()]
+    allowed_origins.extend(extra)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 

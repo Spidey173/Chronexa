@@ -16,7 +16,9 @@ except ImportError:
 
 from src.config import ROOT_DIR
 
-DEFAULT_VECTOR_DIR = ROOT_DIR / ".cache" / "embeddings"
+DEFAULT_VECTOR_DIR = ROOT_DIR / "data" / "embeddings"
+if not DEFAULT_VECTOR_DIR.exists():
+    DEFAULT_VECTOR_DIR = ROOT_DIR / ".cache" / "embeddings"
 
 
 class VectorStoreRepository(ABC):
@@ -74,7 +76,10 @@ class FaissVectorStore(VectorStoreRepository):
     ):
         self.dimension = dimension
         self.storage_dir = Path(storage_dir or DEFAULT_VECTOR_DIR)
-        self.storage_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            self.storage_dir.mkdir(parents=True, exist_ok=True)
+        except (OSError, PermissionError):
+            pass
         self.index_name = index_name
         self.index_path = self.storage_dir / f"{index_name}.bin"
         self.meta_path = self.storage_dir / f"{index_name}_meta.json"
@@ -181,16 +186,20 @@ class FaissVectorStore(VectorStoreRepository):
         idx_p = path or self.index_path
         meta_p = (path.parent / f"{path.stem}_meta.json") if path else self.meta_path
 
-        if HAS_FAISS and self.index is not None:
-            faiss.write_index(self.index, str(idx_p))
+        try:
+            if HAS_FAISS and self.index is not None:
+                faiss.write_index(self.index, str(idx_p))
 
-        meta = {
-            "dimension": self.dimension,
-            "count": len(self.idx_to_hash),
-            "idx_to_hash": self.idx_to_hash,
-        }
-        with open(meta_p, "w", encoding="utf-8") as f:
-            json.dump(meta, f)
+            meta = {
+                "dimension": self.dimension,
+                "count": len(self.idx_to_hash),
+                "idx_to_hash": self.idx_to_hash,
+            }
+            with open(meta_p, "w", encoding="utf-8") as f:
+                json.dump(meta, f)
+        except (OSError, PermissionError) as e:
+            # Safe read-only serverless fallback
+            print(f"[FaissVectorStore] Index is read-only ({e}); skipping save.")
 
     def load(self, path: Optional[Path] = None) -> bool:
         idx_p = path or self.index_path

@@ -10,7 +10,7 @@ Tests cover:
 """
 import pytest
 from fastapi.testclient import TestClient
-from src.api.app import app, MAX_REQUEST_BODY_BYTES
+from src.api.app import app, MAX_REQUEST_BODY_BYTES, reset_rate_limits
 from src.api.deps import EngineState
 
 
@@ -260,3 +260,92 @@ def test_frontend_api_origin_security(client):
     # Ensure unverified external subdomains are not in trusted allowlist
     assert "chronexa-api.onrender.com" not in js_content
     assert "chronexa-api.fly.dev" not in js_content
+
+
+def test_rate_limiter_exceeded_returns_429(client):
+    reset_rate_limits()
+    try:
+        # Send 60 requests within limit
+        for _ in range(60):
+            res = client.get("/health")
+            assert res.status_code == 200
+
+        # 61st request in the same window must be rate limited
+        res61 = client.get("/health")
+        assert res61.status_code == 429
+        body = res61.json()
+        assert "rate limit exceeded" in body.get("error", "").lower()
+    finally:
+        reset_rate_limits()
+
+
+def test_cors_origin_allowlist_headers(client):
+    # Allowed origin: chronexa17.vercel.app
+    res_allowed = client.get("/health", headers={"Origin": "https://chronexa17.vercel.app"})
+    assert res_allowed.status_code == 200
+    assert res_allowed.headers.get("access-control-allow-origin") == "https://chronexa17.vercel.app"
+
+    # Unallowed random origin
+    res_rejected = client.get("/health", headers={"Origin": "https://random-untrusted-origin.com"})
+    assert res_rejected.status_code == 200
+    assert res_rejected.headers.get("access-control-allow-origin") is None
+
+
+def test_demo_mode_in_memory_proposals():
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from sqlalchemy.pool import StaticPool
+    from src.db.models import Base, ActionProposal, AuditLog
+
+    # Create isolated in-memory engine mimicking DEMO_MODE
+    demo_engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool
+    )
+    Base.metadata.create_all(bind=demo_engine)
+    DemoSession = sessionmaker(bind=demo_engine)
+    db = DemoSession()
+
+    try:
+        # Create action proposal in memory
+        prop = ActionProposal(
+            id="demo-prop-1",
+            user_id="demo-user",
+            command="Open Figma",
+            as_of="2026-09-18T18:00:00-07:00",
+            status="proposed",
+            payload=[{"type": "app.open", "args": {"app": "Figma"}}]
+        )
+        db.add(prop)
+        audit = AuditLog(
+            user_id="demo-user",
+            action="propose",
+            resource_type="action_proposal",
+            resource_id="demo-prop-1"
+        )
+        db.add(audit)
+        db.commit()
+
+        # Query back
+        loaded = db.query(ActionProposal).filter(ActionProposal.id == "demo-prop-1").first()
+        assert loaded is not None
+        assert loaded.command == "Open Figma"
+        assert loaded.status == "proposed"
+
+        log = db.query(AuditLog).filter(AuditLog.resource_id == "demo-prop-1").first()
+        assert log is not None
+        assert log.action == "propose"
+    finally:
+        db.close()
+
+
+def test_vector_store_health_reports_count(client):
+    res = client.get("/health")
+    assert res.status_code == 200
+    body = res.json()
+    assert body.get("status") == "ok"
+    assert body.get("corpus_size") == 1316
+    assert isinstance(body.get("vector_store_count"), int)
+    assert body.get("vector_store_count") >= 0
+    assert body.get("database") == "connected"

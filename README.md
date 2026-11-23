@@ -11,7 +11,7 @@
 [![Human-in-the-Loop](https://img.shields.io/badge/Actions-Dry--Run%20%2B%20Approval%20Decoupled-purple?style=flat-square)](src/actions/)
 [![License](https://img.shields.io/badge/License-MIT-lightgrey?style=flat-square)](LICENSE)
 
-🔗 **[Live Demo Frontend (Vercel)](https://chronexa17.vercel.app/)** | 📊 **[Benchmark Methodology](#-retrieval-benchmark-results)** | 📦 **[GitHub Repository](https://github.com/Spidey173/Chronexa)**
+🔗 **[Live Demo Frontend (Vercel)](https://chronexa17.vercel.app/)** | ⚡ **[Live Backend API (Vercel Serverless)](https://chronexa-api.vercel.app/health)** | 📊 **[Benchmark Methodology](#-retrieval-benchmark-results)** | 📦 **[GitHub Repository](https://github.com/Spidey173/Chronexa)**
 
 ---
 
@@ -22,10 +22,10 @@
 | **Problem** | Traditional workplace search models index documents uniformly, causing future facts (delays, re-orgs, edits) to leak into historical questions, while autonomous action assistants risk accidental destructive OAuth executions. |
 | **Architecture** | **Pre-retrieval temporal boundaries** (`timestamp <= as_of & NOT deleted`), dual-stream **FastEmbed BGE dense vectors (backed by persistent disk FAISS repository) + passage-cached BM25** fused via Reciprocal Rank Fusion (RRF, k=60), cross-encoder joint reranking, and allowlisted dry-run JSON schema validation. |
 | **Production Service** | **FastAPI enterprise backend** (`src/api/`): `/query`, `/actions/propose`, `/actions/{id}/approve`, `/actions/{id}/reject`, `/health`. Backed by **SQLAlchemy ORM + PostgreSQL/SQLite persistence** (Alembic migrations) for `users`, `action_proposals`, and `audit_log`. |
-| **Auth & Security** | Real **JWT Bearer authentication**, role-based access control (**RBAC**: viewer, operator, admin). Strict human-in-the-loop state machine (only operator+ can approve; every propose/approve/reject/execute records user ID in `audit_log`). |
+| **Auth & Security** | Real **JWT Bearer authentication**, role-based access control (**RBAC**: viewer, operator, admin). Strict human-in-the-loop state machine (only operator+ can approve; every propose/approve/reject/execute records user ID in `audit_log`). Per-IP rate limiting (60 req/min) and strict CORS. |
 | **Integration Adapters** | Adapters for Slack (live API), Gmail & Google Calendar (implemented REST calls, requires user OAuth bearer token). Explicit `MockAdapter` selected strictly by default (`INTEGRATION_MODE=mock`) for dry-runs. |
 | **Background Execution** | Action approval is completely decoupled from execution via FastAPI BackgroundTasks worker. |
-| **Deployment** | Multi-stage containerized build (`Dockerfile` with non-root user, pre-downloaded ONNX models, zero cold-start delay) targeting **Render / Fly.io / Google Cloud Run**. [chronexa17.vercel.app](https://chronexa17.vercel.app/) operates as a thin frontend calling the container API. |
+| **Deployment** | **Live Vercel Serverless Backend** (`https://chronexa-api.vercel.app`) backed by Neon PostgreSQL, pre-bundled FastEmbed ONNX models (151 MB), and prebuilt FAISS index. Multi-stage containerized build (`Dockerfile`) also targets **Render / Fly.io / Google Cloud Run** or local Docker. [chronexa17.vercel.app](https://chronexa17.vercel.app/) connects live to the serverless backend with cold-start management and offline replay fallback. |
 | **Evidence & Benchmarks** | **Synthetic benchmarks (1,316 units, n=100 unseen holdout)**: Top-10 Retrieval: 86.8%, Dev Top-10: 94.4%, Recall@5: 75.0%, MRR: 0.683, **0.0% future knowledge leakage**, and 12/12 passing action benchmark schemas. |
 
 ---
@@ -162,11 +162,24 @@ fly postgres attach
 fly deploy
 ```
 
-### 4. Public Web Demo & Replay Mode (Vercel)
-The recruiter and demo interface at [chronexa17.vercel.app](https://chronexa17.vercel.app/) serves static assets and operates in **static benchmark replay mode** (interactive pre-indexed replay of the 1,316 workplace units with zero external backend dependencies).
+### 4. Live Serverless Backend & Public Web Demo (Vercel)
+
+Chronexa is deployed across two decoupled Vercel projects:
+- **Live Frontend**: [chronexa17.vercel.app](https://chronexa17.vercel.app/) — Client application with real-time backend heartbeat sync, cold-start waking indicators, and pre-indexed evaluation benchmark replay fallback.
+- **Live Serverless Backend API**: [chronexa-api.vercel.app](https://chronexa-api.vercel.app/health) — FastAPI serverless service running with PostgreSQL persistence and dual-stream retrieval.
+
+#### Serverless Architecture & Performance Profile:
+- **Pre-Bundled ONNX Embeddings**: Embeds FastEmbed ONNX caches (`BAAI/bge-small-en-v1.5` dense embeddings + `Xenova/ms-marco-MiniLM-L-6-v2` cross-encoder reranker, total ~151.5 MB) directly in the deployment package for zero runtime downloads.
+- **Disk-Backed Read-Only FAISS Index**: Ships 2,679 pre-indexed vectors in `data/embeddings/` read-only.
+- **Managed Neon PostgreSQL**: Persists `users`, `action_proposals`, and `audit_log` records via SQLAlchemy ORM with connection pooling (`pool_pre_ping=True`).
+- **Realistic Latency Expectations**:
+  - `/health` check: **~1.3s** (warm)
+  - Full hybrid RRF + joint cross-encoder reranking: **~15s** on Vercel CPU serverless execution.
+  - When waking from scale-to-zero, the frontend displays `⚡ WAKING UP CONTAINER BACKEND... (~10-15s)` and retries automatically before falling back to replay mode.
+- **Security & Guardrails**: Per-IP sliding-window rate limiting (60 req/min, HTTP 429), strict CORS headers (`https://chronexa17.vercel.app`), 64 KB body size enforcement, and path traversal protection.
 
 > [!NOTE]
-> **Demo Replay vs. Full Docker Stack**: The Vercel deployment is intentionally client-side and pre-indexed so recruiters can test temporal boundaries instantly with zero cold-start delay. To execute live arbitrary queries and dry-run actions against the full backend, run the container stack via `docker compose up`. If connected to a running backend container, the frontend dynamically switches to live mode.
+> **Local vs. Cloud**: For local development or instantaneous sub-second query latency, run the multi-stage Docker container locally (`docker compose up`) or native Python virtual environment. The live Vercel backend provides a fully deployed cloud endpoint without requiring recruiters to run local containers.
 
 ### 🎮 Guided Demo Walkthrough (30-Second Recruiter Tour)
 

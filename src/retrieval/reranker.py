@@ -32,6 +32,15 @@ class CrossEncoderReranker:
         self.max_chars = max_chars
         self.threads = threads
         self.batch_size = batch_size
+        import os
+        from pathlib import Path
+        if not cache_dir:
+            cache_dir = os.environ.get("FASTEMBED_CACHE_PATH")
+            if not cache_dir:
+                root_dir = Path(__file__).resolve().parent.parent.parent
+                bundled = root_dir / "fastembed_cache"
+                if bundled.exists():
+                    cache_dir = str(bundled)
         self.cache_dir = cache_dir
         
         self.encoder = None

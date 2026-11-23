@@ -18,6 +18,8 @@ htmlcov/
 scratch/
 .cache/
 .vercel
+fastembed_cache/
+deploy_backend/
 eval/results.md
 
 *.db

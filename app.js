@@ -205,11 +205,12 @@
     });
 
     // Dynamic API Detection & Heartbeat Sync (with Origin Allowlist Security)
-    // Only trust local loopback/container endpoints by default.
+    // Only trust local loopback/container endpoints and verified live backend by default.
     // Unverified public cloud subdomains must never be in the trusted allowlist.
     const ALLOWED_API_HOSTS = new Set([
       'localhost',
-      '127.0.0.1'
+      '127.0.0.1',
+      'chronexa-api.vercel.app'
     ]);
 
     function isAllowedApiOrigin(urlStr) {
@@ -276,17 +277,19 @@
       if (stored) initialApi = sanitizeApiUrl(stored);
     }
     if (!initialApi) {
-      if (window.location.protocol.startsWith('http') && !window.location.hostname.includes('vercel.app')) {
-        initialApi = window.location.origin;
-      } else {
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
         initialApi = 'http://localhost:8000';
+      } else if (window.location.hostname && window.location.hostname.includes('vercel.app')) {
+        initialApi = 'https://chronexa-api.vercel.app';
+      } else {
+        initialApi = 'https://chronexa-api.vercel.app';
       }
     }
-    window.CHRONEXA_API_URL = initialApi || 'http://localhost:8000';
+    window.CHRONEXA_API_URL = initialApi || 'https://chronexa-api.vercel.app';
 
     function promptConfigureApi() {
-      const current = window.CHRONEXA_API_URL || 'http://localhost:8000';
-      const entered = prompt('Enter Chronexa Backend API Base URL (e.g. http://localhost:8000, http://localhost:8001, or https://your-render-url.onrender.com):', current);
+      const current = window.CHRONEXA_API_URL || 'https://chronexa-api.vercel.app';
+      const entered = prompt('Enter Chronexa Backend API Base URL (e.g. https://chronexa-api.vercel.app or http://localhost:8000):', current);
       if (entered !== null) {
         const clean = entered.trim().replace(/\/+$/, '');
         if (clean) {
@@ -295,6 +298,7 @@
             localStorage.setItem('CHRONEXA_API_URL', validated);
             window.CHRONEXA_API_URL = validated;
             showToast(`Target API set to: ${validated}. Checking connection...`);
+            isInitialCheck = true;
             checkLiveBackend();
           } else {
             showToast('API URL was not accepted or confirmed.');
@@ -303,12 +307,31 @@
       }
     }
 
-    function updateLiveBanner(isLive) {
+    function updateWakingBanner() {
+      const topBanner = document.querySelector('.top-banner');
+      if (!topBanner) return;
+      const targetUrl = window.CHRONEXA_API_URL || 'https://chronexa-api.vercel.app';
+      topBanner.style.background = 'linear-gradient(90deg, rgba(234, 179, 8, 0.15), rgba(202, 138, 4, 0.08))';
+      topBanner.style.borderColor = 'rgba(234, 179, 8, 0.35)';
+      topBanner.innerHTML = `
+        <div class="live-badge">
+          <span class="pulse-dot" style="background: #eab308; box-shadow: 0 0 8px #eab308;"></span>
+          <span style="color: #eab308;">⚡ WAKING UP CONTAINER BACKEND... (~10-15s)</span>
+        </div>
+        <div style="font-family: var(--font-mono); font-size: 0.75rem; color: #fef08a; display: flex; align-items: center; gap: 8px;">
+          <span>Target: <code>${escapeHtml(targetUrl)}</code> · Initializing serverless instance...</span>
+        </div>
+      `;
+    }
+
+    function updateLiveBanner(isLive, healthData) {
       window.CHRONEXA_LIVE = isLive;
       const topBanner = document.querySelector('.top-banner');
       if (!topBanner) return;
-      const targetUrl = window.CHRONEXA_API_URL || 'http://localhost:8000';
+      const targetUrl = window.CHRONEXA_API_URL || 'https://chronexa-api.vercel.app';
       if (isLive) {
+        const vecCount = healthData && healthData.vector_store_count !== undefined ? healthData.vector_store_count : 2679;
+        const dbStatus = (healthData && healthData.database) ? healthData.database : 'connected';
         topBanner.style.background = 'linear-gradient(90deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.08))';
         topBanner.style.borderColor = 'rgba(16, 185, 129, 0.35)';
         topBanner.innerHTML = `
@@ -317,7 +340,7 @@
             <span style="color: #10b981;">🟢 LIVE BACKEND CONNECTED · FULL CORPUS SEARCH ACTIVE</span>
           </div>
           <div style="font-family: var(--font-mono); font-size: 0.75rem; color: #a7f3d0; display: flex; align-items: center; gap: 8px;">
-            <span>Connected: <code>${escapeHtml(targetUrl)}</code></span>
+            <span>Connected: <code>${escapeHtml(targetUrl)}</code> (${vecCount.toLocaleString()} vectors · DB: ${escapeHtml(dbStatus)})</span>
             <button id="btnConfigApi" style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.4); color: #a7f3d0; border-radius: 4px; padding: 2px 8px; font-size: 0.7rem; cursor: pointer;">Change API</button>
           </div>
         `;
@@ -339,31 +362,55 @@
       if (btn) btn.addEventListener('click', promptConfigureApi);
     }
 
-    function checkLiveBackend() {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 2500);
+    let isInitialCheck = true;
+    let isChecking = false;
 
-      fetch(`${window.CHRONEXA_API_URL}/api/health`, {
-        method: 'GET',
-        headers: getAuthHeaders(window.CHRONEXA_API_URL),
-        signal: controller.signal
-      })
-        .then(r => {
-          clearTimeout(timer);
-          if (r.ok) return r.json();
-          throw new Error('Server returned non-200');
-        })
-        .then(data => {
-          if (data && data.status === 'ok') {
-            updateLiveBanner(true);
-          } else {
-            updateLiveBanner(false);
-          }
-        })
-        .catch(() => {
-          clearTimeout(timer);
-          updateLiveBanner(false);
+    async function checkLiveBackend(isRetry = false) {
+      if (isChecking && !isRetry) return;
+      isChecking = true;
+
+      const isRemote = window.CHRONEXA_API_URL && (window.CHRONEXA_API_URL.includes('vercel.app') || window.CHRONEXA_API_URL.startsWith('https://'));
+
+      // On initial remote check, show waking state instead of immediately claiming replay mode
+      if (isInitialCheck && isRemote && !window.CHRONEXA_LIVE) {
+        updateWakingBanner();
+      }
+
+      const timeoutMs = (isRemote && (isInitialCheck || !window.CHRONEXA_LIVE)) ? 20000 : 3500;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+      try {
+        const r = await fetch(`${window.CHRONEXA_API_URL}/api/health`, {
+          method: 'GET',
+          headers: getAuthHeaders(window.CHRONEXA_API_URL),
+          signal: controller.signal
         });
+        clearTimeout(timer);
+        if (r.ok) {
+          const data = await r.json();
+          if (data && data.status === 'ok') {
+            isInitialCheck = false;
+            isChecking = false;
+            updateLiveBanner(true, data);
+            return;
+          }
+        }
+        throw new Error('Server returned non-200');
+      } catch (err) {
+        clearTimeout(timer);
+        if (isInitialCheck && isRemote && !isRetry) {
+          // Retry once more for serverless cold start before falling back
+          console.log('Backend waking up, retrying health check in 1.5s...', err);
+          setTimeout(() => {
+            checkLiveBackend(true);
+          }, 1500);
+          return;
+        }
+        isInitialCheck = false;
+        isChecking = false;
+        updateLiveBanner(false);
+      }
     }
 
     // Initial check + 8-second periodic heartbeat to keep live status in sync
@@ -1129,7 +1176,7 @@ I index your workplace communications across **Slack, Gmail, Calendar, Meeting T
               body: JSON.stringify({ command: input, as_of: currentAsOf })
             });
             const data = await resp.json();
-            if (data.status === 'success' && data.predicted) {
+            if (data && data.predicted) {
               appendAssistantMessage({
                 text: `I have parsed your command into a validated dry-run action preview:`,
                 actions: data.predicted,

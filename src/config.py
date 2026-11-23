@@ -10,8 +10,15 @@ DATA_DIR = ROOT_DIR / "data"
 EVALS_DIR = ROOT_DIR / "evals"
 OUTPUTS_DIR = ROOT_DIR / "outputs"
 
-# Ensure output directory exists
-OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
+# Ensure output directory exists (fallback to /tmp on read-only serverless filesystems)
+try:
+    OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
+except (OSError, PermissionError):
+    OUTPUTS_DIR = Path("/tmp/outputs")
+    try:
+        OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        pass
 
 
 class Settings(BaseSettings):
@@ -24,8 +31,14 @@ class Settings(BaseSettings):
     # Service & Database
     ENVIRONMENT: str = "development"
     DATABASE_URL: str = "sqlite:///./chronexa.db"
+    DEMO_MODE: bool = False
     HOST: str = "127.0.0.1"
     PORT: int = 8000
+
+    # Rate Limiting & Networking
+    RATE_LIMIT_PER_MINUTE: int = 60
+    CORS_ALLOWED_ORIGINS: Optional[str] = None
+    FASTEMBED_CACHE_DIR: Optional[str] = None
 
     # Auth & Security
     JWT_SECRET_KEY: str = "chronexa-insecure-dev-secret-key-change-in-prod"

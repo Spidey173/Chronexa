@@ -24,7 +24,9 @@ from eval_harness.records import Unit
 from src.retrieval.vector_store import VectorStoreRepository, FaissVectorStore
 
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent
-CACHE_DIR = ROOT_DIR / ".cache" / "embeddings"
+CACHE_DIR = ROOT_DIR / "data" / "embeddings"
+if not CACHE_DIR.exists():
+    CACHE_DIR = ROOT_DIR / ".cache" / "embeddings"
 
 
 class DenseRetriever:
@@ -36,7 +38,10 @@ class DenseRetriever:
     ):
         self.model_name = model_name
         self.cache_dir = Path(cache_dir)
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            self.cache_dir.mkdir(parents=True, exist_ok=True)
+        except (OSError, PermissionError):
+            pass
         
         sanitized_name = re.sub(r"[^a-zA-Z0-9_-]", "_", model_name)
         self.cache_file = self.cache_dir / f"{sanitized_name}.npz"
@@ -54,9 +59,16 @@ class DenseRetriever:
         self._hash_to_idx: Dict[str, int] = {}
 
         self._load_disk_cache()
+        import os
+        fastembed_cache = os.environ.get("FASTEMBED_CACHE_PATH")
+        if not fastembed_cache:
+            bundled = ROOT_DIR / "fastembed_cache"
+            if bundled.exists():
+                fastembed_cache = str(bundled)
+
         if HAS_FASTEMBED and TextEmbedding is not None:
             try:
-                self.model = TextEmbedding(model_name=model_name)
+                self.model = TextEmbedding(model_name=model_name, cache_dir=fastembed_cache)
             except Exception as e:
                 self.model = None
                 print(f"[DenseRetriever] Warning: Could not initialize TextEmbedding ({e}). Falling back to cached embeddings.")

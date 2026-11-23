@@ -24,7 +24,10 @@ TWOHOP_CACHE_FILE = CACHE_DIR / "two_hop_decomposition.json"
 
 
 def _ensure_cache_dir():
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    try:
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    except (OSError, PermissionError):
+        pass
 
 
 def _load_cache(cache_file: Path) -> Dict[str, Any]:

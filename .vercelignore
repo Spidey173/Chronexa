@@ -4,6 +4,14 @@ __pycache__
 .git
 .env
 .env.example
+api/
+deploy_backend/
+fastembed_cache/
+tests/
+alembic/
+alembic.ini
+Dockerfile
+docker-compose.yml
 data/
 eval/
 eval_harness/
@@ -14,4 +22,5 @@ src/
 results_*.json
 run.sh
 requirements.txt
+requirements-dev.txt
 demo_dataset.json
