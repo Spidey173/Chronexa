@@ -23,10 +23,10 @@
 | **Architecture** | **Pre-retrieval temporal boundaries** (`timestamp <= as_of & NOT deleted`), dual-stream **FastEmbed BGE dense vectors (backed by persistent disk FAISS repository) + passage-cached BM25** fused via Reciprocal Rank Fusion (RRF, k=60), cross-encoder joint reranking, and allowlisted dry-run JSON schema validation. |
 | **Production Service** | **FastAPI enterprise backend** (`src/api/`): `/query`, `/actions/propose`, `/actions/{id}/approve`, `/actions/{id}/reject`, `/health`. Backed by **SQLAlchemy ORM + PostgreSQL/SQLite persistence** (Alembic migrations) for `users`, `action_proposals`, and `audit_log`. |
 | **Auth & Security** | Real **JWT Bearer authentication**, role-based access control (**RBAC**: viewer, operator, admin). Strict human-in-the-loop state machine (only operator+ can approve; every propose/approve/reject/execute records user ID in `audit_log`). |
-| **Integration Adapters** | Adapters for Slack, Gmail, and Google Calendar reading credentials from per-user stored OAuth tokens or env variables. Explicit `MockAdapter` selected strictly by config (`INTEGRATION_MODE=mock`), never as a silent fallback. |
+| **Integration Adapters** | Adapters for Slack (live API), Gmail & Google Calendar (implemented REST calls, requires user OAuth bearer token). Explicit `MockAdapter` selected strictly by default (`INTEGRATION_MODE=mock`) for dry-runs. |
 | **Background Execution** | Action approval is completely decoupled from execution via FastAPI BackgroundTasks worker. |
 | **Deployment** | Multi-stage containerized build (`Dockerfile` with non-root user, pre-downloaded ONNX models, zero cold-start delay) targeting **Render / Fly.io / Google Cloud Run**. [chronexa17.vercel.app](https://chronexa17.vercel.app/) operates as a thin frontend calling the container API. |
-| **Evidence & Benchmarks** | **Holdout (n=100 unseen) Top-10 Retrieval: 86.8%**, Dev (n=36) Top-10: 94.4%, Recall@5: 75.0%, MRR: 0.683, **0.0% future knowledge leakage**, and 12/12 passing action benchmark schemas. |
+| **Evidence & Benchmarks** | **Synthetic benchmarks (1,316 units, n=100 unseen holdout)**: Top-10 Retrieval: 86.8%, Dev Top-10: 94.4%, Recall@5: 75.0%, MRR: 0.683, **0.0% future knowledge leakage**, and 12/12 passing action benchmark schemas. |
 
 ---
 
@@ -169,9 +169,46 @@ The recruiter and demo interface at [chronexa17.vercel.app](https://chronexa17.v
 
 ---
 
+## 🔌 Integration Status
+
+Chronexa supports multiple workplace integration actions through an adapter architecture (`src/actions/adapters.py`). Behavior depends on `INTEGRATION_MODE` (`mock` or `live`):
+
+| Integration | Supported Actions | Status in Live Mode (`INTEGRATION_MODE=live`) | Status in Mock Mode (`INTEGRATION_MODE=mock`, Default) |
+| :--- | :--- | :--- | :--- |
+| **Slack** | `slack.send_message` | **Live**: Calls Slack Web API (`chat.postMessage`) using `SLACK_BOT_TOKEN` or per-user token. | **Mock**: Records payload, returns simulated delivery. |
+| **Gmail** | `gmail.send` | **Implemented**: Generates base64url RFC 2822 email and calls Google Gmail REST API (`users.messages.send`). **Requires per-user OAuth bearer token** in user credentials or env. | **Mock**: Records payload, returns simulated delivery. |
+| **Google Calendar** | `calendar.create_event`, `calendar.update_event` | **Implemented**: Calls Google Calendar v3 REST API (`events.insert`, `events.patch`). **Requires per-user OAuth bearer token** in user credentials or env. | **Mock**: Records payload, returns simulated event ID. |
+| **Desktop Apps** | `app.open` | **Unsupported in Server Mode**: Returns explicit `{"status": "unsupported"}` to avoid executing platform-specific shell subprocesses in Linux containers. | **Mock**: Records payload, returns simulated launch. |
+| **Apple Reminders** | `reminder.create` | **Unsupported in Server Mode**: Returns explicit `{"status": "unsupported"}` as native macOS reminder APIs are not available in server/container environments. | **Mock**: Records payload, returns simulated reminder ID. |
+
+> [!NOTE]
+> `INTEGRATION_MODE=mock` is the safe default for dry-runs and automated evaluation. Live execution must be explicitly configured via environment variables.
+
+---
+
+## 🎯 Design Decisions
+
+* **Pre-Retrieval Temporal Gate**: Filtering candidate units *before* retrieval (`timestamp <= as_of & NOT deleted`) mathematically guarantees zero future knowledge leakage. Post-retrieval filtering or prompting an LLM to "ignore future facts" frequently fails under subtle semantic updates.
+* **Reciprocal Rank Fusion (RRF, $k=60$)**: RRF fuses ranked lists from dense vector search (FastEmbed BGE) and sparse lexical search (BM25 with Snowball stemming). Using $k=60$ standardizes rank influence across disparate score scales without requiring fragile score normalization or tuning.
+* **Cross-Encoder Joint Reranking**: Bi-encoders compute query and document embeddings independently. A cross-encoder (`ms-marco-MiniLM-L-6-v2`) performs full cross-attention over query-document pairs for the top-30 candidates, capturing subtle semantic interactions and entity matches.
+* **Human-in-the-Loop State Machine**: To prevent accidental or malicious autonomous action execution, actions cannot execute directly from natural language. The system must first generate a validated, allowlisted JSON proposal (`status: proposed`), which an operator with appropriate RBAC permissions must explicitly approve (`status: approved`).
+* **Decoupled Background Execution**: Action execution is offloaded to asynchronous background tasks upon operator approval. This ensures HTTP responses are sub-100ms and prevents slow external APIs (Slack, Google) from causing request timeouts.
+* **Persistent Disk-Backed FAISS Vector Store**: For corpora of thousands of units, a local disk-persisted FAISS IndexFlatIP delivers sub-millisecond similarity search on CPU with zero external network hops or database infrastructure overhead. It abstracts behind `VectorStoreRepository`, allowing seamless future swaps if horizontal vector scaling is needed.
+
+---
+
+## ⚠️ Limitations
+
+* **Synthetic Benchmark Scope**: Retrieval accuracy, recall, and zero-leakage metrics are evaluated on synthetic workplace memory datasets (1,316 corpus units, 27 train queries, 100 holdout queries) crafted for temporal updates. They demonstrate algorithmic correctness of temporal gating and fusion, not petabyte-scale production throughput.
+* **Single-Node In-Memory Corpus**: The BM25 index and unit corpus are loaded into memory at startup. This architecture is optimized for small-to-medium teams (tens of thousands of documents), not distributed multi-terabyte search clusters.
+* **No OAuth Web Consent Flow Yet**: While Gmail and Google Calendar adapters make real Google REST calls with user bearer tokens, Chronexa does not yet include a frontend OAuth 2.0 authorization redirect/callback server. Tokens must currently be seeded via user profile `oauth_tokens` or environment variables.
+* **Desktop App & Reminders Disabled on Server**: Desktop GUI launching (`app.open`) and Apple Reminders are disabled in live server/container deployments to ensure container safety and cross-platform compatibility.
+
+---
+
 ## 📊 Retrieval Benchmark Results
 
-Evaluated across two independent suites: a development set (n=36) and a held-out test set of 100 unseen natural language queries.
+Evaluated across two synthetic benchmark suites: a development set (n=36 / 27 training queries over 1,316 units) and a held-out synthetic test set of 100 unseen natural language queries with temporal updates.
 
 | Evaluation Metric | Dev Set (n=36) | Holdout Benchmark (n=100 Unseen) | Baseline (Naive Dense Only) |
 | :--- | :---: | :---: | :---: |
@@ -180,6 +217,8 @@ Evaluated across two independent suites: a development set (n=36) and a held-out
 | **Mean Reciprocal Rank (MRR)** | **0.742** | **0.683** | 0.538 |
 | **Temporal Future Leakage** | **0.0%** | **0.0%** | 18.4% (Critical Failure) |
 | **Action Schema Accuracy** | **12 / 12 (100%)** | **12 / 12 (100%)** | N/A |
+
+*Note: Benchmarks reflect synthetic eval scenarios designed to test temporal boundaries and injection resistance; production enterprise corpora will vary.*
 
 ---
 
