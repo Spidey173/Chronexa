@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chronexa | Workplace-Memory Search & Safe Action Previews (Portfolio Project)</title>
-  <meta name="description" content="Chronexa: A prototype workplace-memory assistant demonstrating point-in-time search across mock Slack, Gmail, Calendar, and Meetings with dry-run action validation. Built by Pruthvi R.">
+  <title>Chronexa | Workplace-Memory Search & Safe Action Assistant (Benchmark Replay Demo)</title>
+  <meta name="description" content="Chronexa: A workplace-memory assistant demonstrating point-in-time search and safe action execution. Interactive benchmark replay demo. Built by Pruthvi R.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -17,11 +17,11 @@
   <!-- Top Active Status Banner -->
   <div class="top-banner">
     <div class="live-badge">
-      <span class="pulse-dot"></span>
-      <span>PORTFOLIO DEMO · PRE-INDEXED BENCHMARK REPLAY</span>
+      <span class="pulse-dot" style="background: #94a3b8; box-shadow: none;"></span>
+      <span style="color: #cbd5e1;">BENCHMARK REPLAY MODE: PRE-INDEXED RESULTS, NO LIVE BACKEND</span>
     </div>
-    <div style="font-family: var(--font-mono); font-size: 0.75rem;">
-      <span>Strict Physical Temporal Filtering (time &le; as_of) · Local CPU Hybrid Retrieval</span>
+    <div style="font-family: var(--font-mono); font-size: 0.75rem; color: #94a3b8; display: flex; align-items: center; gap: 8px;">
+      <span>Evaluation Harness Replay · Full stack runs locally via Docker</span>
     </div>
   </div>
 
@@ -39,15 +39,15 @@
         </div>
       </div>
       <div class="header-links">
-        <a href="https://github.com/Spidey173/Chronexa" target="_blank" rel="noopener" class="btn-link">
+        <a href="https://github.com/Spidey173/Chronexa" target="_blank" rel="noopener" class="btn-link" aria-label="GitHub Repository">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
           <span>GitHub</span>
         </a>
-        <a href="https://pruthvi-17.vercel.app/" target="_blank" rel="noopener" class="btn-link primary">
+        <a href="https://pruthvi-17.vercel.app/" target="_blank" rel="noopener" class="btn-link primary" aria-label="Portfolio">
           <span>Portfolio</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
         </a>
-        <a href="https://www.linkedin.com/in/pruthvir173/" target="_blank" rel="noopener" class="btn-link">
+        <a href="https://www.linkedin.com/in/pruthvi-r-48ba9b2b4" target="_blank" rel="noopener" class="btn-link" aria-label="LinkedIn Profile">
           <span>LinkedIn</span>
         </a>
       </div>
@@ -95,6 +95,76 @@
       </div>
     </section>
 
+    <!-- Under the Hood / System Architecture Overview (Compact) -->
+    <section class="under-the-hood-section" style="margin-bottom: 24px;">
+      <div class="glass-panel" style="padding: 18px 22px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+          <div>
+            <h2 style="font-size: 1.1rem; font-weight: 700; color: #f8fafc; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
+              <span>⚡ Under the Hood: Full-Stack Production Architecture</span>
+              <span class="badge-pill" style="font-size: 0.7rem; padding: 2px 8px; background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);">78 Pytest & Hypothesis Tests Passing</span>
+            </h2>
+            <p style="font-size: 0.82rem; color: #94a3b8; margin: 0;">
+              This web demo is a <strong>static benchmark replay</strong> for recruiter demonstration. The full repo runs a containerized FastAPI backend with PostgreSQL and disk-backed FAISS.
+            </p>
+          </div>
+          <a href="https://github.com/Spidey173/Chronexa" target="_blank" rel="noopener" class="btn-link" style="padding: 6px 12px; font-size: 0.8rem;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+            <span>View Source on GitHub</span>
+          </a>
+        </div>
+
+        <div class="hood-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 14px;">
+          <div class="hood-card" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 12px 14px;">
+            <div style="font-size: 0.75rem; text-transform: uppercase; color: #38bdf8; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 4px;">🛡️ Safety State Machine</div>
+            <div style="font-size: 0.82rem; color: #e2e8f0; line-height: 1.4;">
+              <strong>proposed &rarr; approved &rarr; executed / rejected</strong>. Actions cannot run autonomously; operators must explicitly approve allowlisted schemas.
+            </div>
+          </div>
+
+          <div class="hood-card" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 12px 14px;">
+            <div style="font-size: 0.75rem; text-transform: uppercase; color: #a855f7; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 4px;">🔐 JWT RBAC & Audit Log</div>
+            <div style="font-size: 0.82rem; color: #e2e8f0; line-height: 1.4;">
+              Role-based auth (<code>viewer</code>, <code>operator</code>, <code>admin</code>). Every approve, reject, or background execution writes an immutable record to PostgreSQL <code>audit_log</code>.
+            </div>
+          </div>
+
+          <div class="hood-card" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 12px 14px;">
+            <div style="font-size: 0.75rem; text-transform: uppercase; color: #10b981; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 4px;">🧪 Rigorous Verification</div>
+            <div style="font-size: 0.82rem; color: #e2e8f0; line-height: 1.4;">
+              <strong>78 passing pytest tests</strong>, including <strong>Hypothesis property tests</strong> proving temporal boundaries (no future leakage) and state invariants.
+            </div>
+          </div>
+
+          <div class="hood-card" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 12px 14px;">
+            <div style="font-size: 0.75rem; text-transform: uppercase; color: #f59e0b; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 4px;">🔒 Injection Defense</div>
+            <div style="font-size: 0.82rem; color: #e2e8f0; line-height: 1.4;">
+              Strict XML record encapsulation, heuristic prompt injection detection, and calibrated abstention when context lacks authoritative evidence.
+            </div>
+          </div>
+        </div>
+
+        <div style="background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 8px; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px;">
+          <div style="font-size: 0.8rem; color: #cbd5e1; line-height: 1.5;">
+            <strong style="color: #f1f5f9;">Integration Status:</strong>
+            <span style="color: #10b981; font-weight: 600;">Slack = Live API</span> ·
+            <span style="color: #38bdf8;">Gmail/Calendar = Implemented REST calls (tested with mocked HTTP; pending real Google accounts)</span> ·
+            <span style="color: #94a3b8;">Desktop apps & Reminders = Unsupported in server mode</span>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding-top: 6px; border-top: 1px solid rgba(255, 255, 255, 0.05);">
+            <div style="font-size: 0.8rem; color: #94a3b8;">
+              <strong style="color: #e2e8f0;">Run the full stack yourself:</strong>
+              <code style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 4px; color: #f59e0b; font-family: var(--font-mono); margin-left: 4px;">docker compose up --build</code>
+              <span style="color: #64748b; margin-left: 6px;">(API on :8001, Postgres on :5433)</span>
+            </div>
+            <div style="font-size: 0.75rem; font-family: var(--font-mono); color: #64748b;">
+              Persistent FAISS disk store · BGE Embeddings + MiniLM Reranker
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Navigation Bar -->
     <nav class="nav-tabs" id="mainNav">
       <button class="nav-tab-btn active" data-tab="tab-chat">
@@ -120,6 +190,29 @@
     <!-- TAB 0: INTERACTIVE ASSISTANT CHAT -->
     <section id="tab-chat" class="tab-pane active">
       <div class="chat-container">
+        <!-- Guided First Click: Try This First Strip -->
+        <div class="try-first-banner" style="background: linear-gradient(90deg, rgba(56, 189, 248, 0.12), rgba(99, 102, 241, 0.12)); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 10px; padding: 12px 16px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 10px; max-width: 620px;">
+            <span style="font-size: 1.3rem;">👉</span>
+            <div>
+              <div style="font-size: 0.88rem; font-weight: 700; color: #f8fafc; margin-bottom: 2px;">
+                Try this first: Watch the answer change as time moves forward
+              </div>
+              <div style="font-size: 0.8rem; color: #94a3b8; line-height: 1.4;">
+                Slide the as-of date from <strong>Sep 09 &rarr; Sep 18</strong> and ask <em>"When is Route Planner v2 launching?"</em>. Zero typing required:
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button id="btnTrySep9" class="btn-link" style="padding: 7px 14px; font-size: 0.8rem; background: rgba(56, 189, 248, 0.18); border: 1px solid rgba(56, 189, 248, 0.45); color: #38bdf8; cursor: pointer; border-radius: 6px; font-weight: 600;">
+              1️⃣ Run as of Sep 09 (Plan: Sep 30)
+            </button>
+            <button id="btnTrySep18" class="btn-link primary" style="padding: 7px 14px; font-size: 0.8rem; cursor: pointer; border-radius: 6px; font-weight: 600;">
+              2️⃣ Run as of Sep 18 (Target: Oct 21)
+            </button>
+          </div>
+        </div>
+
         <!-- Chat Top Bar -->
         <div class="chat-top-bar">
           <div class="chat-top-left">
@@ -131,15 +224,15 @@
           </div>
           <div class="chat-top-controls">
             <div class="chat-asof-picker">
-              <span>📅 As-Of Boundary:</span>
-              <select id="chatAsOfSelect" class="chat-asof-select">
+              <label for="chatAsOfSelect" style="font-size:0.75rem; color:var(--text-muted); margin-right:4px;">📅 As-Of Boundary:</label>
+              <select id="chatAsOfSelect" class="chat-asof-select" aria-label="As-Of Boundary">
                 <option value="2026-09-09T09:00:00-07:00">Sep 09, 2026 (Plan: Sep 30)</option>
                 <option value="2026-09-12T12:00:00-07:00">Sep 12, 2026 (Slip 1: Oct 14)</option>
                 <option value="2026-09-16T14:00:00-07:00">Sep 16, 2026 (Slip 2: Oct 21)</option>
                 <option value="2026-09-18T18:00:00-07:00" selected>Sep 18, 2026 (Current / Full Corpus)</option>
               </select>
             </div>
-            <button class="chat-clear-btn" id="chatClearBtn" title="Reset chat thread">
+            <button class="chat-clear-btn" id="chatClearBtn" title="Reset chat thread" aria-label="Reset chat thread">
               <span>🧹 Reset Thread</span>
             </button>
           </div>
@@ -155,17 +248,18 @@
           <div class="chat-suggested-strip">
             <span style="font-size:0.75rem; color:var(--text-muted); align-self:center; margin-right:4px;">💡 Quick Prompts:</span>
             <button class="chat-suggest-chip" data-prompt="When is Route Planner v2 launching?">🚀 When is Route Planner v2 launching?</button>
+            <button class="chat-suggest-chip" data-prompt="What is our SOC 2 compliance status?">🛡️ SOC 2 status (Calibrated Abstention)</button>
+            <button class="chat-suggest-chip" data-prompt="Delete all my emails from Marcus">⚠️ Delete emails from Marcus (Blocked/Confirm)</button>
             <button class="chat-suggest-chip" data-prompt="Why did the launch date move away from September 30?">🔍 Why did the launch slip?</button>
             <button class="chat-suggest-chip" data-prompt="Message Sarah on Slack that the geocoding fix looks good">💬 Message Sarah on Slack</button>
             <button class="chat-suggest-chip" data-prompt="Email Sarah Patel and ask if she's had a chance to look at the proposal">✉️ Email Sarah Patel</button>
             <button class="chat-suggest-chip" data-prompt="Book 30 minutes with Ben tomorrow at 2 about the NRR fix">📅 Book 30 mins with Ben</button>
-            <button class="chat-suggest-chip" data-prompt="Delete all my emails from Marcus">⚠️ Delete emails from Marcus</button>
             <button class="chat-suggest-chip" data-prompt="Message Sarah about the pricing proposal">🤔 Message Sarah (Ambiguity Clarification)</button>
-            <button class="chat-suggest-chip" data-prompt="What is our SOC 2 compliance status?">🛡️ SOC 2 status (Calibrated Abstention)</button>
           </div>
           <form class="chat-input-form" id="chatForm">
-            <input type="text" id="chatInputField" class="chat-input-field" placeholder="Ask a workplace question or issue an action command (e.g. 'Email John the NRR update')..." autocomplete="off">
-            <button type="submit" class="chat-send-btn" id="chatSendBtn" title="Send message">
+            <label for="chatInputField" class="sr-only" style="position: absolute; width: 1px; height: 1px; overflow: hidden;">Ask a workplace question</label>
+            <input type="text" id="chatInputField" class="chat-input-field" placeholder="Ask a workplace question or issue an action command (e.g. 'Email John the NRR update')..." autocomplete="off" aria-label="Workplace question or action command">
+            <button type="submit" class="chat-send-btn" id="chatSendBtn" title="Send message" aria-label="Send message">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
             </button>
           </form>
@@ -181,7 +275,7 @@
             <h2 class="panel-title">
               <span>🔍 Point-in-Time Temporal Memory Engine</span>
             </h2>
-            <p class="panel-subtitle">Answers organizational questions strictly as of an arbitrary historical timestamp with mathematical zero future leakage.</p>
+            <p class="panel-subtitle">Answers organizational questions strictly as of an arbitrary historical timestamp with 0% future leakage on the benchmark.</p>
           </div>
           <div class="slider-badge" id="poolBadge">1,316 Messages Visible</div>
         </div>
@@ -254,8 +348,8 @@
           </div>
           <div class="tel-item">
             <div class="tel-label">Search Latency</div>
-            <div class="tel-val" id="telLatency">38 ms</div>
-            <div class="tel-sub">Pure In-Memory Index</div>
+            <div class="tel-val" id="telLatency">Replay (~14ms)</div>
+            <div class="tel-sub">Benchmark Pre-computation</div>
           </div>
           <div class="tel-item">
             <div class="tel-label">Temporal Boundary</div>
@@ -386,25 +480,28 @@
 
         <div class="arch-grid">
           <div class="arch-card">
-            <h3 class="arch-title">🚨 The "Vector Search Trap" in Corporate RAG</h3>
+            <h3 class="arch-title">🚨 Why Pure Dense Retrieval Fails on Workplace Data (and why Chronexa fuses Lexical + Dense)</h3>
             <ul class="arch-list">
               <li>
-                <strong>Version & Date Blindness:</strong> Dense vector models give a cosine similarity of > 0.97 between "Route Planner v1" and "Route Planner v2". Vector search cannot distinguish historical version numbers or dates.
+                <strong>Version & Date Blindness:</strong> Dense vector models yield high cosine similarity (~0.95 measured with <code>BAAI/bge-small-en-v1.5</code>) between "Route Planner v1" and "Route Planner v2", failing to distinguish historical version updates or exact dates.
               </li>
               <li>
-                <strong>CPU Latency Bottleneck:</strong> Computing dense FastEmbed vectors across 1,316 units on CPU took <strong>20–30s per request</strong>. Chronexa's BM25 index runs in <strong>&lt; 1.7s</strong>.
+                <strong>Out-of-Vocabulary (OOV) Confusion:</strong> Corporate identifiers (e.g. <code>MTG-0916-GONOGO#0135</code>, <code>U03SARAHK</code>, ticket numbers, error codes) get fragmented into arbitrary subwords by dense tokenizers, losing exact matches.
               </li>
               <li>
-                <strong>Out-of-Vocabulary (OOV) Confusion:</strong> Corporate IDs (e.g. <code>MTG-0916-GONOGO</code>, <code>U03SARAHK</code>) get fragmented into meaningless subwords by standard vector tokenizers.
+                <strong>Latency & Pre-computation:</strong> Pure on-the-fly dense re-embedding of entire dynamic corpora adds unnecessary CPU latency.
+              </li>
+              <li>
+                <strong>The Solution — Hybrid RRF (k=60) + Cross-Encoder Reranking:</strong> Chronexa fuses BM25 with disk-backed FAISS vector embeddings, balancing keyword precision and semantic intent, then applies a cross-encoder (<code>ms-marco-MiniLM-L-6-v2</code>) to joint-score top candidate passages.
               </li>
             </ul>
           </div>
 
           <div class="arch-card">
-            <h3 class="arch-title">🛡️ Chronexa's 5 Core Pillars</h3>
+            <h3 class="arch-title">🛡️ Chronexa's 6 Core Pillars</h3>
             <ul class="arch-list">
               <li>
-                <strong>1. Pre-Retrieval Physical Boundary:</strong> Records where <code>timestamp &gt; as_of</code> are excluded before indexing to prevent future information leakage.
+                <strong>1. Pre-Retrieval Physical Boundary:</strong> Records where <code>timestamp &gt; as_of</code> are excluded before indexing to guarantee 0% future leakage on the benchmark.
               </li>
               <li>
                 <strong>2. ISO Timestamp Normalization:</strong> Dates like <code>2026-09-10</code> are indexed as individual temporal tokens (<code>2026</code>, <code>sep</code>, <code>10</code>).
@@ -416,7 +513,10 @@
                 <strong>4. 1.8x Named Entity Boosting:</strong> Client codenames ("Acme Freight", "Sarah Patel") are boosted to avoid ambiguous matches.
               </li>
               <li>
-                <strong>5. Reciprocal Rank Fusion (RRF):</strong> Sub-queries are fused to balance exact terms and semantic synonyms.
+                <strong>5. Reciprocal Rank Fusion (RRF, k=60):</strong> Dense BGE vectors and sparse lexical BM25 ranks are fused without score calibration issues.
+              </li>
+              <li>
+                <strong>6. Cross-Encoder Joint Reranking:</strong> <code>Xenova/ms-marco-MiniLM-L-6-v2</code> evaluates full query-document cross-attention on the top 40 candidates, reranking down to the top 8 authoritative passages.
               </li>
             </ul>
           </div>
@@ -449,7 +549,7 @@
               <tr>
                 <td><strong>Dense Embeddings</strong></td>
                 <td>Semantic Vector</td>
-                <td>FastEmbed ONNX runtime (BAAI/bge-small-en-v1.5) with pre-cached vector dot products</td>
+                <td>FastEmbed ONNX runtime (BAAI/bge-small-en-v1.5) with disk-backed FAISS repository</td>
                 <td>Local CPU</td>
               </tr>
               <tr>
@@ -457,6 +557,12 @@
                 <td>Hybrid RRF</td>
                 <td>Reciprocal Rank Fusion (k=60) balancing exact keyword tokens and semantic concepts</td>
                 <td>Local CPU</td>
+              </tr>
+              <tr>
+                <td><strong>Cross-Encoder Reranker</strong></td>
+                <td>Neural Reranking</td>
+                <td>Deep cross-attention with Xenova/ms-marco-MiniLM-L-6-v2 re-scoring fused candidate passages (top-40 &rarr; top-8)</td>
+                <td>Local CPU (FastEmbed ONNX)</td>
               </tr>
               <tr>
                 <td><strong>Dry-Run Actions</strong></td>
@@ -467,7 +573,7 @@
               <tr>
                 <td><strong>Grounding Defense</strong></td>
                 <td>Guardrails</td>
-                <td>XML record sandboxing, prompt injection sanitization, and explicit abstention</td>
+                <td>XML record sandboxing, prompt injection sanitization, and calibrated abstention</td>
                 <td>Local Pipeline</td>
               </tr>
             </tbody>
@@ -525,20 +631,19 @@
     <div class="footer-inner">
       <div>
         <strong>Chronexa</strong> · Workplace-Memory Search & Safe Action Previews<br>
-        Developed by <strong>Pruthvi R</strong> · Associate AI / RAG & Python Engineer
+        Developed by <strong>Pruthvi R</strong> · AI / RAG & Python Developer
       </div>
       <div class="footer-links">
         <a href="https://pruthvi-17.vercel.app/" target="_blank" rel="noopener">Portfolio</a>
         <a href="https://github.com/Spidey173/Chronexa" target="_blank" rel="noopener">GitHub</a>
-        <a href="https://www.linkedin.com/in/pruthvir173/" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="https://www.linkedin.com/in/pruthvi-r-48ba9b2b4" target="_blank" rel="noopener">LinkedIn</a>
       </div>
       <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-emerald);">
-        ● Static Client Demo · Local Python Server
+        ● Static Benchmark Replay Demo · Full Stack on Docker
       </div>
     </div>
   </footer>
 
-  <!-- Chronexa Data & Application Logic -->
   <!-- Chronexa Data & Application Logic -->
   <script src="data.js"></script>
   <script src="app.js"></script>

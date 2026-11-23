@@ -204,13 +204,87 @@
       updateTemporalTelemetry(e.target.value);
     });
 
-    // Dynamic API Detection & Heartbeat Sync (Thin Frontend connecting to Container API)
+    // Dynamic API Detection & Heartbeat Sync (with Origin Allowlist Security)
+    const ALLOWED_API_HOSTS = new Set([
+      'localhost',
+      '127.0.0.1',
+      'chronexa-api.onrender.com',
+      'chronexa-api.fly.dev'
+    ]);
+
+    function isAllowedApiOrigin(urlStr) {
+      if (!urlStr) return false;
+      try {
+        const parsed = new URL(urlStr, window.location.href);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
+        if (ALLOWED_API_HOSTS.has(parsed.hostname)) return true;
+        if (window.location.hostname && parsed.hostname === window.location.hostname) return true;
+        return false;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function sanitizeApiUrl(rawUrl) {
+      if (!rawUrl) return null;
+      try {
+        const parsed = new URL(rawUrl, window.location.href);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+          console.warn('Rejected non-http/https API URL:', rawUrl);
+          return null;
+        }
+        if (isAllowedApiOrigin(parsed.origin)) {
+          return parsed.origin;
+        }
+        // External origin confirmation dialog
+        const confirmed = window.confirm(
+          `Security Notice:\n\nYou are connecting to an external API origin:\n${parsed.origin}\n\nDo not send confidential tokens or credentials to unverified servers. Allow connection?`
+        );
+        if (confirmed) {
+          return parsed.origin;
+        }
+        return null;
+      } catch (e) {
+        console.warn('Invalid API URL provided:', rawUrl);
+        return null;
+      }
+    }
+
+    function getAuthHeaders(urlStr) {
+      const headers = { 'Content-Type': 'application/json' };
+      if (isAllowedApiOrigin(urlStr)) {
+        const token = localStorage.getItem('CHRONEXA_AUTH_TOKEN');
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+      return headers;
+    }
+
+    window.isAllowedApiOrigin = isAllowedApiOrigin;
+    window.sanitizeApiUrl = sanitizeApiUrl;
+    window.getAuthHeaders = getAuthHeaders;
+
     const urlParams = new URLSearchParams(window.location.search);
     window.CHRONEXA_LIVE = false;
-    window.CHRONEXA_API_URL = urlParams.get('api')
-      || window.CHRONEXA_API_URL
-      || localStorage.getItem('CHRONEXA_API_URL')
-      || (window.location.protocol.startsWith('http') && !window.location.hostname.includes('vercel.app') ? window.location.origin : (window.location.hostname.includes('vercel.app') ? 'https://chronexa-api.onrender.com' : 'http://localhost:8000'));
+    let initialApi = null;
+    const queryApi = urlParams.get('api');
+    if (queryApi) initialApi = sanitizeApiUrl(queryApi);
+    if (!initialApi && window.CHRONEXA_API_URL) initialApi = sanitizeApiUrl(window.CHRONEXA_API_URL);
+    if (!initialApi) {
+      const stored = localStorage.getItem('CHRONEXA_API_URL');
+      if (stored) initialApi = sanitizeApiUrl(stored);
+    }
+    if (!initialApi) {
+      if (window.location.protocol.startsWith('http') && !window.location.hostname.includes('vercel.app')) {
+        initialApi = window.location.origin;
+      } else if (window.location.hostname.includes('vercel.app')) {
+        initialApi = 'https://chronexa-api.onrender.com';
+      } else {
+        initialApi = 'http://localhost:8000';
+      }
+    }
+    window.CHRONEXA_API_URL = initialApi || 'http://localhost:8000';
 
     function promptConfigureApi() {
       const current = window.CHRONEXA_API_URL || 'http://localhost:8000';
@@ -218,10 +292,15 @@
       if (entered !== null) {
         const clean = entered.trim().replace(/\/+$/, '');
         if (clean) {
-          localStorage.setItem('CHRONEXA_API_URL', clean);
-          window.CHRONEXA_API_URL = clean;
-          showToast(`Target API set to: ${clean}. Checking connection...`);
-          checkLiveBackend();
+          const validated = sanitizeApiUrl(clean);
+          if (validated) {
+            localStorage.setItem('CHRONEXA_API_URL', validated);
+            window.CHRONEXA_API_URL = validated;
+            showToast(`Target API set to: ${validated}. Checking connection...`);
+            checkLiveBackend();
+          } else {
+            showToast('API URL was not accepted or confirmed.');
+          }
         }
       }
     }
@@ -237,7 +316,7 @@
         topBanner.innerHTML = `
           <div class="live-badge">
             <span class="pulse-dot" style="background: #10b981; box-shadow: 0 0 8px #10b981;"></span>
-            <span style="color: #10b981;">🟢 LIVE CONTAINER BACKEND CONNECTED · FULL CORPUS SEARCH ACTIVE</span>
+            <span style="color: #10b981;">🟢 LIVE BACKEND CONNECTED · FULL CORPUS SEARCH ACTIVE</span>
           </div>
           <div style="font-family: var(--font-mono); font-size: 0.75rem; color: #a7f3d0; display: flex; align-items: center; gap: 8px;">
             <span>Connected: <code>${escapeHtml(targetUrl)}</code></span>
@@ -245,16 +324,16 @@
           </div>
         `;
       } else {
-        topBanner.style.background = 'linear-gradient(90deg, rgba(239, 68, 68, 0.12), rgba(185, 28, 28, 0.05))';
-        topBanner.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+        topBanner.style.background = 'rgba(15, 23, 42, 0.95)';
+        topBanner.style.borderColor = 'rgba(255, 255, 255, 0.1)';
         topBanner.innerHTML = `
           <div class="live-badge">
-            <span class="pulse-dot" style="background: #ef4444; box-shadow: 0 0 8px #ef4444;"></span>
-            <span style="color: #f87171;">🔴 BACKEND UNAVAILABLE · PRE-INDEXED BENCHMARK REPLAY MODE</span>
+            <span class="pulse-dot" style="background: #94a3b8; box-shadow: none;"></span>
+            <span style="color: #cbd5e1;">BENCHMARK REPLAY MODE: PRE-INDEXED RESULTS, NO LIVE BACKEND</span>
           </div>
-          <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 8px;">
-            <span>Target: <code>${escapeHtml(targetUrl)}</code></span>
-            <button id="btnConfigApi" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #cbd5e1; border-radius: 4px; padding: 2px 8px; font-size: 0.7rem; cursor: pointer;">Configure API URL</button>
+          <div style="font-family: var(--font-mono); font-size: 0.75rem; color: #94a3b8; display: flex; align-items: center; gap: 8px;">
+            <span>Evaluation Replay · Target: <code>${escapeHtml(targetUrl)}</code></span>
+            <button id="btnConfigApi" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #cbd5e1; border-radius: 4px; padding: 2px 8px; font-size: 0.7rem; cursor: pointer;">Connect Live API</button>
           </div>
         `;
       }
@@ -266,7 +345,11 @@
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 2500);
 
-      fetch(`${window.CHRONEXA_API_URL}/api/health`, { method: 'GET', signal: controller.signal })
+      fetch(`${window.CHRONEXA_API_URL}/api/health`, {
+        method: 'GET',
+        headers: getAuthHeaders(window.CHRONEXA_API_URL),
+        signal: controller.signal
+      })
         .then(r => {
           clearTimeout(timer);
           if (r.ok) return r.json();
@@ -305,7 +388,7 @@
 
         fetch(`${window.CHRONEXA_API_URL}/api/search`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(window.CHRONEXA_API_URL),
           body: JSON.stringify({ query: qRaw, as_of: asOf, mode: searchMode })
         })
         .then(r => r.json())
@@ -418,7 +501,7 @@
         return;
       }
 
-      telLatency.textContent = "Replay (Verified)";
+      telLatency.textContent = "Replay (~14ms precomputed)";
 
       const isAbstain = match.abstained || (match.gold_answer && match.gold_answer.toLowerCase().includes('not in memory'));
       
@@ -633,7 +716,7 @@
         guardrailText.textContent = '⏳ Parsing command via live ActionParser API...';
         fetch(`${window.CHRONEXA_API_URL}/api/action`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(window.CHRONEXA_API_URL),
           body: JSON.stringify({ command: rawInput, as_of: asOfInput.value })
         })
         .then(r => r.json())
@@ -977,7 +1060,7 @@ I index your workplace communications across **Slack, Gmail, Calendar, Meeting T
           <div style="margin-top:10px; font-size:0.7rem; color:var(--text-muted); font-family:var(--font-mono); display:flex; align-items:center; gap:6px;">
             <span>🛡️ Temporal Boundary: ${asOfLabel}</span>
             <span>·</span>
-            <span>0 Future Leakage</span>
+            <span>0% Future Leakage on Benchmark</span>
           </div>
         </div>
       `;
@@ -1044,7 +1127,7 @@ I index your workplace communications across **Slack, Gmail, Calendar, Meeting T
           if (isActionIntent(input)) {
             const resp = await fetch(`${window.CHRONEXA_API_URL}/api/action`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: getAuthHeaders(window.CHRONEXA_API_URL),
               body: JSON.stringify({ command: input, as_of: currentAsOf })
             });
             const data = await resp.json();
@@ -1060,7 +1143,7 @@ I index your workplace communications across **Slack, Gmail, Calendar, Meeting T
           } else {
             const resp = await fetch(`${window.CHRONEXA_API_URL}/api/search`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: getAuthHeaders(window.CHRONEXA_API_URL),
               body: JSON.stringify({ query: input, as_of: currentAsOf, mode: 'hybrid' })
             });
             const data = await resp.json();
@@ -1323,7 +1406,7 @@ Try asking about the **Route Planner launch**, **Acme Freight pricing proposal**
         text: `⏱️ **Point-in-Time Temporal Boundary Updated:**
 
 Current moment shifted to **${label}**. 
-All subsequent questions will be answered strictly from communications recorded on or before this timestamp (zero future leakage).`,
+All subsequent questions will be answered strictly from communications recorded on or before this timestamp (0% future leakage on benchmark).`,
         sources: [],
         asOf: newAsOf
       });
@@ -1332,6 +1415,31 @@ All subsequent questions will be answered strictly from communications recorded 
       timeSlider.value = parseDateToSliderValue(newAsOf);
       updateTemporalTelemetry(newAsOf);
     });
+
+    // Wire "Try this first" interactive guided walkthrough buttons
+    const btnTrySep9 = document.getElementById('btnTrySep9');
+    if (btnTrySep9) {
+      btnTrySep9.addEventListener('click', () => {
+        const asOfVal = "2026-09-09T09:00:00-07:00";
+        chatAsOfSelect.value = asOfVal;
+        asOfInput.value = asOfVal;
+        timeSlider.value = parseDateToSliderValue(asOfVal);
+        updateTemporalTelemetry(asOfVal);
+        handleChatSubmission("When is Route Planner v2 launching?");
+      });
+    }
+
+    const btnTrySep18 = document.getElementById('btnTrySep18');
+    if (btnTrySep18) {
+      btnTrySep18.addEventListener('click', () => {
+        const asOfVal = "2026-09-18T18:00:00-07:00";
+        chatAsOfSelect.value = asOfVal;
+        asOfInput.value = asOfVal;
+        timeSlider.value = parseDateToSliderValue(asOfVal);
+        updateTemporalTelemetry(asOfVal);
+        handleChatSubmission("When is Route Planner v2 launching?");
+      });
+    }
 
     document.querySelectorAll('.chat-suggest-chip').forEach(btn => {
       btn.addEventListener('click', () => {

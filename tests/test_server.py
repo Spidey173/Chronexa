@@ -225,3 +225,33 @@ def test_serve_frontend_static_assets(client):
     res_app = client.get("/app.js")
     assert res_app.status_code == 200
     assert "javascript" in res_app.headers.get("content-type", "")
+
+
+def test_frontend_honest_content_and_claims(client):
+    res_root = client.get("/")
+    html_content = res_root.text
+
+    # No inflated claims
+    assert "mathematical zero future leakage" not in html_content.lower()
+    assert "cosine > 0.97" not in html_content
+
+    # Grounded benchmark wording and guided walkthrough
+    assert "BENCHMARK REPLAY MODE" in html_content
+    assert "Under the Hood" in html_content
+    assert "Try this first" in html_content
+    assert "btnTrySep9" in html_content
+    assert "btnTrySep18" in html_content
+    assert "Cross-Encoder Joint Reranking" in html_content
+    assert "https://www.linkedin.com/in/pruthvi-r-48ba9b2b4" in html_content
+
+
+def test_frontend_api_origin_security(client):
+    res_app = client.get("/app.js")
+    js_content = res_app.text
+
+    # Origin security and allowlist functions
+    assert "isAllowedApiOrigin" in js_content
+    assert "sanitizeApiUrl" in js_content
+    assert "getAuthHeaders" in js_content
+    assert "ALLOWED_API_HOSTS" in js_content
+    assert "chronexa-api.onrender.com" in js_content

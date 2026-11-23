@@ -162,10 +162,27 @@ fly postgres attach
 fly deploy
 ```
 
-### 4. Thin Frontend Setup (Vercel)
-The recruiter and demo interface at [chronexa17.vercel.app](https://chronexa17.vercel.app/) serves static assets and dynamically connects to your deployed container backend:
-- By default, it targets `https://chronexa-api.onrender.com` (or your configured container endpoint).
-- You can override the backend URL at any time in the browser via `localStorage.setItem('CHRONEXA_API_URL', 'https://your-container-url.com')`.
+### 4. Public Web Demo & Replay Mode (Vercel)
+The recruiter and demo interface at [chronexa17.vercel.app](https://chronexa17.vercel.app/) serves static assets and operates in **static benchmark replay mode** (interactive pre-indexed replay of the 1,316 workplace units with zero external backend dependencies).
+
+> [!NOTE]
+> **Demo Replay vs. Full Docker Stack**: The Vercel deployment is intentionally client-side and pre-indexed so recruiters can test temporal boundaries instantly with zero cold-start delay. To execute live arbitrary queries and dry-run actions against the full backend, run the container stack via `docker compose up`. If connected to a running backend container, the frontend dynamically switches to live mode.
+
+### 🎮 Guided Demo Walkthrough (30-Second Recruiter Tour)
+
+If exploring the demo at [chronexa17.vercel.app](https://chronexa17.vercel.app/):
+
+1. **Observe Temporal Knowledge Shifts**:
+   - In the **Chat Assistant** tab, look at the highlighted **"Try this first"** banner above the conversation.
+   - Click **`1️⃣ Run as of Sep 09 (Plan: Sep 30)`**: Chronexa answers that Route Planner v2 is launching on **September 30, 2026** (the initial plan locked in the Sept 8 launch planning meeting).
+   - Click **`2️⃣ Run as of Sep 18 (Target: Oct 21)`**: Chronexa shifts its answer to **October 21, 2026**, citing the two successive slips (geocoding regression on Sept 10 and Acme Freight dispatcher training on Sept 16).
+   - **Verification**: Zero future leakage—documents written after the selected as-of timestamp are physically filtered out before retrieval.
+
+2. **Calibrated Abstention**:
+   - Click the prompt chip **`🛡️ SOC 2 status (Calibrated Abstention)`**: Chronexa cleanly abstains (*"Not in memory"*) because SOC 2 audits were never mentioned in indexed communications on or before that date.
+
+3. **Human-in-the-Loop Safe Action Preview**:
+   - Click the prompt chip **`⚠️ Delete emails from Marcus (Blocked/Confirm)`**: Rather than blindly executing a destructive action, Chronexa generates a blocked dry-run preview requiring explicit user confirmation.
 
 ---
 
