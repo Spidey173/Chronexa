@@ -11,7 +11,7 @@
 [![Human-in-the-Loop](https://img.shields.io/badge/Actions-Dry--Run%20%2B%20Approval%20Decoupled-purple?style=flat-square)](src/actions/)
 [![License](https://img.shields.io/badge/License-MIT-lightgrey?style=flat-square)](LICENSE)
 
-🔗 **[Live Demo Frontend (Vercel)](https://chronexa17.vercel.app/)** | ⚡ **[Live Backend API (Vercel Serverless)](https://chronexa-api.vercel.app/health)** | 📊 **[Benchmark Methodology](#-retrieval-benchmark-results)** | 📦 **[GitHub Repository](https://github.com/Spidey173/Chronexa)**
+🔗 **[Live Demo Frontend (Vercel)](https://chronexa17.vercel.app/)** | ⚡ **[Live Backend API (Vercel Serverless)](https://chronexa-api.vercel.app/health)** | 💼 **[LinkedIn Profile](https://www.linkedin.com/in/pruthvir173/)** | 📊 **[Benchmark Methodology](#-retrieval-benchmark-results)** | 📦 **[GitHub Repository](https://github.com/Spidey173/Chronexa)**
 
 ---
 
@@ -182,12 +182,13 @@ Chronexa is deployed across two decoupled Vercel projects:
 > *Why the latency gap?* BM25 and FastEmbed dense vector retrieval with Reciprocal Rank Fusion operate in sub-second time on CPU. The cross-encoder (`ms-marco-MiniLM-L-6-v2`) performs full multi-layer transformer cross-attention over 40+ candidate query-document pairs sequentially on single-core serverless CPU without GPU acceleration, which takes ~13s. Making Fast Hybrid the default ensures instantaneous recruiter responses while keeping the deep reranker available on demand.
 
 #### Public Safety, Database Caps & Auth Matrix:
-- **Public Sandbox Safety**: `CHRONEXA_OFFLINE=1` and `INTEGRATION_MODE=mock` are enforced on the public `chronexa-api` deployment. No LLM API keys (`GROQ_API_KEY`) exist in the public environment.
-- **Two-Tier Serverless Rate Limiting**: Tier 1 in-memory sliding window cache for fast container defense + Tier 2 persistent Neon PostgreSQL table (`rate_limit_records`) for distributed multi-instance tracking (60 req/min, HTTP 429).
-- **Public Write Capping & Auto-Pruning**: Public action proposals are strictly capped at 100 rows and audit logs at 200 rows. When thresholds are reached, the oldest demo records are automatically pruned.
+- **Public Sandbox Safety & Offline Grounding**: `CHRONEXA_OFFLINE=1` and `INTEGRATION_MODE=mock` are enforced on the public `chronexa-api` deployment. Public demo answers use deterministic, template-grounded synthesis to avoid third-party LLM key exposure. Pluggable Groq / OpenAI LLM synthesis is supported when running locally or in enterprise production.
+- **Two-Tier Serverless Rate Limiting**: Tier 1 in-memory sliding window cache for fast container defense (0ms overhead; health checks remain in-memory) + Tier 2 persistent Neon PostgreSQL table (`rate_limit_records`) with probabilistic pruning and fail-open resilience for distributed multi-instance tracking (60 req/min, HTTP 429).
+- **Public Write Capping vs. Immutable Audit Trail**: Enterprise production PostgreSQL maintains an append-only, strictly immutable audit log. In the public demo sandbox, simulation proposals are capped at 100 rows and audit logs at 200 rows (auto-pruning oldest entries) to prevent free-tier storage exhaustion.
 - **Health Check Cloud Detection**: On local environments, `/health` reports `loopback_only: true` (bound to 127.0.0.1). On cloud/serverless environments (Vercel, Render), it automatically reports `loopback_only: false`, `mode: "cloud_serverless"`, and `offline: true`.
 - **Public Visitor Auth Matrix**:
-  - `POST /api/action` (Public Propose): Open to public visitors; unauthenticated visitors are automatically assigned to a sandboxed demo operator identity for review.
+  - `POST /api/action` (Public Propose): Open to public visitors; unauthenticated visitors are automatically assigned to a sandboxed demo operator identity for schema review.
+  - Public UI Action Approval: The public demo UI provides client-side dry-run simulation with zero live side-effects.
   - `POST /actions/propose` (Strict Propose): Requires a valid JWT bearer token.
   - `POST /actions/{id}/approve` & `reject`: **Strictly gated** by RBAC. Requires a valid JWT with `role: "operator"` or `role: "admin"`. Anonymous requests return `401 Unauthorized`; `viewer` tokens return `403 Forbidden`.
 

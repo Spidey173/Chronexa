@@ -1063,7 +1063,7 @@ I index your workplace communications across **Slack, Gmail, Calendar, Meeting T
             buttonsHtml = `
               <div class="chat-action-buttons" id="btns_${cardId}">
                 <button class="chat-btn-action" style="background:#f43f5e;" onclick="approveAction('${cardId}')">
-                  <span>⚠️ Confirm & Execute Simulation</span>
+                  <span>⚠️ Confirm Simulation (Client Dry-Run)</span>
                 </button>
                 <button class="chat-btn-action secondary" onclick="abortAction('${cardId}')">
                   <span>Cancel</span>
@@ -1085,7 +1085,7 @@ I index your workplace communications across **Slack, Gmail, Calendar, Meeting T
             buttonsHtml = `
               <div class="chat-action-buttons">
                 <span class="badge-pill" style="background:rgba(16,185,129,0.15); color:#10b981; font-size:0.72rem; padding:4px 8px;">
-                  ✓ Schema Validated · Dry-Run Preview
+                  ✓ Schema Validated · Dry-Run Preview (Live execution requires Operator JWT)
                 </span>
               </div>
             `;
@@ -1149,7 +1149,7 @@ I index your workplace communications across **Slack, Gmail, Calendar, Meeting T
       if (btns) {
         btns.innerHTML = `
           <div style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); border-radius:6px; padding:6px 10px; font-size:0.78rem; color:#10b981; font-weight:600;">
-            ✓ Action simulation executed successfully: 0 live side-effects on production systems.
+            ✓ Action simulation confirmed in public demo (0 live side effects). In production, an Operator with JWT Bearer auth approves via POST /actions/{id}/approve to dispatch the background worker.
           </div>
         `;
       }

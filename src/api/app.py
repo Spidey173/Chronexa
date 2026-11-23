@@ -23,11 +23,11 @@ _RATE_LIMIT_WINDOW_SEC = 60.0
 _ip_request_timestamps: Dict[str, List[float]] = defaultdict(list)
 
 
-def _is_rate_limited(client_ip: str) -> bool:
+def _is_rate_limited(client_ip: str, check_db: bool = True) -> bool:
     """Two-tier sliding window rate limiter:
-    1. Tier 1: Fast in-memory per-instance sliding window cache.
+    1. Tier 1: Fast in-memory per-instance sliding window cache (0ms overhead, protects container).
     2. Tier 2: Neon PostgreSQL persistent table for distributed multi-instance serverless.
-    If database is unavailable or SQLite in-memory, gracefully relies on Tier 1.
+    Fails open to Tier 1 if Neon is slow or unreachable; skips Tier 2 on health checks.
     """
     now = time.time()
     cutoff = now - _RATE_LIMIT_WINDOW_SEC
@@ -40,15 +40,18 @@ def _is_rate_limited(client_ip: str) -> bool:
 
     # Tier 2: Persistent database-backed check for distributed serverless functions
     if (
-        getattr(settings, "DATABASE_URL", None)
+        check_db
+        and getattr(settings, "DATABASE_URL", None)
         and "postgresql" in settings.DATABASE_URL
         and not getattr(settings, "DEMO_MODE", False)
     ):
         try:
+            import random
             from src.db.session import SessionLocal
             from src.db.models import RateLimitRecord
             db = SessionLocal()
             try:
+                # Query recent requests in sliding window
                 db_count = db.query(RateLimitRecord).filter(
                     RateLimitRecord.client_ip == client_ip,
                     RateLimitRecord.timestamp > cutoff
@@ -57,8 +60,8 @@ def _is_rate_limited(client_ip: str) -> bool:
                     return True
                 # Record event in database
                 db.add(RateLimitRecord(client_ip=client_ip, timestamp=now))
-                # Prune old records periodically
-                if len(timestamps) % 10 == 0:
+                # Probabilistic pruning (~10% of requests) cleans old records across instances
+                if random.random() < 0.10:
                     db.query(RateLimitRecord).filter(
                         RateLimitRecord.timestamp < cutoff - 60
                     ).delete(synchronize_session=False)
@@ -66,7 +69,7 @@ def _is_rate_limited(client_ip: str) -> bool:
             finally:
                 db.close()
         except Exception:
-            # Fall back to in-memory decision on transient DB connectivity errors
+            # Strictly fail open to Tier 1 in-memory limiter if Neon experiences latency or errors
             pass
 
     timestamps.append(now)
@@ -133,7 +136,8 @@ async def security_and_limits_middleware(request: Request, call_next):
 
     # 2. Per-IP Rate Limiting (60 requests/minute)
     client_ip = request.client.host if request.client else "127.0.0.1"
-    if _is_rate_limited(client_ip):
+    is_health = path in ("/health", "/api/health")
+    if _is_rate_limited(client_ip, check_db=(not is_health)):
         return JSONResponse(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             content={

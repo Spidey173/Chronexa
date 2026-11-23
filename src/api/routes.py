@@ -240,32 +240,39 @@ def _propose_action_impl(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error parsing action command: {str(e)}")
 
-    # Cap public database writes (max 100 proposals, max 200 audit logs) to prevent storage bloat
-    try:
-        prop_count = db.query(ActionProposal).count()
-        if prop_count >= 100:
-            oldest_props = (
-                db.query(ActionProposal)
-                .order_by(ActionProposal.created_at.asc())
-                .limit(prop_count - 99)
-                .all()
-            )
-            old_ids = [p.id for p in oldest_props]
-            db.query(AuditLog).filter(AuditLog.resource_id.in_(old_ids)).delete(synchronize_session=False)
-            db.query(ActionProposal).filter(ActionProposal.id.in_(old_ids)).delete(synchronize_session=False)
+    # Cap demo sandbox database writes (max 100 proposals, max 200 audit logs) to prevent storage bloat.
+    # Production enterprise deployments with persistent PostgreSQL retain a complete, append-only immutable audit trail.
+    is_demo_sandbox = bool(
+        getattr(settings, "DEMO_MODE", False)
+        or os.environ.get("VERCEL")
+        or getattr(settings, "CHRONEXA_OFFLINE", False)
+    )
+    if is_demo_sandbox:
+        try:
+            prop_count = db.query(ActionProposal).count()
+            if prop_count >= 100:
+                oldest_props = (
+                    db.query(ActionProposal)
+                    .order_by(ActionProposal.created_at.asc())
+                    .limit(prop_count - 99)
+                    .all()
+                )
+                old_ids = [p.id for p in oldest_props]
+                db.query(AuditLog).filter(AuditLog.resource_id.in_(old_ids)).delete(synchronize_session=False)
+                db.query(ActionProposal).filter(ActionProposal.id.in_(old_ids)).delete(synchronize_session=False)
 
-        audit_count = db.query(AuditLog).count()
-        if audit_count >= 200:
-            oldest_audits = (
-                db.query(AuditLog)
-                .order_by(AuditLog.timestamp.asc())
-                .limit(audit_count - 199)
-                .all()
-            )
-            old_audit_ids = [a.id for a in oldest_audits]
-            db.query(AuditLog).filter(AuditLog.id.in_(old_audit_ids)).delete(synchronize_session=False)
-    except Exception:
-        pass
+            audit_count = db.query(AuditLog).count()
+            if audit_count >= 200:
+                oldest_audits = (
+                    db.query(AuditLog)
+                    .order_by(AuditLog.timestamp.asc())
+                    .limit(audit_count - 199)
+                    .all()
+                )
+                old_audit_ids = [a.id for a in oldest_audits]
+                db.query(AuditLog).filter(AuditLog.id.in_(old_audit_ids)).delete(synchronize_session=False)
+        except Exception:
+            pass
 
     proposal = ActionProposal(
         id=str(uuid.uuid4()),
