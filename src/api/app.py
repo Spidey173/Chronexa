@@ -132,3 +132,27 @@ def serve_root():
         "status": "online",
         "docs": "/docs"
     }
+
+
+@app.get("/styles.css", include_in_schema=False)
+def serve_styles():
+    p = ROOT_DIR / "styles.css"
+    if p.exists():
+        return FileResponse(str(p), media_type="text/css")
+    raise StarletteHTTPException(status_code=404, detail="styles.css not found")
+
+
+@app.get("/data.js", include_in_schema=False)
+def serve_data():
+    p = ROOT_DIR / "data.js"
+    if p.exists():
+        return FileResponse(str(p), media_type="application/javascript")
+    raise StarletteHTTPException(status_code=404, detail="data.js not found")
+
+
+@app.get("/app.js", include_in_schema=False)
+def serve_app_js():
+    p = ROOT_DIR / "app.js"
+    if p.exists():
+        return FileResponse(str(p), media_type="application/javascript")
+    raise StarletteHTTPException(status_code=404, detail="app.js not found")

@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chronexa | Workplace-Memory Search & Safe Action Previews (Portfolio Project)</title>
+  <meta name="description" content="Chronexa: A prototype workplace-memory assistant demonstrating point-in-time search across mock Slack, Gmail, Calendar, and Meetings with dry-run action validation. Built by Pruthvi R.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏱️</text></svg>">
+  
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top Active Status Banner -->
+  <div class="top-banner">
+    <div class="live-badge">
+      <span class="pulse-dot"></span>
+      <span>PORTFOLIO DEMO · PRE-INDEXED BENCHMARK REPLAY</span>
+    </div>
+    <div style="font-family: var(--font-mono); font-size: 0.75rem;">
+      <span>Strict Physical Temporal Filtering (time &le; as_of) · Local CPU Hybrid Retrieval</span>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <div class="header-inner">
+      <div class="brand-group">
+        <div class="brand-logo">
+          <span>⏱️</span>
+          <span>CHRONEXA</span>
+        </div>
+        <div class="brand-tag">
+          Workplace Temporal Memory Engine<br>
+          <span style="color: #cbd5e1;">& TextOS Action Assistant</span>
+        </div>
+      </div>
+      <div class="header-links">
+        <a href="https://github.com/Spidey173/Chronexa" target="_blank" rel="noopener" class="btn-link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+          <span>GitHub</span>
+        </a>
+        <a href="https://pruthvi-17.vercel.app/" target="_blank" rel="noopener" class="btn-link primary">
+          <span>Portfolio</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+        </a>
+        <a href="https://www.linkedin.com/in/pruthvir173/" target="_blank" rel="noopener" class="btn-link">
+          <span>LinkedIn</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div>
+        <h1 class="hero-title">
+          Grounded Work Memory Search with <span class="highlight">Point-in-Time Filtering</span>.
+        </h1>
+        <p class="hero-subtitle">
+          Prototype workplace-memory assistant searching across mock Slack messages, Gmail threads, Google Calendar events, and meeting transcripts strictly as of an arbitrary historical timestamp.
+        </p>
+        <div class="hero-pills">
+          <span class="badge-pill">📅 Pre-Retrieval Cutoff</span>
+          <span class="badge-pill badge-cyan">🔍 Hybrid RRF Fusion</span>
+          <span class="badge-pill badge-emerald">⚡ Local CPU Runtime</span>
+          <span class="badge-pill">🛡️ Dry-Run Action Previews</span>
+        </div>
+      </div>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-val">7 Sources</div>
+          <div class="metric-label">Mock Workplace Connectors</div>
+          <div class="metric-delta">Slack, Gmail, Cal, Meetings</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val">1,316</div>
+          <div class="metric-label">Corpus Passage Units</div>
+          <div class="metric-delta">Synthetic Test Dataset</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val">as_of</div>
+          <div class="metric-label">Temporal Cutoff Boundary</div>
+          <div class="metric-delta">Pre-Retrieval Filtering</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val">Dry-Run</div>
+          <div class="metric-label">Action Assistant Plans</div>
+          <div class="metric-delta">No Live External Mutations</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Navigation Bar -->
+    <nav class="nav-tabs" id="mainNav">
+      <button class="nav-tab-btn active" data-tab="tab-chat">
+        <span>💬 Interactive Assistant Chat</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="tab-search">
+        <span>🔍 Point-in-Time Memory Q&A</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="tab-storyline">
+        <span>📅 Storyline Evolution Explorer</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="tab-actions">
+        <span>⚡ TextOS Action Assistant</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="tab-architecture">
+        <span>📊 Architecture & Design</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="tab-corpus">
+        <span>🗂️ Workplace Corpus Inspector</span>
+      </button>
+    </nav>
+
+    <!-- TAB 0: INTERACTIVE ASSISTANT CHAT -->
+    <section id="tab-chat" class="tab-pane active">
+      <div class="chat-container">
+        <!-- Chat Top Bar -->
+        <div class="chat-top-bar">
+          <div class="chat-top-left">
+            <div class="chat-bot-avatar">⏱️</div>
+            <div class="chat-title-group">
+              <h3>Chronexa Workplace Assistant <span class="badge-pill" style="font-size:0.65rem; padding: 2px 7px; background: rgba(16,185,129,0.15); color: #10b981;">Interactive Multi-Turn Chat</span></h3>
+              <p>Point-in-time memory retrieval & safe action preview engine</p>
+            </div>
+          </div>
+          <div class="chat-top-controls">
+            <div class="chat-asof-picker">
+              <span>📅 As-Of Boundary:</span>
+              <select id="chatAsOfSelect" class="chat-asof-select">
+                <option value="2026-09-09T09:00:00-07:00">Sep 09, 2026 (Plan: Sep 30)</option>
+                <option value="2026-09-12T12:00:00-07:00">Sep 12, 2026 (Slip 1: Oct 14)</option>
+                <option value="2026-09-16T14:00:00-07:00">Sep 16, 2026 (Slip 2: Oct 21)</option>
+                <option value="2026-09-18T18:00:00-07:00" selected>Sep 18, 2026 (Current / Full Corpus)</option>
+              </select>
+            </div>
+            <button class="chat-clear-btn" id="chatClearBtn" title="Reset chat thread">
+              <span>🧹 Reset Thread</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Chat Thread Messages -->
+        <div class="chat-thread" id="chatMessages">
+          <!-- Populated via JS -->
+        </div>
+
+        <!-- Chat Bottom Bar -->
+        <div class="chat-bottom-bar">
+          <div class="chat-suggested-strip">
+            <span style="font-size:0.75rem; color:var(--text-muted); align-self:center; margin-right:4px;">💡 Quick Prompts:</span>
+            <button class="chat-suggest-chip" data-prompt="When is Route Planner v2 launching?">🚀 When is Route Planner v2 launching?</button>
+            <button class="chat-suggest-chip" data-prompt="Why did the launch date move away from September 30?">🔍 Why did the launch slip?</button>
+            <button class="chat-suggest-chip" data-prompt="Message Sarah on Slack that the geocoding fix looks good">💬 Message Sarah on Slack</button>
+            <button class="chat-suggest-chip" data-prompt="Email Sarah Patel and ask if she's had a chance to look at the proposal">✉️ Email Sarah Patel</button>
+            <button class="chat-suggest-chip" data-prompt="Book 30 minutes with Ben tomorrow at 2 about the NRR fix">📅 Book 30 mins with Ben</button>
+            <button class="chat-suggest-chip" data-prompt="Delete all my emails from Marcus">⚠️ Delete emails from Marcus</button>
+            <button class="chat-suggest-chip" data-prompt="Message Sarah about the pricing proposal">🤔 Message Sarah (Ambiguity Clarification)</button>
+            <button class="chat-suggest-chip" data-prompt="What is our SOC 2 compliance status?">🛡️ SOC 2 status (Calibrated Abstention)</button>
+          </div>
+          <form class="chat-input-form" id="chatForm">
+            <input type="text" id="chatInputField" class="chat-input-field" placeholder="Ask a workplace question or issue an action command (e.g. 'Email John the NRR update')..." autocomplete="off">
+            <button type="submit" class="chat-send-btn" id="chatSendBtn" title="Send message">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 1: POINT-IN-TIME MEMORY SEARCH -->
+    <section id="tab-search" class="tab-pane">
+      <div class="glass-panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">
+              <span>🔍 Point-in-Time Temporal Memory Engine</span>
+            </h2>
+            <p class="panel-subtitle">Answers organizational questions strictly as of an arbitrary historical timestamp with mathematical zero future leakage.</p>
+          </div>
+          <div class="slider-badge" id="poolBadge">1,316 Messages Visible</div>
+        </div>
+
+        <!-- Presets Carousel -->
+        <div class="presets-title">⚡ Quick-Load Curated Scenarios (Watch Facts Shift Over Time):</div>
+        <div class="presets-carousel" id="presetPills">
+          <!-- Rendered via JS -->
+        </div>
+
+        <!-- Full Scenario Selector -->
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="form-label" for="fullScenarioSelect">Or Select Evaluation Question:</label>
+          <select id="fullScenarioSelect" class="form-select">
+            <!-- Rendered via JS -->
+          </select>
+        </div>
+
+        <!-- Query Form -->
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label" for="queryInput">Natural Language Question:</label>
+            <input type="text" id="queryInput" class="form-input" value="When is Route Planner v2 launching?">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="asOfInput">As-Of Timestamp (ISO-8601):</label>
+            <input type="text" id="asOfInput" class="form-input code-font" value="2026-09-09T09:00:00-07:00">
+          </div>
+        </div>
+
+        <!-- Dynamic Date Slider -->
+        <div class="slider-box">
+          <div class="slider-header">
+            <span class="slider-label">
+              <span>📅 Physical Temporal Boundary (Pre-Retrieval Filter):</span>
+            </span>
+            <span class="slider-badge" id="sliderDateDisplay">Sep 09, 2026 09:00 AM</span>
+          </div>
+          <input type="range" id="timeSlider" class="slider-range" min="0" max="100" value="30">
+          <div class="slider-ticks">
+            <span>Sep 01 (Kickoff)</span>
+            <span>Sep 09 (Plan: Sep 30)</span>
+            <span>Sep 12 (Slip: Oct 14)</span>
+            <span>Sep 16 (Slip: Oct 21)</span>
+            <span>Sep 25 (Final)</span>
+          </div>
+        </div>
+
+        <!-- Search Controls -->
+        <div class="action-controls">
+          <button id="btnExecuteSearch" class="btn-search">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <span>Execute Temporal Search</span>
+          </button>
+          <select id="searchModeSelect" class="search-mode-select">
+            <option value="bm25">Structured Body-Aware BM25 (1.7s CPU Default)</option>
+            <option value="hybrid">Hybrid RRF Fusion (FastEmbed Vectors + BM25)</option>
+          </select>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-left: auto;">
+            <span>Candidate Depth: <strong>Top-10</strong></span>
+          </div>
+        </div>
+
+        <!-- Telemetry Strip -->
+        <div class="telemetry-strip" id="telemetryStrip">
+          <div class="tel-item">
+            <div class="tel-label">Visible Message Pool</div>
+            <div class="tel-val" id="telVisible">225 units</div>
+            <div class="tel-sub" id="telFiltered">1,091 filtered out</div>
+          </div>
+          <div class="tel-item">
+            <div class="tel-label">Search Latency</div>
+            <div class="tel-val" id="telLatency">38 ms</div>
+            <div class="tel-sub">Pure In-Memory Index</div>
+          </div>
+          <div class="tel-item">
+            <div class="tel-label">Temporal Boundary</div>
+            <div class="tel-val" style="color: var(--accent-emerald);">timestamp &le; as_of</div>
+            <div class="tel-sub">Pre-retrieval Filter</div>
+          </div>
+          <div class="tel-item">
+            <div class="tel-label">Evidence Grounding</div>
+            <div class="tel-val" style="color: var(--accent-cyan);">Cited</div>
+            <div class="tel-sub">Matched Source Documents</div>
+          </div>
+        </div>
+
+        <!-- Grounded Answer Card -->
+        <div class="answer-card" id="answerCard">
+          <div class="answer-status">
+            <span class="badge-pill badge-emerald" id="answerBadge">✓ GROUNDED ANSWER</span>
+            <span style="font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono);" id="categoryBadge">CATEGORY: as_of_time_travel</span>
+          </div>
+          <div class="answer-body" id="answerText">
+            Route Planner v2 is launching on September 30, 2026, decided in the Sep 8 launch planning meeting. Knowledge of subsequent delays does not exist yet.
+          </div>
+          <div class="gold-diff-box" id="goldBox">
+            <strong>Expected Gold Truth:</strong> <span id="goldText">September 30, 2026, decided in the Sep 8 launch planning meeting.</span>
+          </div>
+        </div>
+
+        <!-- Citable Evidence Chain -->
+        <div class="citations-header">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          <span>Citable Evidence Chain (Audit Trail)</span>
+        </div>
+        <div class="citation-list" id="citationList">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: STORYLINE EXPLORER -->
+    <section id="tab-storyline" class="tab-pane">
+      <div class="glass-panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">
+              <span>📅 Chronological Fact Drift & Storyline Explorer</span>
+            </h2>
+            <p class="panel-subtitle">Visual proof of why temporal memory is critical: watch facts migrate across meetings, Slack threads, and emails over time.</p>
+          </div>
+        </div>
+
+        <div class="storyline-selector">
+          <button class="storyline-btn active" data-story="rp">Route Planner v2 Launch Date (Moved 3 times)</button>
+          <button class="storyline-btn" data-story="acme">Acme Freight Pricing Proposal ($18/mo Lifecycle)</button>
+          <button class="storyline-btn" data-story="dark">Dark Mode Removal (Hearsay vs Reality)</button>
+          <button class="storyline-btn" data-story="harbor">Harbor Logistics Contract (Sales vs Legal)</button>
+        </div>
+
+        <div class="timeline-container" id="timelineItems">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: TEXTOS ACTIONS -->
+    <section id="tab-actions" class="tab-pane">
+      <div class="glass-panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">
+              <span>⚡ TextOS: Dry-Run Action Assistant</span>
+            </h2>
+            <p class="panel-subtitle">Translates unstructured natural language instructions into validated tool execution calls with dynamic entity resolution and safety guardrails.</p>
+          </div>
+          <span class="badge-pill badge-cyan">12 / 12 Validated</span>
+        </div>
+
+        <div class="presets-title">Select Sample Instruction to Execute (or Type Below):</div>
+        <div class="action-presets-grid" id="actionPresetsGrid">
+          <!-- Rendered via JS -->
+        </div>
+
+        <div class="form-grid" style="margin-top: 16px;">
+          <div class="form-group">
+            <label class="form-label" for="actionCommandInput">Natural Language Command:</label>
+            <input type="text" id="actionCommandInput" class="form-input" value="Message Sarah on Slack that the geocoding fix looks good">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="actionAsOfInput">Context Timestamp:</label>
+            <input type="text" id="actionAsOfInput" class="form-input code-font" value="2026-09-18T18:00:00-07:00">
+          </div>
+        </div>
+
+        <button id="btnParseAction" class="btn-search" style="margin-bottom: 20px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          <span>Parse & Resolve Dynamic Entities</span>
+        </button>
+
+        <div id="guardrailBanner" class="guardrail-alert safe">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          <span id="guardrailText">Standard Dry-Run Execution: All entities resolved dynamically without requiring human confirmation.</span>
+        </div>
+
+        <div class="presets-title">Validated Tool Execution Payload (Dry-Run Preview):</div>
+        <div class="json-viewer-box">
+          <button class="copy-btn" id="btnCopyJson">Copy JSON</button>
+          <pre id="actionJsonOutput">{
+  "type": "slack.send_message",
+  "args": {
+    "to": "U03SARAHK",
+    "text": "the geocoding fix looks good"
+  }
+}</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: ARCHITECTURE & DESIGN -->
+    <section id="tab-architecture" class="tab-pane">
+      <div class="glass-panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">
+              <span>📊 Architecture & Implementation Decisions</span>
+            </h2>
+            <p class="panel-subtitle">Technical analysis comparing Structured Lexical & Hybrid RRF with generic dense vector search on workplace communication data.</p>
+          </div>
+        </div>
+
+        <div class="arch-grid">
+          <div class="arch-card">
+            <h3 class="arch-title">🚨 The "Vector Search Trap" in Corporate RAG</h3>
+            <ul class="arch-list">
+              <li>
+                <strong>Version & Date Blindness:</strong> Dense vector models give a cosine similarity of > 0.97 between "Route Planner v1" and "Route Planner v2". Vector search cannot distinguish historical version numbers or dates.
+              </li>
+              <li>
+                <strong>CPU Latency Bottleneck:</strong> Computing dense FastEmbed vectors across 1,316 units on CPU took <strong>20–30s per request</strong>. Chronexa's BM25 index runs in <strong>&lt; 1.7s</strong>.
+              </li>
+              <li>
+                <strong>Out-of-Vocabulary (OOV) Confusion:</strong> Corporate IDs (e.g. <code>MTG-0916-GONOGO</code>, <code>U03SARAHK</code>) get fragmented into meaningless subwords by standard vector tokenizers.
+              </li>
+            </ul>
+          </div>
+
+          <div class="arch-card">
+            <h3 class="arch-title">🛡️ Chronexa's 5 Core Pillars</h3>
+            <ul class="arch-list">
+              <li>
+                <strong>1. Pre-Retrieval Physical Boundary:</strong> Records where <code>timestamp &gt; as_of</code> are excluded before indexing to prevent future information leakage.
+              </li>
+              <li>
+                <strong>2. ISO Timestamp Normalization:</strong> Dates like <code>2026-09-10</code> are indexed as individual temporal tokens (<code>2026</code>, <code>sep</code>, <code>10</code>).
+              </li>
+              <li>
+                <strong>3. Header Down-Weighting (0.35x):</strong> Message metadata like <code>[Slack #route-planner]</code> is down-weighted so bodies drive relevance.
+              </li>
+              <li>
+                <strong>4. 1.8x Named Entity Boosting:</strong> Client codenames ("Acme Freight", "Sarah Patel") are boosted to avoid ambiguous matches.
+              </li>
+              <li>
+                <strong>5. Reciprocal Rank Fusion (RRF):</strong> Sub-queries are fused to balance exact terms and semantic synonyms.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px;">
+          <h3 class="arch-title">⚙️ Prototype Pipeline Architecture</h3>
+          <table class="benchmark-table">
+            <thead>
+              <tr>
+                <th>Component</th>
+                <th>Type</th>
+                <th>Technical Approach</th>
+                <th>Execution Scope</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Point-in-Time Filter</strong></td>
+                <td>Ingestion Gate</td>
+                <td>Pre-retrieval timestamp cutoff (timestamp &le; as_of) masking deleted and future items</td>
+                <td>Local In-Memory</td>
+              </tr>
+              <tr>
+                <td><strong>Lexical Index</strong></td>
+                <td>BM25</td>
+                <td>Pure-Python Okapi BM25 with Snowball stemming and tokenized ISO date handling</td>
+                <td>Local CPU</td>
+              </tr>
+              <tr>
+                <td><strong>Dense Embeddings</strong></td>
+                <td>Semantic Vector</td>
+                <td>FastEmbed ONNX runtime (BAAI/bge-small-en-v1.5) with pre-cached vector dot products</td>
+                <td>Local CPU</td>
+              </tr>
+              <tr>
+                <td><strong>Rank Fusion</strong></td>
+                <td>Hybrid RRF</td>
+                <td>Reciprocal Rank Fusion (k=60) balancing exact keyword tokens and semantic concepts</td>
+                <td>Local CPU</td>
+              </tr>
+              <tr>
+                <td><strong>Dry-Run Actions</strong></td>
+                <td>Action Parser</td>
+                <td>Strict schema validation (allowlists, typing, unknown argument rejection)</td>
+                <td>JSON Preview Only</td>
+              </tr>
+              <tr>
+                <td><strong>Grounding Defense</strong></td>
+                <td>Guardrails</td>
+                <td>XML record sandboxing, prompt injection sanitization, and explicit abstention</td>
+                <td>Local Pipeline</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: CORPUS INSPECTOR -->
+    <section id="tab-corpus" class="tab-pane">
+      <div class="glass-panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">
+              <span>🗂️ Workplace Corpus Inspector</span>
+            </h2>
+            <p class="panel-subtitle">Browse through 1,316 workplace records across Slack channels, Gmail inboxes, Google Calendar schedules, and meeting transcripts.</p>
+          </div>
+          <div class="slider-badge" id="corpusFilteredCount">Showing 154 units</div>
+        </div>
+
+        <div class="form-grid" style="margin-bottom: 16px;">
+          <div class="form-group">
+            <label class="form-label" for="corpusSearchInput">Filter Corpus by Keyword or ID:</label>
+            <input type="text" id="corpusSearchInput" class="form-input" placeholder="e.g. Route Planner, Sarah, geocoding, pricing, MTG...">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="corpusSourceSelect">Filter by Channel / Source:</label>
+            <select id="corpusSourceSelect" class="form-select">
+              <option value="all">All Sources (Slack, Gmail, Calendar, Meetings, Dictations)</option>
+              <option value="slack">Slack Messages (#route-planner, #sales, DMs)</option>
+              <option value="email">Gmail Threads (Alex Rivera, Sarah Patel)</option>
+              <option value="meeting">Zoom / Google Meet Transcripts</option>
+              <option value="calendar">Google Calendar Events</option>
+              <option value="dictation">Voice Dictation Memos</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="citation-list" id="corpusDisplayList">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toastBox">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    <span id="toastMessage">Copied to clipboard!</span>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-inner">
+      <div>
+        <strong>Chronexa</strong> · Workplace-Memory Search & Safe Action Previews<br>
+        Developed by <strong>Pruthvi R</strong> · Associate AI / RAG & Python Engineer
+      </div>
+      <div class="footer-links">
+        <a href="https://pruthvi-17.vercel.app/" target="_blank" rel="noopener">Portfolio</a>
+        <a href="https://github.com/Spidey173/Chronexa" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://www.linkedin.com/in/pruthvir173/" target="_blank" rel="noopener">LinkedIn</a>
+      </div>
+      <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-emerald);">
+        ● Static Client Demo · Local Python Server
+      </div>
+    </div>
+  </footer>
+
+  <!-- Chronexa Data & Application Logic -->
+  <!-- Chronexa Data & Application Logic -->
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -207,3 +207,21 @@ def test_security_blocks_python_sources(client):
     assert res.status_code == 403
     body = res.json()
     assert "forbidden" in body.get("error", "").lower()
+
+
+def test_serve_frontend_static_assets(client):
+    res_root = client.get("/")
+    assert res_root.status_code == 200
+    assert "text/html" in res_root.headers.get("content-type", "")
+
+    res_css = client.get("/styles.css")
+    assert res_css.status_code == 200
+    assert "text/css" in res_css.headers.get("content-type", "")
+
+    res_data = client.get("/data.js")
+    assert res_data.status_code == 200
+    assert "javascript" in res_data.headers.get("content-type", "")
+
+    res_app = client.get("/app.js")
+    assert res_app.status_code == 200
+    assert "javascript" in res_app.headers.get("content-type", "")

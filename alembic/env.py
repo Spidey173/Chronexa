@@ -22,7 +22,10 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Set DB URL dynamically from application settings
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+raw_url = settings.DATABASE_URL
+if raw_url.startswith("postgresql://"):
+    raw_url = raw_url.replace("postgresql://", "postgresql+psycopg2://", 1)
+config.set_main_option("sqlalchemy.url", raw_url)
 
 target_metadata = Base.metadata
 
@@ -47,7 +50,7 @@ def run_migrations_online() -> None:
     configuration = config.get_section(config.config_ini_section)
     if configuration is None:
         configuration = {}
-    configuration["sqlalchemy.url"] = settings.DATABASE_URL
+    configuration["sqlalchemy.url"] = raw_url
 
     connectable = engine_from_config(
         configuration,

@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   api:
     build:
@@ -8,12 +6,12 @@ services:
     container_name: chronexa-api
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "${API_PORT:-8001}:8000"
     environment:
       - ENVIRONMENT=production
       - HOST=0.0.0.0
       - PORT=8000
-      - DATABASE_URL=postgresql://chronexa_user:chronexa_password@postgres:5432/chronexa_db
+      - DATABASE_URL=postgresql+psycopg2://chronexa_user:chronexa_password@postgres:5432/chronexa_db
       - JWT_SECRET_KEY=change_this_to_a_secure_random_secret_in_production
       - JWT_ALGORITHM=HS256
       - INTEGRATION_MODE=mock
@@ -21,6 +19,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   postgres:
     image: postgres:16-alpine
@@ -31,7 +35,7 @@ services:
       POSTGRES_PASSWORD: chronexa_password
       POSTGRES_DB: chronexa_db
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
