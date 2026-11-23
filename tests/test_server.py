@@ -242,7 +242,7 @@ def test_frontend_honest_content_and_claims(client):
     assert "btnTrySep9" in html_content
     assert "btnTrySep18" in html_content
     assert "Cross-Encoder Joint Reranking" in html_content
-    assert "https://www.linkedin.com/in/pruthvi-r-48ba9b2b4" in html_content
+    assert "https://www.linkedin.com/in/pruthvir173/" in html_content
 
 
 def test_frontend_api_origin_security(client):
