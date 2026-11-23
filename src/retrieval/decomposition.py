@@ -18,7 +18,21 @@ except ImportError:
 from eval_harness.records import Unit
 from src.retrieval.temporal import resolve_dates_with_dateparser, DATE_INDICATORS
 
-CACHE_DIR = Path(__file__).resolve().parent.parent.parent / ".cache" / "decomposition"
+def _get_cache_dir() -> Path:
+    base = Path(__file__).resolve().parent.parent.parent / ".cache" / "decomposition"
+    try:
+        base.mkdir(parents=True, exist_ok=True)
+        return base
+    except (OSError, PermissionError):
+        tmp_dir = Path("/tmp/.cache/decomposition")
+        try:
+            tmp_dir.mkdir(parents=True, exist_ok=True)
+            return tmp_dir
+        except Exception:
+            return base
+
+
+CACHE_DIR = _get_cache_dir()
 QUERY_CACHE_FILE = CACHE_DIR / "query_decomposition.json"
 TWOHOP_CACHE_FILE = CACHE_DIR / "two_hop_decomposition.json"
 

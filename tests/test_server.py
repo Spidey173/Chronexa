@@ -349,3 +349,100 @@ def test_vector_store_health_reports_count(client):
     assert isinstance(body.get("vector_store_count"), int)
     assert body.get("vector_store_count") >= 0
     assert body.get("database") == "connected"
+
+
+def test_search_rerank_toggle(client):
+    # Fast mode (rerank=False, default)
+    res_fast = client.post("/api/search", json={
+        "query": "When is Route Planner v2 launching?",
+        "as_of": "2026-09-18T18:00:00-07:00",
+        "mode": "hybrid",
+        "top_k": 3,
+        "rerank": False
+    })
+    assert res_fast.status_code == 200
+    assert len(res_fast.json()["results"]) == 3
+
+    # Opt-in deep rerank mode (rerank=True)
+    res_deep = client.post("/api/search", json={
+        "query": "When is Route Planner v2 launching?",
+        "as_of": "2026-09-18T18:00:00-07:00",
+        "mode": "hybrid",
+        "top_k": 3,
+        "rerank": True
+    })
+    assert res_deep.status_code == 200
+    assert len(res_deep.json()["results"]) == 3
+
+
+def test_health_cloud_environment_flag(client, monkeypatch):
+    monkeypatch.setenv("VERCEL", "1")
+    res = client.get("/health")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["loopback_only"] is False
+    assert data["mode"] == "cloud_serverless"
+
+
+def test_database_auto_prune_capping():
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from sqlalchemy.pool import StaticPool
+    from src.db.models import Base, ActionProposal, AuditLog, User
+    from src.api.routes import _propose_action_impl
+    from src.api.schemas import ActionProposeRequest
+    from src.api.deps import EngineState
+
+    test_engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool
+    )
+    Base.metadata.create_all(bind=test_engine)
+    Session = sessionmaker(bind=test_engine)
+    db = Session()
+
+    try:
+        user = User(id="prune-test-user", email="test@prune.local", role="operator", hashed_password="pw")
+        db.add(user)
+        db.commit()
+
+        # Seed 105 proposals
+        import datetime
+        base_time = datetime.datetime.now(datetime.timezone.utc)
+        for i in range(105):
+            p = ActionProposal(
+                id=f"prop-{i:03d}",
+                user_id=user.id,
+                command=f"Open App {i}",
+                as_of="2026-09-18T18:00:00-07:00",
+                status="proposed",
+                payload=[{"type": "app.open", "args": {"app": f"App{i}"}}],
+                created_at=base_time + datetime.timedelta(seconds=i)
+            )
+            db.add(p)
+            a = AuditLog(
+                id=i + 1,
+                user_id=user.id,
+                action="propose",
+                resource_type="action_proposal",
+                resource_id=f"prop-{i:03d}",
+                timestamp=base_time + datetime.timedelta(seconds=i)
+            )
+            db.add(a)
+        db.commit()
+
+        assert db.query(ActionProposal).count() == 105
+
+        engine_state = EngineState.get_instance(pre_warm=False)
+        req = ActionProposeRequest(
+            command="Open Calendar",
+            as_of="2026-09-18T18:00:00-07:00"
+        )
+        _propose_action_impl(req, db, engine_state, user)
+
+        # After proposing, old records are pruned so count is capped
+        assert db.query(ActionProposal).count() <= 100
+    finally:
+        db.close()
+

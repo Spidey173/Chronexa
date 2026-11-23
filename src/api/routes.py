@@ -1,10 +1,12 @@
 """FastAPI route definitions for Chronexa: /query, /actions/propose, approve, reject, /health."""
+import os
 import uuid
 from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, status, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
+from src.config import settings
 from src.db.session import get_db, SessionLocal
 from src.db.models import User, ActionProposal, AuditLog
 from src.api.schemas import (
@@ -104,15 +106,34 @@ def health_check(engine: EngineState = Depends(get_engine)):
         elif hasattr(engine.retriever.dense, "embedding_cache"):
             vec_count = len(engine.retriever.dense.embedding_cache)
 
+    is_cloud = bool(
+        os.environ.get("VERCEL")
+        or os.environ.get("VERCEL_ENV")
+        or os.environ.get("RENDER")
+        or os.environ.get("FLY_ALLOC_ID")
+        or os.environ.get("K_SERVICE")
+    )
+    # loopback_only was originally for local-only binding (127.0.0.1); on cloud/serverless it is False
+    is_loopback = False if is_cloud else bool(getattr(settings, "LOOPBACK_ONLY", True))
+    mode_str = "cloud_serverless" if is_cloud else "live_local_engine"
+    is_offline = bool(getattr(settings, "CHRONEXA_OFFLINE", False))
+
+    rate_limiter_mode = (
+        "hybrid_postgres_memory"
+        if (getattr(settings, "DATABASE_URL", None) and "postgresql" in settings.DATABASE_URL)
+        else "in_memory_per_instance"
+    )
+
     return HealthResponse(
         status="ok",
-        mode="live_local_engine",
+        mode=mode_str,
         database="connected",
         vector_store_count=vec_count,
         corpus_size=1316,
-        offline=False,
-        loopback_only=True,
-        version="2.0.0"
+        offline=is_offline,
+        loopback_only=is_loopback,
+        version="2.0.0",
+        rate_limiter=rate_limiter_mode
     )
 
 
@@ -150,7 +171,8 @@ def search_query(
         top_k=req.top_k,
         generate_answer=True,
         retriever=engine.retriever,
-        generator=engine.generator
+        generator=engine.generator,
+        rerank=req.rerank
     )
 
     formatted_results = []
@@ -186,10 +208,11 @@ def search_query_get(
     as_of: str = Query("2026-09-18T18:00:00-07:00"),
     mode: str = Query("hybrid"),
     top_k: int = Query(10, ge=1, le=50),
+    rerank: bool = Query(False, description="Enable heavy cross-encoder reranking"),
     engine: EngineState = Depends(get_engine),
     current_user: Optional[User] = Depends(get_optional_current_user)
 ):
-    req = QueryRequest(query=q, as_of=as_of, mode=mode, top_k=top_k)
+    req = QueryRequest(query=q, as_of=as_of, mode=mode, top_k=top_k, rerank=rerank)
     return search_query(req, engine, current_user)
 
 
@@ -216,6 +239,33 @@ def _propose_action_impl(
         raise HTTPException(status_code=400, detail=f"Action validation error: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error parsing action command: {str(e)}")
+
+    # Cap public database writes (max 100 proposals, max 200 audit logs) to prevent storage bloat
+    try:
+        prop_count = db.query(ActionProposal).count()
+        if prop_count >= 100:
+            oldest_props = (
+                db.query(ActionProposal)
+                .order_by(ActionProposal.created_at.asc())
+                .limit(prop_count - 99)
+                .all()
+            )
+            old_ids = [p.id for p in oldest_props]
+            db.query(AuditLog).filter(AuditLog.resource_id.in_(old_ids)).delete(synchronize_session=False)
+            db.query(ActionProposal).filter(ActionProposal.id.in_(old_ids)).delete(synchronize_session=False)
+
+        audit_count = db.query(AuditLog).count()
+        if audit_count >= 200:
+            oldest_audits = (
+                db.query(AuditLog)
+                .order_by(AuditLog.timestamp.asc())
+                .limit(audit_count - 199)
+                .all()
+            )
+            old_audit_ids = [a.id for a in oldest_audits]
+            db.query(AuditLog).filter(AuditLog.id.in_(old_audit_ids)).delete(synchronize_session=False)
+    except Exception:
+        pass
 
     proposal = ActionProposal(
         id=str(uuid.uuid4()),

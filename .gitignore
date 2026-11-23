@@ -20,6 +20,7 @@ scratch/
 .vercel
 fastembed_cache/
 deploy_backend/
+.deploy_tmp/
 eval/results.md
 
 *.db

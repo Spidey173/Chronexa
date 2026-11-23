@@ -252,6 +252,7 @@ class HybridRetriever:
         dense_weight: float = 1.0,
         max_per_record: int = 4,
         as_of: str = "",
+        enable_rerank: Optional[bool] = None,
     ) -> List[Tuple[Unit, float]]:
         """Searches strictly visible units using Reciprocal Rank Fusion of BM25 and Dense embeddings.
 
@@ -262,6 +263,7 @@ class HybridRetriever:
         if not visible_units:
             return []
 
+        do_rerank = self.enable_rerank if enable_rerank is None else bool(enable_rerank)
         unit_by_id = {u.id: u for u in visible_units}
         streams = []
 
@@ -315,7 +317,7 @@ class HybridRetriever:
             selected_main.extend(deferred_main[:(top_k * 2 - len(selected_main))])
 
         selected_main = self._inject_adjacent_segments(selected_main, unit_by_id, visible_units, max_inject=12)
-        if self.enable_rerank and self.reranker is not None and len(selected_main) > 0:
+        if do_rerank and self.reranker is not None and len(selected_main) > 0:
             reranked_main = self.reranker.rerank(query, selected_main[:min(60, len(selected_main))], top_k=20)
         else:
             reranked_main = selected_main[:20]
@@ -332,7 +334,7 @@ class HybridRetriever:
                 sq_ranked = sorted(sq_scores.items(), key=lambda x: x[1], reverse=True)
                 pool_sq = [(unit_by_id[uid], s) for uid, s in sq_ranked[:30] if uid in unit_by_id]
                 pool_sq = self._inject_adjacent_segments(pool_sq, unit_by_id, visible_units, max_inject=10)
-                if self.enable_rerank and self.reranker is not None and len(pool_sq) > 0:
+                if do_rerank and self.reranker is not None and len(pool_sq) > 0:
                     reranked_sq = self.reranker.rerank(sq, pool_sq[:25], top_k=15)
                 else:
                     reranked_sq = pool_sq[:15]
@@ -367,7 +369,7 @@ class HybridRetriever:
                 hop2_ranked = sorted(hop2_scores.items(), key=lambda x: x[1], reverse=True)
                 pool_h2 = [(unit_by_id[uid], s) for uid, s in hop2_ranked[:30] if uid in unit_by_id]
                 pool_h2 = self._inject_adjacent_segments(pool_h2, unit_by_id, visible_units, max_inject=10)
-                if self.enable_rerank and self.reranker is not None and len(pool_h2) > 0:
+                if do_rerank and self.reranker is not None and len(pool_h2) > 0:
                     reranked_h2 = self.reranker.rerank(follow_up, pool_h2[:25], top_k=15)
                 else:
                     reranked_h2 = pool_h2[:15]

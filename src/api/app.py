@@ -24,12 +24,51 @@ _ip_request_timestamps: Dict[str, List[float]] = defaultdict(list)
 
 
 def _is_rate_limited(client_ip: str) -> bool:
+    """Two-tier sliding window rate limiter:
+    1. Tier 1: Fast in-memory per-instance sliding window cache.
+    2. Tier 2: Neon PostgreSQL persistent table for distributed multi-instance serverless.
+    If database is unavailable or SQLite in-memory, gracefully relies on Tier 1.
+    """
     now = time.time()
     cutoff = now - _RATE_LIMIT_WINDOW_SEC
+
+    # Tier 1: In-memory sliding window check
     timestamps = [t for t in _ip_request_timestamps[client_ip] if t > cutoff]
     if len(timestamps) >= _RATE_LIMIT_PER_MINUTE:
         _ip_request_timestamps[client_ip] = timestamps
         return True
+
+    # Tier 2: Persistent database-backed check for distributed serverless functions
+    if (
+        getattr(settings, "DATABASE_URL", None)
+        and "postgresql" in settings.DATABASE_URL
+        and not getattr(settings, "DEMO_MODE", False)
+    ):
+        try:
+            from src.db.session import SessionLocal
+            from src.db.models import RateLimitRecord
+            db = SessionLocal()
+            try:
+                db_count = db.query(RateLimitRecord).filter(
+                    RateLimitRecord.client_ip == client_ip,
+                    RateLimitRecord.timestamp > cutoff
+                ).count()
+                if db_count >= _RATE_LIMIT_PER_MINUTE:
+                    return True
+                # Record event in database
+                db.add(RateLimitRecord(client_ip=client_ip, timestamp=now))
+                # Prune old records periodically
+                if len(timestamps) % 10 == 0:
+                    db.query(RateLimitRecord).filter(
+                        RateLimitRecord.timestamp < cutoff - 60
+                    ).delete(synchronize_session=False)
+                db.commit()
+            finally:
+                db.close()
+        except Exception:
+            # Fall back to in-memory decision on transient DB connectivity errors
+            pass
+
     timestamps.append(now)
     _ip_request_timestamps[client_ip] = timestamps
     return False
@@ -38,6 +77,22 @@ def _is_rate_limited(client_ip: str) -> bool:
 def reset_rate_limits():
     """Helper for testing to reset rate limit states."""
     _ip_request_timestamps.clear()
+    if (
+        getattr(settings, "DATABASE_URL", None)
+        and "postgresql" in settings.DATABASE_URL
+        and not getattr(settings, "DEMO_MODE", False)
+    ):
+        try:
+            from src.db.session import SessionLocal
+            from src.db.models import RateLimitRecord
+            db = SessionLocal()
+            try:
+                db.query(RateLimitRecord).delete()
+                db.commit()
+            finally:
+                db.close()
+        except Exception:
+            pass
 
 
 @asynccontextmanager

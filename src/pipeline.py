@@ -101,6 +101,7 @@ def search_single(
     top_k: int = 10,
     retriever: Optional[HybridRetriever] = None,
     generator: Optional[AnswerGenerator] = None,
+    rerank: Optional[bool] = None,
 ):
     """Executes a single ad-hoc search query with temporal filtering and grounded answer generation."""
     as_of_dt = parse_iso_datetime(as_of)
@@ -108,7 +109,9 @@ def search_single(
 
     if mode == "hybrid":
         active_retriever = retriever or HybridRetriever()
-        results = active_retriever.search(query, visible_units, top_k=top_k, as_of=as_of)
+        results = active_retriever.search(
+            query, visible_units, top_k=top_k, as_of=as_of, enable_rerank=rerank
+        )
     else:
         bm25_idx = BM25Index(visible_units)
         results = bm25_idx.search(query, top_k=top_k)

@@ -9,6 +9,7 @@ class QueryRequest(BaseModel):
     as_of: str = Field(default="2026-09-18T18:00:00-07:00", description="ISO-8601 temporal point-in-time timestamp")
     mode: str = Field(default="hybrid", description="Retrieval mode: 'hybrid' or 'bm25'")
     top_k: int = Field(default=10, ge=1, le=50, description="Number of results to retrieve")
+    rerank: bool = Field(default=False, description="Enable heavy cross-encoder reranking (slower on CPU)")
 
 
 class QueryResultItem(BaseModel):
@@ -69,3 +70,4 @@ class HealthResponse(BaseModel):
     offline: bool = False
     loopback_only: bool = True
     version: str = "2.0.0"
+    rate_limiter: Optional[str] = None

@@ -427,14 +427,33 @@
         answerBadge.className = 'badge-pill';
         answerBadge.style.background = 'rgba(56, 189, 248, 0.2)';
         answerBadge.style.color = '#38bdf8';
-        answerBadge.textContent = "⏳ SEARCHING 1,316 UNITS...";
+
+        const selectedModeVal = (document.getElementById('searchModeSelect') || {}).value || 'fast';
+        let searchMode = 'hybrid';
+        let doRerank = false;
+        if (selectedModeVal === 'bm25') {
+          searchMode = 'bm25';
+          doRerank = false;
+        } else if (selectedModeVal === 'rerank') {
+          searchMode = 'hybrid';
+          doRerank = true;
+        } else {
+          searchMode = 'hybrid';
+          doRerank = false;
+        }
+
+        if (doRerank) {
+          answerBadge.textContent = "⏳ SEARCHING & RERANKING (~12-15s)...";
+        } else {
+          answerBadge.textContent = "⏳ SEARCHING 1,316 UNITS (~1s)...";
+        }
+
         const startTime = performance.now();
-        const searchMode = (document.getElementById('searchModeSelect') || {}).value || 'hybrid';
 
         fetch(`${window.CHRONEXA_API_URL}/api/search`, {
           method: 'POST',
           headers: getAuthHeaders(window.CHRONEXA_API_URL),
-          body: JSON.stringify({ query: qRaw, as_of: asOf, mode: searchMode })
+          body: JSON.stringify({ query: qRaw, as_of: asOf, mode: searchMode, rerank: doRerank })
         })
         .then(r => r.json())
         .then(data => {
@@ -466,7 +485,8 @@
             answerBadge.textContent = '✓ LIVE GROUNDED ANSWER';
           }
 
-          categoryBadge.textContent = `MODE: LIVE ENGINE (${searchMode.toUpperCase()})`;
+          const modeLabel = doRerank ? 'HYBRID + CROSS-ENCODER RERANK' : (searchMode === 'bm25' ? 'BM25' : 'FAST HYBRID RRF');
+          categoryBadge.textContent = `MODE: LIVE ENGINE (${modeLabel})`;
           answerText.textContent = data.answer || "No grounded answer synthesized from visible memory window.";
           goldText.textContent = data.sources && data.sources.length ? `Cited Evidence: ${data.sources.join(', ')}` : "None";
 

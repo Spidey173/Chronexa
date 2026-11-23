@@ -1,7 +1,7 @@
 """SQLAlchemy ORM models for Chronexa: users, action proposals, and audit logs."""
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, DateTime, Text, JSON, Integer, ForeignKey
+from sqlalchemy import Column, String, DateTime, Text, JSON, Integer, ForeignKey, Float
 from sqlalchemy.orm import relationship
 from src.db.session import Base
 
@@ -50,3 +50,12 @@ class AuditLog(Base):
     resource_id = Column(String(64), nullable=True, index=True)
     details = Column(JSON, nullable=True)
     timestamp = Column(DateTime(timezone=True), default=utcnow, nullable=False, index=True)
+
+
+class RateLimitRecord(Base):
+    __tablename__ = "rate_limit_records"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    client_ip = Column(String(45), index=True, nullable=False)
+    timestamp = Column(Float, index=True, nullable=False)
+

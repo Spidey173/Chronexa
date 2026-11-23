@@ -172,11 +172,38 @@ Chronexa is deployed across two decoupled Vercel projects:
 - **Pre-Bundled ONNX Embeddings**: Embeds FastEmbed ONNX caches (`BAAI/bge-small-en-v1.5` dense embeddings + `Xenova/ms-marco-MiniLM-L-6-v2` cross-encoder reranker, total ~151.5 MB) directly in the deployment package for zero runtime downloads.
 - **Disk-Backed Read-Only FAISS Index**: Ships 2,679 pre-indexed vectors in `data/embeddings/` read-only.
 - **Managed Neon PostgreSQL**: Persists `users`, `action_proposals`, and `audit_log` records via SQLAlchemy ORM with connection pooling (`pool_pre_ping=True`).
-- **Realistic Latency Expectations**:
-  - `/health` check: **~1.3s** (warm)
-  - Full hybrid RRF + joint cross-encoder reranking: **~15s** on Vercel CPU serverless execution.
-  - When waking from scale-to-zero, the frontend displays `⚡ WAKING UP CONTAINER BACKEND... (~10-15s)` and retries automatically before falling back to replay mode.
-- **Security & Guardrails**: Per-IP sliding-window rate limiting (60 req/min, HTTP 429), strict CORS headers (`https://chronexa17.vercel.app`), 64 KB body size enforcement, and path traversal protection.
+- **Verified Latency Measurements on Live Vercel Serverless Backend**:
+
+| Mode | Cold Start Run 1 | Warm Run 2 | Warm Run 3 | Average Warm | Demo Status |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **⚡ Fast Hybrid (BM25 + Dense RRF)** | 0.795s | 0.545s | 0.534s | **~0.54s** | **Default in Public UI** |
+| **🧠 Deep Joint Cross-Encoder Reranker** | 14.643s | 13.617s | 12.424s | **~13.56s** | **Opt-In Toggle (+12-15s CPU)** |
+
+> *Why the latency gap?* BM25 and FastEmbed dense vector retrieval with Reciprocal Rank Fusion operate in sub-second time on CPU. The cross-encoder (`ms-marco-MiniLM-L-6-v2`) performs full multi-layer transformer cross-attention over 40+ candidate query-document pairs sequentially on single-core serverless CPU without GPU acceleration, which takes ~13s. Making Fast Hybrid the default ensures instantaneous recruiter responses while keeping the deep reranker available on demand.
+
+#### Public Safety, Database Caps & Auth Matrix:
+- **Public Sandbox Safety**: `CHRONEXA_OFFLINE=1` and `INTEGRATION_MODE=mock` are enforced on the public `chronexa-api` deployment. No LLM API keys (`GROQ_API_KEY`) exist in the public environment.
+- **Two-Tier Serverless Rate Limiting**: Tier 1 in-memory sliding window cache for fast container defense + Tier 2 persistent Neon PostgreSQL table (`rate_limit_records`) for distributed multi-instance tracking (60 req/min, HTTP 429).
+- **Public Write Capping & Auto-Pruning**: Public action proposals are strictly capped at 100 rows and audit logs at 200 rows. When thresholds are reached, the oldest demo records are automatically pruned.
+- **Health Check Cloud Detection**: On local environments, `/health` reports `loopback_only: true` (bound to 127.0.0.1). On cloud/serverless environments (Vercel, Render), it automatically reports `loopback_only: false`, `mode: "cloud_serverless"`, and `offline: true`.
+- **Public Visitor Auth Matrix**:
+  - `POST /api/action` (Public Propose): Open to public visitors; unauthenticated visitors are automatically assigned to a sandboxed demo operator identity for review.
+  - `POST /actions/propose` (Strict Propose): Requires a valid JWT bearer token.
+  - `POST /actions/{id}/approve` & `reject`: **Strictly gated** by RBAC. Requires a valid JWT with `role: "operator"` or `role: "admin"`. Anonymous requests return `401 Unauthorized`; `viewer` tokens return `403 Forbidden`.
+
+#### Reproducible Deploy Script (`scripts/deploy_backend.sh`)
+To redeploy the backend cleanly to Vercel without committing model weights or secrets:
+```bash
+# Deploys src/, api/, eval_harness/, data/embeddings, and pre-downloaded fastembed_cache
+./scripts/deploy_backend.sh
+```
+
+**Required Environment Variables for `chronexa-api` (Names only, no secrets):**
+- `DATABASE_URL` — Neon PostgreSQL connection URI (`postgresql://...`)
+- `JWT_SECRET_KEY` — Random 256-bit secret string for JWT signing
+- `CHRONEXA_OFFLINE` — Set to `1` on public cloud deployments
+- `INTEGRATION_MODE` — Set to `mock` for safe public sandbox
+- `RATE_LIMIT_PER_MINUTE` — Rate limit threshold (default: `60`)
 
 > [!NOTE]
 > **Local vs. Cloud**: For local development or instantaneous sub-second query latency, run the multi-stage Docker container locally (`docker compose up`) or native Python virtual environment. The live Vercel backend provides a fully deployed cloud endpoint without requiring recruiters to run local containers.
