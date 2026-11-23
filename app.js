@@ -205,11 +205,11 @@
     });
 
     // Dynamic API Detection & Heartbeat Sync (with Origin Allowlist Security)
+    // Only trust local loopback/container endpoints by default.
+    // Unverified public cloud subdomains must never be in the trusted allowlist.
     const ALLOWED_API_HOSTS = new Set([
       'localhost',
-      '127.0.0.1',
-      'chronexa-api.onrender.com',
-      'chronexa-api.fly.dev'
+      '127.0.0.1'
     ]);
 
     function isAllowedApiOrigin(urlStr) {
@@ -278,8 +278,6 @@
     if (!initialApi) {
       if (window.location.protocol.startsWith('http') && !window.location.hostname.includes('vercel.app')) {
         initialApi = window.location.origin;
-      } else if (window.location.hostname.includes('vercel.app')) {
-        initialApi = 'https://chronexa-api.onrender.com';
       } else {
         initialApi = 'http://localhost:8000';
       }

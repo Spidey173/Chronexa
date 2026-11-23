@@ -254,4 +254,9 @@ def test_frontend_api_origin_security(client):
     assert "sanitizeApiUrl" in js_content
     assert "getAuthHeaders" in js_content
     assert "ALLOWED_API_HOSTS" in js_content
-    assert "chronexa-api.onrender.com" in js_content
+    assert "localhost" in js_content
+    assert "127.0.0.1" in js_content
+
+    # Ensure unverified external subdomains are not in trusted allowlist
+    assert "chronexa-api.onrender.com" not in js_content
+    assert "chronexa-api.fly.dev" not in js_content
