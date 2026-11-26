@@ -8,22 +8,7 @@ Tests cover:
 - Security enforcement (security headers, CORS, payload size limits)
 - File access restrictions (blocking .env, .git, and internal source code)
 """
-import pytest
-from fastapi.testclient import TestClient
-from src.api.app import app, MAX_REQUEST_BODY_BYTES, reset_rate_limits
-from src.api.deps import EngineState
-
-
-@pytest.fixture(scope="module")
-def client():
-    # Initialize engines in offline mode for fast deterministic testing
-    state = EngineState.get_instance(pre_warm=False)
-    if state.action_parser is not None:
-        state.action_parser.provider = "none"
-    if state.generator is not None:
-        state.generator.provider = "none"
-    with TestClient(app) as c:
-        yield c
+from src.api.app import MAX_REQUEST_BODY_BYTES, reset_rate_limits
 
 
 def test_health_endpoint(client):

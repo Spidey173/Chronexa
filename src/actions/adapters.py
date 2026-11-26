@@ -261,6 +261,32 @@ class LiveAdapter(IntegrationAdapter):
                 status_code=status
             )
 
+    def _request_json(
+        self,
+        method: str,
+        url: str,
+        token: str,
+        payload: Dict[str, Any],
+        service_name: str,
+        content_type: str = "application/json",
+    ) -> Dict[str, Any]:
+        """Send an authenticated JSON HTTP request and return parsed JSON response."""
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": content_type,
+        }
+        try:
+            with httpx.Client(timeout=self.DEFAULT_TIMEOUT) as client:
+                resp = client.request(method, url, json=payload, headers=headers)
+        except httpx.TimeoutException as e:
+            raise IntegrationAPIError(f"{service_name} API timed out: {str(e)}")
+        except httpx.RequestError as e:
+            raise IntegrationAPIError(f"{service_name} API network error: {str(e)}")
+
+        if not resp.is_success:
+            self._handle_http_error(resp, service_name)
+        return resp.json()
+
     def send_slack_message(self, to: str, text: str, credentials: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         if not to or not to.strip():
             raise IntegrationAPIError("Slack error: target channel/user 'to' must be non-empty", code="invalid_payload")
@@ -268,25 +294,14 @@ class LiveAdapter(IntegrationAdapter):
             raise IntegrationAPIError("Slack error: message 'text' must be non-empty", code="invalid_payload")
 
         token = self._resolve_token(credentials, "slack")
-        url = "https://slack.com/api/chat.postMessage"
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json; charset=utf-8"
-        }
-        payload = {"channel": to, "text": text}
-
-        try:
-            with httpx.Client(timeout=self.DEFAULT_TIMEOUT) as client:
-                resp = client.post(url, json=payload, headers=headers)
-        except httpx.TimeoutException as e:
-            raise IntegrationAPIError(f"Slack API timed out: {str(e)}")
-        except httpx.RequestError as e:
-            raise IntegrationAPIError(f"Slack API network error: {str(e)}")
-
-        if not resp.is_success:
-            self._handle_http_error(resp, "Slack")
-
-        data = resp.json()
+        data = self._request_json(
+            "POST",
+            "https://slack.com/api/chat.postMessage",
+            token,
+            {"channel": to, "text": text},
+            "Slack",
+            content_type="application/json; charset=utf-8",
+        )
         if not data.get("ok"):
             err = data.get("error", "unknown_error")
             if err in ("invalid_auth", "not_authed", "account_inactive", "token_revoked"):
@@ -324,25 +339,13 @@ class LiveAdapter(IntegrationAdapter):
         raw_bytes = msg.as_bytes()
         raw_b64url = base64.urlsafe_b64encode(raw_bytes).decode("ascii")
 
-        url = "https://gmail.googleapis.com/gmail/v1/users/me/messages/send"
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json"
-        }
-        payload = {"raw": raw_b64url}
-
-        try:
-            with httpx.Client(timeout=self.DEFAULT_TIMEOUT) as client:
-                resp = client.post(url, json=payload, headers=headers)
-        except httpx.TimeoutException as e:
-            raise IntegrationAPIError(f"Gmail API timed out: {str(e)}")
-        except httpx.RequestError as e:
-            raise IntegrationAPIError(f"Gmail API network error: {str(e)}")
-
-        if not resp.is_success:
-            self._handle_http_error(resp, "Gmail")
-
-        data = resp.json()
+        data = self._request_json(
+            "POST",
+            "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+            token,
+            {"raw": raw_b64url},
+            "Gmail",
+        )
         return {
             "status": "success",
             "mode": "live",
@@ -369,12 +372,6 @@ class LiveAdapter(IntegrationAdapter):
             raise IntegrationAPIError("Calendar error: event 'end' time is required", code="invalid_payload")
 
         token = self._resolve_token(credentials, "calendar")
-
-        url = "https://www.googleapis.com/calendar/v3/calendars/primary/events"
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json"
-        }
         event_body: Dict[str, Any] = {
             "summary": title,
             "start": {"dateTime": start} if "T" in start else {"date": start},
@@ -385,18 +382,13 @@ class LiveAdapter(IntegrationAdapter):
         if attendees:
             event_body["attendees"] = [{"email": a} for a in attendees]
 
-        try:
-            with httpx.Client(timeout=self.DEFAULT_TIMEOUT) as client:
-                resp = client.post(url, json=event_body, headers=headers)
-        except httpx.TimeoutException as e:
-            raise IntegrationAPIError(f"Calendar API timed out: {str(e)}")
-        except httpx.RequestError as e:
-            raise IntegrationAPIError(f"Calendar API network error: {str(e)}")
-
-        if not resp.is_success:
-            self._handle_http_error(resp, "Calendar")
-
-        data = resp.json()
+        data = self._request_json(
+            "POST",
+            "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+            token,
+            event_body,
+            "Calendar",
+        )
         return {
             "status": "success",
             "mode": "live",
@@ -430,25 +422,13 @@ class LiveAdapter(IntegrationAdapter):
             raise IntegrationAPIError("Calendar error: at least one field (title, start, end) must be provided to update", code="invalid_payload")
 
         token = self._resolve_token(credentials, "calendar")
-
-        url = f"https://www.googleapis.com/calendar/v3/calendars/primary/events/{event_id}"
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json"
-        }
-
-        try:
-            with httpx.Client(timeout=self.DEFAULT_TIMEOUT) as client:
-                resp = client.patch(url, json=patch_body, headers=headers)
-        except httpx.TimeoutException as e:
-            raise IntegrationAPIError(f"Calendar API timed out: {str(e)}")
-        except httpx.RequestError as e:
-            raise IntegrationAPIError(f"Calendar API network error: {str(e)}")
-
-        if not resp.is_success:
-            self._handle_http_error(resp, "Calendar")
-
-        data = resp.json()
+        data = self._request_json(
+            "PATCH",
+            f"https://www.googleapis.com/calendar/v3/calendars/primary/events/{event_id}",
+            token,
+            patch_body,
+            "Calendar",
+        )
         return {
             "status": "success",
             "mode": "live",

@@ -219,6 +219,23 @@ def search_query_get(
 # ---------------------------------------------------------------------------
 # Action Proposal Logic
 # ---------------------------------------------------------------------------
+def _proposal_to_response(
+    proposal: ActionProposal, include_execution_result: bool = False
+) -> ActionProposalResponse:
+    """Serialize an ActionProposal ORM row into its API response model."""
+    return ActionProposalResponse(
+        id=proposal.id,
+        user_id=proposal.user_id,
+        command=proposal.command,
+        as_of=proposal.as_of,
+        status=proposal.status,
+        predicted=proposal.payload,
+        created_at=proposal.created_at,
+        updated_at=proposal.updated_at,
+        execution_result=proposal.execution_result if include_execution_result else None,
+    )
+
+
 def _propose_action_impl(
     req: ActionProposeRequest,
     db: Session,
@@ -296,16 +313,7 @@ def _propose_action_impl(
     db.commit()
     db.refresh(proposal)
 
-    return ActionProposalResponse(
-        id=proposal.id,
-        user_id=proposal.user_id,
-        command=proposal.command,
-        as_of=proposal.as_of,
-        status=proposal.status,
-        predicted=proposal.payload,
-        created_at=proposal.created_at,
-        updated_at=proposal.updated_at
-    )
+    return _proposal_to_response(proposal)
 
 
 @router.post("/actions/propose", response_model=ActionProposalResponse, tags=["Actions"])
@@ -427,17 +435,7 @@ def get_action_proposal(
     if not proposal:
         raise HTTPException(status_code=404, detail=f"Action proposal '{proposal_id}' not found")
 
-    return ActionProposalResponse(
-        id=proposal.id,
-        user_id=proposal.user_id,
-        command=proposal.command,
-        as_of=proposal.as_of,
-        status=proposal.status,
-        predicted=proposal.payload,
-        created_at=proposal.created_at,
-        updated_at=proposal.updated_at,
-        execution_result=proposal.execution_result
-    )
+    return _proposal_to_response(proposal, include_execution_result=True)
 
 
 # ---------------------------------------------------------------------------

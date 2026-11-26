@@ -9,21 +9,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.api.app import app
-from src.api.deps import EngineState
 from src.db.session import SessionLocal
 from src.db.models import User, ActionProposal, AuditLog
 from src.auth import create_access_token, get_password_hash
-
-
-@pytest.fixture(scope="module")
-def client():
-    state = EngineState.get_instance(pre_warm=False)
-    if state.action_parser is not None:
-        state.action_parser.provider = "none"
-    if state.generator is not None:
-        state.generator.provider = "none"
-    with TestClient(app) as c:
-        yield c
 
 
 @pytest.fixture
