@@ -1,0 +1,26 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["eval_harness", "."]
+addopts = "-q"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+extend-exclude = [".venv", "__pycache__", "alembic/versions", "fastembed_cache", ".cache"]
+
+[tool.ruff.lint]
+select = ["E9", "F", "E713", "E741"]
+ignore = ["F403"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311", "py312"]
+extend-exclude = '''
+/(
+    \.venv
+  | alembic/versions
+  | fastembed_cache
+  | \.cache
+)/
+'''
+
