@@ -8,6 +8,9 @@ Point-in-time workplace memory search and approval-gated action assistant for en
 
 **Live Demo:** [chronexa17.vercel.app](https://chronexa17.vercel.app/) | **API Health:** [chronexa-api.vercel.app/health](https://chronexa-api.vercel.app/health)
 
+![Chronexa Overview](docs/assets/chronexa-overview.png)
+![Chronexa Interactive Assistant Chat](docs/assets/chronexa-chat-assistant.png)
+
 ## Key Features
 
 - **Answer questions as of any past timestamp:** Filters out messages, edits, and deletions created after your chosen `as_of` time so future updates never leak into historical answers.
