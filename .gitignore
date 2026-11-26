@@ -11,8 +11,10 @@ __pycache__/
 env/
 venv/
 
-# Cache directories
+# Cache & Generated Output directories
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
 .coverage
 htmlcov/
 scratch/
@@ -21,7 +23,9 @@ scratch/
 fastembed_cache/
 deploy_backend/
 .deploy_tmp/
+outputs/
 eval/results.md
+results_*.json
 
 *.db
 *.sqlite
