@@ -9,7 +9,7 @@ import re
 from typing import Dict, List, Any
 from eval_harness.records import Unit
 from src.generation.prompt import SYSTEM_PROMPT, USER_TEMPLATE
-from src.llm_client import LLMClient
+from src.core.llm_client import LLMClient
 
 
 class AnswerGenerator:

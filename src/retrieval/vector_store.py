@@ -14,7 +14,7 @@ except ImportError:
     faiss = None
     HAS_FAISS = False
 
-from src.config import ROOT_DIR
+from src.core.config import ROOT_DIR
 
 DEFAULT_VECTOR_DIR = ROOT_DIR / "data" / "embeddings"
 if not DEFAULT_VECTOR_DIR.exists():

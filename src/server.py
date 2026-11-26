@@ -10,7 +10,7 @@ Serves endpoints:
 """
 import argparse
 import uvicorn
-from src.config import settings
+from src.core.config import settings
 
 
 def run_server(host: str = None, port: int = None):

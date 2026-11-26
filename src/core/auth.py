@@ -5,7 +5,7 @@ import os
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 from jose import JWTError, jwt
-from src.config import settings
+from src.core.config import settings
 
 ROLE_HIERARCHY = {
     "viewer": 1,

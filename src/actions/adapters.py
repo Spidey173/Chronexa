@@ -10,7 +10,7 @@ from email.message import EmailMessage
 import json
 from typing import Dict, List, Optional, Any
 import httpx
-from src.config import settings
+from src.core.config import settings
 
 
 # ---------------------------------------------------------------------------

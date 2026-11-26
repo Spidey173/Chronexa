@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
-from src.config import settings
+from src.core.config import settings
 from src.db.session import get_db, SessionLocal
 from src.db.models import User, ActionProposal, AuditLog
 from src.api.schemas import (
@@ -24,7 +24,7 @@ from src.actions.schema import ActionValidationError
 from src.actions.executor import ActionExecutor
 from src.pipeline import search_single
 from src.retrieval.temporal import parse_iso_datetime
-from src.auth import create_access_token, get_password_hash, verify_password
+from src.core.auth import create_access_token, get_password_hash, verify_password
 
 router = APIRouter()
 

@@ -4,10 +4,10 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
-from src.config import DATA_DIR
+from src.core.config import DATA_DIR
 from src.db.session import get_db
 from src.db.models import User
-from src.auth import decode_access_token, has_sufficient_role
+from src.core.auth import decode_access_token, has_sufficient_role
 from src.ingestion.loader import _get_raw_records
 from src.retrieval.hybrid import HybridRetriever
 from src.generation.generator import AnswerGenerator

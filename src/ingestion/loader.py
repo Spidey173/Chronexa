@@ -18,7 +18,7 @@ if str(ROOT_DIR) not in sys.path:
 
 from eval_harness import records
 from eval_harness.records import Unit
-from src.config import DATA_DIR
+from src.core.config import DATA_DIR
 from src.ingestion.chunker import load_enriched_records
 from src.retrieval.temporal import parse_iso_datetime
 

@@ -14,7 +14,7 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 import os
-from src.config import EVALS_DIR, OUTPUTS_DIR
+from src.core.config import EVALS_DIR, OUTPUTS_DIR
 from src.actions.parser import ActionParser
 
 

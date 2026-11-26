@@ -9,7 +9,7 @@ import json
 import re
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
-from src.config import DATA_DIR
+from src.core.config import DATA_DIR
 
 
 class EntityResolver:

@@ -20,7 +20,7 @@ EVAL_HARNESS_DIR = ROOT_DIR / "eval_harness"
 if str(EVAL_HARNESS_DIR) not in sys.path:
     sys.path.insert(0, str(EVAL_HARNESS_DIR))
 
-from src.config import DATA_DIR
+from src.core.config import DATA_DIR
 from eval.run_eval import EvaluationRunner
 
 EVAL_DIR = ROOT_DIR / "eval"

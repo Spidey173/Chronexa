@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 
 from src.actions.entities import EntityResolver
 from src.actions.schema import validate_actions_list, ActionValidationError
-from src.llm_client import LLMClient
+from src.core.llm_client import LLMClient
 from src.retrieval.hybrid import HybridRetriever
 from src.ingestion.loader import get_visible_units
 from src.retrieval.temporal import parse_iso_datetime

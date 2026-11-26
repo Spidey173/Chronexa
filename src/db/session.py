@@ -2,7 +2,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.pool import StaticPool
-from src.config import settings
+from src.core.config import settings
 
 db_url = settings.DATABASE_URL or "sqlite:///./chronexa.db"
 

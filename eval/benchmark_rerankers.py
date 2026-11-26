@@ -29,7 +29,7 @@ try:
 except ImportError:
     TextCrossEncoder = None
 
-from src.config import DATA_DIR
+from src.core.config import DATA_DIR
 from src.ingestion.loader import get_visible_units
 from src.retrieval.dense import DenseRetriever
 from src.retrieval.hybrid import HybridRetriever

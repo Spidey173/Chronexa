@@ -10,7 +10,7 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from src.config import DATA_DIR, EVALS_DIR, OUTPUTS_DIR
+from src.core.config import DATA_DIR, EVALS_DIR, OUTPUTS_DIR
 from src.ingestion.loader import get_visible_units, _get_raw_records
 from src.retrieval.bm25 import BM25Index
 from src.retrieval.hybrid import HybridRetriever

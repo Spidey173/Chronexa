@@ -10,7 +10,7 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from src.config import settings
+from src.core.config import settings
 from src.db.models import Base
 
 # this is the Alembic Config object, which provides

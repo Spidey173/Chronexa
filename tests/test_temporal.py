@@ -5,7 +5,7 @@ from datetime import datetime
 from eval_harness.records import Unit, load
 from src.retrieval.temporal import parse_iso_datetime, LOCAL_TZ
 from src.ingestion.loader import get_visible_units, _apply_edits
-from src.config import DATA_DIR
+from src.core.config import DATA_DIR
 
 
 def test_parse_iso_datetime_aware():

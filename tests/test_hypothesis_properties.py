@@ -8,7 +8,7 @@ from hypothesis import given, strategies as st, settings, HealthCheck
 
 from src.retrieval.temporal import parse_iso_datetime, resolve_dates_with_dateparser
 from src.ingestion.loader import get_visible_units
-from src.config import DATA_DIR
+from src.core.config import DATA_DIR
 
 
 # ===========================================================================
