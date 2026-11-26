@@ -16,3 +16,4 @@ def client():
         state.generator.provider = "none"
     with TestClient(app) as c:
         yield c
+

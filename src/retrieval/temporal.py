@@ -5,7 +5,7 @@ Provides soft metadata boosting and records-on-date lookups. Never applies hard 
 """
 import re
 from datetime import datetime
-from typing import List, Tuple, Set, Optional, Any
+from typing import List, Tuple, Set, Any
 from zoneinfo import ZoneInfo
 try:
     import dateparser
@@ -93,19 +93,6 @@ def resolve_dates_with_dateparser(query: str, as_of: datetime) -> List[str]:
                         pass
 
     return sorted(list(resolved))
-
-
-def get_records_on_date(units: List[Unit], target_date: str) -> List[Unit]:
-    """Returns units whose timestamp or text matches the target date (YYYY-MM-DD)."""
-    matches = []
-    for u in units:
-        # Check delivery/event timestamp
-        if u.time and u.time.strftime("%Y-%m-%d") == target_date:
-            matches.append(u)
-        # Check text content (e.g. calendar start dates formatted as YYYY-MM-DD)
-        elif target_date in u.text:
-            matches.append(u)
-    return matches
 
 
 def apply_date_boost(

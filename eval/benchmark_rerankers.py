@@ -16,7 +16,6 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Any
 
 import sys
-from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
@@ -71,7 +70,7 @@ def benchmark():
     print("Candidate generation complete.\n")
 
     for model_name in models:
-        print(f"\n=======================================================")
+        print("\n=======================================================")
         print(f"Testing Reranker: {model_name}")
         print("=======================================================")
         

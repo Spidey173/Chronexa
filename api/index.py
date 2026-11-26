@@ -19,3 +19,5 @@ os.environ.setdefault("DEMO_MODE", "1")
 
 from src.api.app import app  # noqa: E402
 
+__all__ = ["app"]
+

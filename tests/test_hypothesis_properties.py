@@ -6,12 +6,9 @@ from typing import List
 import pytest
 from hypothesis import given, strategies as st, settings, HealthCheck
 
-from eval_harness.records import Unit
-from src.retrieval.temporal import parse_iso_datetime, resolve_dates_with_dateparser, LOCAL_TZ
+from src.retrieval.temporal import parse_iso_datetime, resolve_dates_with_dateparser
 from src.ingestion.loader import get_visible_units
 from src.config import DATA_DIR
-from src.db.models import ActionProposal, User, AuditLog
-from src.actions.executor import ActionExecutor
 
 
 # ===========================================================================
@@ -82,9 +79,7 @@ def test_hypothesis_temporal_boundary_inclusive_exclusive_edges():
     # 2. Timestamp minus 1 microsecond must be EXCLUSIVE (if no earlier version exists)
     exclusive_time = exact_time - timedelta(microseconds=1)
     units_before = get_visible_units(exclusive_time, data_dir=DATA_DIR)
-    before_ids = {u.id for u in units_before}
 
-    # Units strictly created at exact_time cannot be in before_ids
     # Check that visible units count at exclusive_time <= exact_time
     assert len(units_before) <= len(units_exact)
 

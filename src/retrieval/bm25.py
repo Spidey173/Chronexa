@@ -5,8 +5,7 @@ universal workplace synonym expansion, and parent record diversification.
 import math
 import re
 from collections import Counter, defaultdict
-from datetime import datetime
-from typing import List, Tuple, Dict, Set, Optional
+from typing import List, Tuple, Dict, Set
 from eval_harness.records import Unit
 
 STOPWORDS = {

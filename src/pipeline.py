@@ -3,7 +3,6 @@
 import argparse
 import json
 import sys
-from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -15,7 +14,6 @@ from src.config import DATA_DIR, EVALS_DIR, OUTPUTS_DIR
 from src.ingestion.loader import get_visible_units, _get_raw_records
 from src.retrieval.bm25 import BM25Index
 from src.retrieval.hybrid import HybridRetriever
-from src.retrieval.reranker import CrossEncoderReranker
 from src.retrieval.temporal import parse_iso_datetime
 from src.generation.generator import AnswerGenerator
 
@@ -172,10 +170,10 @@ def main():
             generate_answer=not args.no_generate,
             top_k=args.top_k
         )
-        print(f"\n=======================================================")
+        print("\n=======================================================")
         print(f" Query: {res['query']}")
         print(f" As-Of: {res['as_of']} ({res['visible_count']} units visible)")
-        print(f"=======================================================")
+        print("=======================================================")
         if res["answer"]:
             print(f"\nAnswer:\n{res['answer']}")
             print(f"\nCitations: {res['sources']}")

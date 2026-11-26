@@ -6,9 +6,7 @@
 """
 import uuid
 import pytest
-from fastapi.testclient import TestClient
 
-from src.api.app import app
 from src.db.session import SessionLocal
 from src.db.models import User, ActionProposal, AuditLog
 from src.auth import create_access_token, get_password_hash

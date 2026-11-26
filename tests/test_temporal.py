@@ -1,10 +1,8 @@
 """Tests for temporal filtering, timezone handling, message edits, and deletions using pytest.
 """
 from datetime import datetime
-from pathlib import Path
-import pytest
 
-from eval_harness.records import Unit, visible, load
+from eval_harness.records import Unit, load
 from src.retrieval.temporal import parse_iso_datetime, LOCAL_TZ
 from src.ingestion.loader import get_visible_units, _apply_edits
 from src.config import DATA_DIR
@@ -104,7 +102,6 @@ def test_dateparser_missing_fallback_iso_dates_only():
 def test_dateparser_missing_date_boost_no_crash():
     """Verifies apply_date_boost safely operates with or without resolved target dates."""
     import src.retrieval.temporal as temporal_mod
-    as_of = parse_iso_datetime("2026-09-18T18:00:00-07:00")
     orig = temporal_mod.dateparser
     try:
         temporal_mod.dateparser = None

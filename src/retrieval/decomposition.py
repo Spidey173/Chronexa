@@ -16,7 +16,7 @@ try:
 except ImportError:
     dateparser = None
 from eval_harness.records import Unit
-from src.retrieval.temporal import resolve_dates_with_dateparser, DATE_INDICATORS
+from src.retrieval.temporal import DATE_INDICATORS
 
 def _get_cache_dir() -> Path:
     base = Path(__file__).resolve().parent.parent.parent / ".cache" / "decomposition"

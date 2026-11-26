@@ -11,7 +11,7 @@ from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
 
 from src.actions.entities import EntityResolver
-from src.actions.schema import validate_action, validate_actions_list, ActionValidationError
+from src.actions.schema import validate_actions_list, ActionValidationError
 from src.llm_client import LLMClient
 from src.retrieval.hybrid import HybridRetriever
 from src.ingestion.loader import get_visible_units
@@ -191,7 +191,7 @@ class ActionParser:
             topic = m_book.group(5).strip() if m_book.group(5) else "Meeting discussion"
 
             target_day = as_of_dt + timedelta(days=1) if "tomorrow" in day_str else as_of_dt
-            is_pm = "pm" in time_str or (not "am" in time_str and int(re.sub(r"[^\d:]", "", time_str).split(":")[0]) <= 6)
+            is_pm = "pm" in time_str or ("am" not in time_str and int(re.sub(r"[^\d:]", "", time_str).split(":")[0]) <= 6)
             time_digits = re.sub(r"[^\d:]", "", time_str)
             parts = time_digits.split(":")
             hour = int(parts[0])

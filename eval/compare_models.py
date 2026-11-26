@@ -21,7 +21,6 @@ if str(EVAL_HARNESS_DIR) not in sys.path:
     sys.path.insert(0, str(EVAL_HARNESS_DIR))
 
 from src.config import DATA_DIR
-from src.retrieval.dense import DenseRetriever
 from eval.run_eval import EvaluationRunner
 
 EVAL_DIR = ROOT_DIR / "eval"
@@ -37,9 +36,9 @@ def main():
     with open(DEV_PATH, "r", encoding="utf-8") as f:
         questions = [json.loads(line) for line in f if line.strip()]
 
-    print(f"===========================================================")
+    print("===========================================================")
     print(f" EVALUATING DENSE EMBEDDING MODELS ON DEV ({len(questions)} queries)")
-    print(f"===========================================================\n")
+    print("===========================================================\n")
 
     results = []
     for model_name in MODELS:
@@ -74,8 +73,8 @@ def main():
     print("\n\n===========================================================")
     print(" SUMMARY COMPARISON ON DEV PARAPHRASES")
     print("===========================================================")
-    print(f"| Model | Recall@5 | Recall@10 | MRR | Found None@20 | Time (s) |")
-    print(f"|---|---|---|---|---|---|")
+    print("| Model | Recall@5 | Recall@10 | MRR | Found None@20 | Time (s) |")
+    print("|---|---|---|---|---|---|")
     for r in results:
         print(f"| `{r['model']}` | {r['complete_unit@5']:.1%} | {r['complete_unit@10']:.1%} | {r['mrr']:.4f} | {r['found_none@20']:.1%} | {r['elapsed_sec']}s |")
 

@@ -9,7 +9,7 @@ Loads records into memory, then filters strictly by `as_of` timestamp:
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, List, Tuple
+from typing import Any, List
 
 # Add project root to sys.path so eval_harness can be imported
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent

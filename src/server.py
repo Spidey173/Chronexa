@@ -11,10 +11,6 @@ Serves endpoints:
 import argparse
 import uvicorn
 from src.config import settings
-from src.api.app import app
-from src.api.deps import EngineState
-
-MAX_REQUEST_BODY_BYTES = 64 * 1024
 
 
 def run_server(host: str = None, port: int = None):
@@ -23,21 +19,6 @@ def run_server(host: str = None, port: int = None):
     print(f"\n🚀 Chronexa Production FastAPI Server running at: http://{h}:{p}/")
     print(f"📖 OpenAPI Swagger documentation available at: http://{h}:{p}/docs\n")
     uvicorn.run("src.api.app:app", host=h, port=p, reload=False)
-
-
-# Legacy compatibility handler for direct tests
-class ChronexaRequestHandler:
-    """Compatibility shim for legacy tests."""
-    action_parser = None
-    generator = None
-    retriever = None
-
-    @classmethod
-    def initialize_engines(cls, pre_warm: bool = False):
-        state = EngineState.get_instance(pre_warm=pre_warm)
-        cls.retriever = state.retriever
-        cls.generator = state.generator
-        cls.action_parser = state.action_parser
 
 
 if __name__ == "__main__":

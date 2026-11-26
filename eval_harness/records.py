@@ -121,7 +121,7 @@ def load(data_dir):
 
     for f in sorted((d / "connectors/codex/sessions").glob("*.jsonl")):
         with open(f, encoding="utf-8") as cf:
-            events = [json.loads(l) for l in cf if l.strip()]
+            events = [json.loads(line) for line in cf if line.strip()]
         meta, body = events[0], events[1:]
         text = "\n".join(f"{e.get('role', e.get('tool', e['type']))}: {e.get('content') or e.get('input', '')}"
                          for e in body)

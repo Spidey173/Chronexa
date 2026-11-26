@@ -11,7 +11,7 @@ import json
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Tuple, Any
 
 from eval_harness.records import Unit
 from zoneinfo import ZoneInfo
@@ -242,7 +242,7 @@ def load_enriched_records(data_dir: Path) -> Tuple[List[EnrichedUnit], Dict[str,
     # 7. Codex Sessions
     for f in sorted((d / "connectors/codex/sessions").glob("*.jsonl")):
         with open(f, encoding="utf-8") as cf:
-            events = [json.loads(l) for l in cf if l.strip()]
+            events = [json.loads(line) for line in cf if line.strip()]
         if not events:
             continue
         meta, body = events[0], events[1:]

@@ -49,5 +49,5 @@ def cohen_kappa(a, b):
     labels = sorted(set(a) | set(b))
     n = len(a)
     po = sum(x == y for x, y in zip(a, b)) / n
-    pe = sum((a.count(l) / n) * (b.count(l) / n) for l in labels)
+    pe = sum((a.count(label) / n) * (b.count(label) / n) for label in labels)
     return None if pe == 1 else round((po - pe) / (1 - pe), 4)

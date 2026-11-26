@@ -43,7 +43,7 @@ class HybridRetriever:
             try:
                 from src.retrieval.reranker import CrossEncoderReranker
                 self.reranker = CrossEncoderReranker(model_name=reranker_model)
-            except Exception as e:
+            except Exception:
                 self.reranker = None
 
     def _rrf_fuse(

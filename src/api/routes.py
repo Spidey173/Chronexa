@@ -1,8 +1,8 @@
 """FastAPI route definitions for Chronexa: /query, /actions/propose, approve, reject, /health."""
 import os
 import uuid
-from typing import Optional, List, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, status, Query
+from typing import Optional, Dict, Any
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 

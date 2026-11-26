@@ -19,12 +19,11 @@ import argparse
 import json
 import math
 import os
-import random
 import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any, Tuple, Optional
+from typing import Dict, List, Any, Tuple
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
@@ -33,7 +32,7 @@ EVAL_HARNESS_DIR = ROOT_DIR / "eval_harness"
 if str(EVAL_HARNESS_DIR) not in sys.path:
     sys.path.insert(0, str(EVAL_HARNESS_DIR))
 
-from src.config import DATA_DIR, EVALS_DIR
+from src.config import DATA_DIR
 from src.ingestion.loader import get_visible_units, _get_raw_records
 from src.retrieval.bm25 import BM25Index
 from src.retrieval.dense import DenseRetriever
@@ -428,9 +427,9 @@ def main():
         with open(path, "r", encoding="utf-8") as f:
             questions = [json.loads(line) for line in f if line.strip()]
 
-        print(f"\n================================================================================")
+        print("\n================================================================================")
         print(f" EVALUATION ON [{split_name.upper()}] [{ds_name.upper()}] (Total: {len(questions)} questions)")
-        print(f"================================================================================")
+        print("================================================================================")
 
         for cfg in configs_to_run:
             print(f"\n>>> Running Config: {cfg} ...")
